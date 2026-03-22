@@ -1,0 +1,216 @@
+{
+  "version": "1.0.0",
+  "total_standards": 29,
+  "categories": [
+    {
+      "id": "clarity",
+      "name": "Clarity",
+      "standards": [
+        {
+          "id": "CLR-01",
+          "rule": "Use plain language. Avoid jargon, technical terms, or insider language unless the audience requires it.",
+          "correct": "Your payment didn't go through. Try a different card.",
+          "incorrect": "Transaction declined due to insufficient authorization parameters."
+        },
+        {
+          "id": "CLR-02",
+          "rule": "Lead with the most important information. Put the action or outcome first.",
+          "correct": "Save 20% when you upgrade today.",
+          "incorrect": "We're excited to announce that for a limited time, customers who choose to upgrade will receive a 20% discount."
+        },
+        {
+          "id": "CLR-03",
+          "rule": "Use short sentences. Aim for 15-20 words per sentence maximum.",
+          "correct": "Your order shipped. It should arrive by Friday.",
+          "incorrect": "We wanted to let you know that the order you placed has been shipped and based on current estimates it should be arriving to you by Friday of this week."
+        },
+        {
+          "id": "CLR-04",
+          "rule": "One idea per sentence. Don't chain multiple concepts together.",
+          "correct": "You can export your data as a CSV. The file will include all records from the selected date range.",
+          "incorrect": "You can export your data as a CSV which will include all records from the selected date range and can be opened in Excel or Google Sheets for further analysis."
+        },
+        {
+          "id": "CLR-05",
+          "rule": "Avoid double negatives. Say what something is, not what it isn't not.",
+          "correct": "This action is reversible.",
+          "incorrect": "This action is not irreversible."
+        }
+      ]
+    },
+    {
+      "id": "voice_tone",
+      "name": "Voice and tone",
+      "standards": [
+        {
+          "id": "VT-01",
+          "rule": "Use active voice. The subject should perform the action.",
+          "correct": "We'll review your application within 2 business days.",
+          "incorrect": "Your application will be reviewed within 2 business days."
+        },
+        {
+          "id": "VT-02",
+          "rule": "Address the user directly. Use 'you' and 'your' instead of 'the user' or 'one'.",
+          "correct": "You can change your password in settings.",
+          "incorrect": "Users can change their password in the settings menu."
+        },
+        {
+          "id": "VT-03",
+          "rule": "Be conversational but not casual. Write like a knowledgeable colleague, not a robot or a buddy.",
+          "correct": "Looks like something went wrong. Let's try that again.",
+          "incorrect": "Oopsie! Something broke lol. Let's give it another go!!"
+        },
+        {
+          "id": "VT-04",
+          "rule": "Be confident, not arrogant. State things directly without hedging or over-qualifying.",
+          "correct": "This will take about 5 minutes.",
+          "incorrect": "This should probably take around maybe 5 minutes or so."
+        },
+        {
+          "id": "VT-05",
+          "rule": "Show empathy in error and failure states. Acknowledge the user's frustration without being patronizing.",
+          "correct": "We couldn't save your changes. Your work isn't lost — try saving again.",
+          "incorrect": "Save failed. Error code 408."
+        }
+      ]
+    },
+    {
+      "id": "consistency",
+      "name": "Consistency",
+      "standards": [
+        {
+          "id": "CON-01",
+          "rule": "Use consistent terminology. Don't switch between synonyms for the same concept.",
+          "correct": "Go to Settings. In Settings, select Notifications.",
+          "incorrect": "Go to Settings. In the Preferences panel, select Alerts."
+        },
+        {
+          "id": "CON-02",
+          "rule": "Use sentence case for headings and UI labels, not title case.",
+          "correct": "Manage your notification preferences",
+          "incorrect": "Manage Your Notification Preferences"
+        },
+        {
+          "id": "CON-03",
+          "rule": "Use consistent date and time formats. Spell out the month to avoid ambiguity.",
+          "correct": "March 16, 2026",
+          "incorrect": "3/16/26"
+        },
+        {
+          "id": "CON-04",
+          "rule": "Use the same word for the same action throughout the product. Don't mix 'delete,' 'remove,' and 'trash.'",
+          "correct": "Delete this file? You can restore it from Trash within 30 days.",
+          "incorrect": "Remove this file? You can recover it from the Deleted Items bin within 30 days."
+        },
+        {
+          "id": "CON-05",
+          "rule": "Capitalize product names and features consistently. Follow the product's own conventions.",
+          "correct": "Use Google Drive to store your files.",
+          "incorrect": "Use google drive to store your files."
+        }
+      ]
+    },
+    {
+      "id": "accessibility",
+      "name": "Accessibility",
+      "standards": [
+        {
+          "id": "ACC-01",
+          "rule": "Write descriptive link text. Never use 'click here' or 'learn more' as standalone links.",
+          "correct": "Read our accessibility guidelines",
+          "incorrect": "Click here to learn more"
+        },
+        {
+          "id": "ACC-02",
+          "rule": "Don't rely on color alone to convey meaning. Pair color with text or icons.",
+          "correct": "Required fields are marked with an asterisk (*)",
+          "incorrect": "Required fields are highlighted in red"
+        },
+        {
+          "id": "ACC-03",
+          "rule": "Write alt text that describes the function or content of an image, not just what it looks like.",
+          "correct": "Chart showing a 40% increase in signups from January to March 2026",
+          "incorrect": "Bar chart image"
+        },
+        {
+          "id": "ACC-04",
+          "rule": "Avoid directional language that assumes visual layout. Don't say 'above,' 'below,' 'to the right.'",
+          "correct": "Select a plan from the pricing options.",
+          "incorrect": "Select a plan from the options on the right."
+        },
+        {
+          "id": "ACC-05",
+          "rule": "Use readable font sizes and sufficient contrast. Body text should be at least 16px.",
+          "correct": "Body text at 16px with a contrast ratio of 4.5:1 or higher",
+          "incorrect": "Body text at 11px in light gray on white background"
+        }
+      ]
+    },
+    {
+      "id": "action_oriented",
+      "name": "Action-oriented writing",
+      "standards": [
+        {
+          "id": "ACT-01",
+          "rule": "Start button and CTA text with a verb. Tell the user what will happen.",
+          "correct": "Create account",
+          "incorrect": "Account creation"
+        },
+        {
+          "id": "ACT-02",
+          "rule": "Use specific verbs over vague ones. Prefer 'save,' 'send,' 'export' over 'submit' or 'process.'",
+          "correct": "Save changes",
+          "incorrect": "Submit"
+        },
+        {
+          "id": "ACT-03",
+          "rule": "Tell users what they can do, not what they can't. Frame limitations as alternatives.",
+          "correct": "You can upload files up to 25 MB. For larger files, use our desktop app.",
+          "incorrect": "You cannot upload files larger than 25 MB."
+        },
+        {
+          "id": "ACT-04",
+          "rule": "Make the next step obvious. Every screen should have a clear primary action.",
+          "correct": "Your account is ready. Go to your dashboard to get started.",
+          "incorrect": "Your account has been successfully created."
+        }
+      ]
+    },
+    {
+      "id": "content_structure",
+      "name": "Content structure",
+      "standards": [
+        {
+          "id": "STR-01",
+          "rule": "Use headings to create scannable structure. Users skim before they read.",
+          "correct": "What you'll need: a valid photo ID and a recent utility bill or bank statement.",
+          "incorrect": "To complete verification you will need to provide a valid government-issued photo ID and you should also have a recent utility bill or bank statement that shows your current address on file with us."
+        },
+        {
+          "id": "STR-02",
+          "rule": "Keep paragraphs short. 2-3 sentences max for UI copy and help content.",
+          "correct": "Your files are backed up every 24 hours. You can restore any version from the last 30 days.",
+          "incorrect": "Your files are backed up automatically every 24 hours to our secure cloud servers, which means you can always access previous versions of your work if you need to restore a file by going to the file browser and right-clicking the file you want to restore and selecting version history from the dropdown menu and choosing the version you want."
+        },
+        {
+          "id": "STR-03",
+          "rule": "Use parallel structure in lists. Each item should follow the same grammatical pattern.",
+          "correct": "Upload your photo. Crop to fit. Apply a filter. Save your changes.",
+          "incorrect": "Upload your photo. The photo should be cropped. You can apply a filter. Saving is the last step."
+        },
+        {
+          "id": "STR-04",
+          "rule": "Front-load key information in tooltips and microcopy. Users may not read to the end.",
+          "correct": "Maximum 5 team members on the free plan. Upgrade for unlimited.",
+          "incorrect": "On your current plan, which is the free tier, you're able to add up to a maximum of 5 team members to your workspace."
+        },
+        {
+          "id": "STR-05",
+          "rule": "Group related information together. Don't scatter details across disconnected sections.",
+          "correct": "Billing section: payment method, billing history, and invoices all in one place.",
+          "incorrect": "Payment method under Settings, billing history under Account, invoices under Documents."
+        }
+      ]
+    }
+  ]
+}

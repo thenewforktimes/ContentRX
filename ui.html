@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  /* ------------------------------------------------------------------ */
+  /* Base — uses Figma's theme colors via CSS variables                  */
+  /* ------------------------------------------------------------------ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--figma-color-text, #333);
+    background: var(--figma-color-bg, #fff);
+    padding: 12px;
+    overflow-y: auto;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Shared components                                                   */
+  /* ------------------------------------------------------------------ */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  h2 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  p, .hint {
+    font-size: 11px;
+    color: var(--figma-color-text-secondary, #666);
+    margin-bottom: 8px;
+  }
+
+  input[type="password"],
+  input[type="text"] {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 12px;
+    border: 1px solid var(--figma-color-border, #ddd);
+    border-radius: 6px;
+    background: var(--figma-color-bg-secondary, #f5f5f5);
+    color: var(--figma-color-text, #333);
+    outline: none;
+    margin-bottom: 8px;
+  }
+
+  input:focus {
+    border-color: var(--figma-color-border-brand, #0d99ff);
+    box-shadow: 0 0 0 1px var(--figma-color-border-brand, #0d99ff);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+  }
+
+  .btn-primary {
+    background: var(--figma-color-bg-brand, #0d99ff);
+    color: #fff;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: var(--figma-color-bg-secondary, #f0f0f0);
+    color: var(--figma-color-text, #333);
+    border: 1px solid var(--figma-color-border, #ddd);
+  }
+  .btn-secondary:hover { background: var(--figma-color-bg-hover, #e8e8e8); }
+
+  .btn-text {
+    background: none;
+    color: var(--figma-color-text-secondary, #666);
+    padding: 4px 0;
+    width: auto;
+    font-size: 11px;
+  }
+  .btn-text:hover { color: var(--figma-color-text, #333); }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn-row .btn { flex: 1; }
+
+  .divider {
+    height: 1px;
+    background: var(--figma-color-border, #eee);
+    margin: 12px 0;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Verdict badges                                                      */
+  /* ------------------------------------------------------------------ */
+  .verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .verdict-pass {
+    background: #e6f9ed;
+    color: #1a7f37;
+  }
+
+  .verdict-fail {
+    background: #fde8e8;
+    color: #c33;
+  }
+
+  .verdict-icon {
+    font-size: 14px;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Violation cards                                                      */
+  /* ------------------------------------------------------------------ */
+  .violation-card {
+    background: var(--figma-color-bg-secondary, #f8f8f8);
+    border: 1px solid var(--figma-color-border, #eee);
+    border-left: 3px solid #e55;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+
+  .violation-card .standard-id {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--figma-color-text-secondary, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .violation-card .issue {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .violation-card .suggestion {
+    font-size: 11px;
+    color: var(--figma-color-text-secondary, #666);
+    padding: 6px 8px;
+    background: var(--figma-color-bg, #fff);
+    border-radius: 4px;
+    border: 1px solid var(--figma-color-border, #eee);
+  }
+
+  .suggestion-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--figma-color-text-secondary, #888);
+    margin-bottom: 2px;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Content type badge                                                  */
+  /* ------------------------------------------------------------------ */
+  .content-type-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--figma-color-bg-secondary, #f0f0f0);
+    color: var(--figma-color-text-secondary, #666);
+    margin-bottom: 8px;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Summary                                                             */
+  /* ------------------------------------------------------------------ */
+  .summary {
+    font-size: 12px;
+    color: var(--figma-color-text, #333);
+    padding: 8px 12px;
+    background: var(--figma-color-bg-secondary, #f8f8f8);
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Loading state                                                       */
+  /* ------------------------------------------------------------------ */
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--figma-color-border, #ddd);
+    border-top-color: var(--figma-color-bg-brand, #0d99ff);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ------------------------------------------------------------------ */
+  /* Checked text preview                                                */
+  /* ------------------------------------------------------------------ */
+  .checked-text {
+    font-size: 11px;
+    color: var(--figma-color-text-secondary, #666);
+    padding: 8px 10px;
+    background: var(--figma-color-bg-secondary, #f5f5f5);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    word-break: break-word;
+    font-style: italic;
+    max-height: 60px;
+    overflow-y: auto;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Footer                                                              */
+  /* ------------------------------------------------------------------ */
+  .footer {
+    margin-top: 12px;
+    font-size: 10px;
+    color: var(--figma-color-text-tertiary, #999);
+    text-align: center;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 24px 12px;
+    color: var(--figma-color-text-secondary, #888);
+  }
+  .empty-state .icon { font-size: 28px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================== -->
+<!-- SCREEN: Setup (first-time API key entry)                           -->
+<!-- ================================================================== -->
+<div id="screen-setup" class="screen">
+  <h2>Set up your API key</h2>
+  <p>Your key is stored locally on this device using Figma's client storage. It's never sent anywhere except the Anthropic API.</p>
+  <input
+    type="password"
+    id="api-key-input"
+    placeholder="sk-ant-..."
+    spellcheck="false"
+    autocomplete="off"
+  />
+  <button class="btn btn-primary" id="btn-save-key">Save key</button>
+</div>
+
+<!-- ================================================================== -->
+<!-- SCREEN: Main (check content)                                       -->
+<!-- ================================================================== -->
+<div id="screen-main" class="screen">
+  <h2>Content standards checker</h2>
+  <p>Select one or more text layers in Figma, then check them against your content standards.</p>
+
+  <button class="btn btn-primary" id="btn-check">Check selected text</button>
+
+  <div class="divider"></div>
+  <div id="results-area"></div>
+
+  <div class="footer">
+    <button class="btn btn-text" id="btn-settings">Change API key</button>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<!-- SCREEN: Loading                                                    -->
+<!-- ================================================================== -->
+<div id="screen-loading" class="screen">
+  <div style="text-align:center; padding: 40px 0;">
+    <div class="spinner"></div>
+    <span id="loading-text">Checking content…</span>
+  </div>
+</div>
+
+
+<script>
+// ====================================================================
+// Standards library (embedded to avoid extra network calls)
+// ====================================================================
+const STANDARDS = {
+  "version": "1.0.0",
+  "total_standards": 29,
+  "categories": [
+    {
+      "id": "clarity",
+      "name": "Clarity",
+      "standards": [
+        { "id": "CLR-01", "rule": "Use plain language. Avoid jargon, technical terms, or insider language unless the audience requires it.", "correct": "Your payment didn't go through. Try a different card.", "incorrect": "Transaction declined due to insufficient authorization parameters." },
+        { "id": "CLR-02", "rule": "Lead with the most important information. Put the action or outcome first.", "correct": "Save 20% when you upgrade today.", "incorrect": "We're excited to announce that for a limited time, customers who choose to upgrade will receive a 20% discount." },
+        { "id": "CLR-03", "rule": "Use short sentences. Aim for 15\u201320 words per sentence maximum.", "correct": "Your order shipped. It should arrive by Friday.", "incorrect": "We wanted to let you know that the order you placed has been shipped and based on current estimates it should be arriving to you by Friday of this week." },
+        { "id": "CLR-04", "rule": "One idea per sentence. Don't chain multiple concepts together.", "correct": "You can export your data as a CSV. The file will include all records from the selected date range.", "incorrect": "You can export your data as a CSV which will include all records from the selected date range and can be opened in Excel or Google Sheets for further analysis." },
+        { "id": "CLR-05", "rule": "Avoid double negatives. Say what something is, not what it isn't not.", "correct": "This action is reversible.", "incorrect": "This action is not irreversible." }
+      ]
+    },
+    {
+      "id": "voice_tone",
+      "name": "Voice and tone",
+      "standards": [
+        { "id": "VT-01", "rule": "Use active voice. The subject should perform the action.", "correct": "We'll review your application within 2 business days.", "incorrect": "Your application will be reviewed within 2 business days." },
+        { "id": "VT-02", "rule": "Address the user directly. Use 'you' and 'your' instead of 'the user' or 'one'.", "correct": "You can change your password in settings.", "incorrect": "Users can change their password in the settings menu." },
+        { "id": "VT-03", "rule": "Be conversational but not casual. Write like a knowledgeable colleague, not a robot or a buddy.", "correct": "Looks like something went wrong. Let's try that again.", "incorrect": "Oopsie! Something broke lol. Let's give it another go!!" },
+        { "id": "VT-04", "rule": "Be confident, not arrogant. State things directly without hedging or over-qualifying.", "correct": "This will take about 5 minutes.", "incorrect": "This should probably take around maybe 5 minutes or so." },
+        { "id": "VT-05", "rule": "Show empathy in error and failure states. Acknowledge the user's frustration without being patronizing.", "correct": "We couldn't save your changes. Your work isn't lost \u2014 try saving again.", "incorrect": "Save failed. Error code 408." }
+      ]
+    },
+    {
+      "id": "consistency",
+      "name": "Consistency",
+      "standards": [
+        { "id": "CON-01", "rule": "Use consistent terminology. Don't switch between synonyms for the same concept.", "correct": "Go to Settings. In Settings, select Notifications.", "incorrect": "Go to Settings. In the Preferences panel, select Alerts." },
+        { "id": "CON-02", "rule": "Use sentence case for headings and UI labels, not title case.", "correct": "Manage your notification preferences", "incorrect": "Manage Your Notification Preferences" },
+        { "id": "CON-03", "rule": "Use consistent date and time formats. Spell out the month to avoid ambiguity.", "correct": "March 16, 2026", "incorrect": "3/16/26" },
+        { "id": "CON-04", "rule": "Use the same word for the same action throughout the product. Don't mix 'delete,' 'remove,' and 'trash.'", "correct": "Delete this file? You can restore it from Trash within 30 days.", "incorrect": "Remove this file? You can recover it from the Deleted Items bin within 30 days." },
+        { "id": "CON-05", "rule": "Capitalize product names and features consistently. Follow the product's own conventions.", "correct": "Use Google Drive to store your files.", "incorrect": "Use google drive to store your files." }
+      ]
+    },
+    {
+      "id": "accessibility",
+      "name": "Accessibility",
+      "standards": [
+        { "id": "ACC-01", "rule": "Write descriptive link text. Never use 'click here' or 'learn more' as standalone links.", "correct": "Read our accessibility guidelines", "incorrect": "Click here to learn more" },
+        { "id": "ACC-02", "rule": "Don't rely on color alone to convey meaning. Pair color with text or icons.", "correct": "Required fields are marked with an asterisk (*)", "incorrect": "Required fields are highlighted in red" },
+        { "id": "ACC-03", "rule": "Write alt text that describes the function or content of an image, not just what it looks like.", "correct": "Chart showing a 40% increase in signups from January to March 2026", "incorrect": "Bar chart image" },
+        { "id": "ACC-04", "rule": "Avoid directional language that assumes visual layout. Don't say 'above,' 'below,' 'to the right.'", "correct": "Select a plan from the pricing options.", "incorrect": "Select a plan from the options on the right." },
+        { "id": "ACC-05", "rule": "Use readable font sizes and sufficient contrast. Body text should be at least 16px.", "correct": "Body text at 16px with a contrast ratio of 4.5:1 or higher", "incorrect": "Body text at 11px in light gray on white background" }
+      ]
+    },
+    {
+      "id": "action_oriented",
+      "name": "Action-oriented writing",
+      "standards": [
+        { "id": "ACT-01", "rule": "Start button and CTA text with a verb. Tell the user what will happen.", "correct": "Create account", "incorrect": "Account creation" },
+        { "id": "ACT-02", "rule": "Use specific verbs over vague ones. Prefer 'save,' 'send,' 'export' over 'submit' or 'process.'", "correct": "Save changes", "incorrect": "Submit" },
+        { "id": "ACT-03", "rule": "Tell users what they can do, not what they can't. Frame limitations as alternatives.", "correct": "You can upload files up to 25 MB. For larger files, use our desktop app.", "incorrect": "You cannot upload files larger than 25 MB." },
+        { "id": "ACT-04", "rule": "Make the next step obvious. Every screen should have a clear primary action.", "correct": "Your account is ready. Go to your dashboard to get started.", "incorrect": "Your account has been successfully created." }
+      ]
+    },
+    {
+      "id": "content_structure",
+      "name": "Content structure",
+      "standards": [
+        { "id": "STR-01", "rule": "Use headings to create scannable structure. Users skim before they read.", "correct": "What you'll need: a valid photo ID and a recent utility bill or bank statement.", "incorrect": "To complete verification you will need to provide a valid government-issued photo ID and you should also have a recent utility bill or bank statement that shows your current address on file with us." },
+        { "id": "STR-02", "rule": "Keep paragraphs short. 2\u20133 sentences max for UI copy and help content.", "correct": "Your files are backed up every 24 hours. You can restore any version from the last 30 days.", "incorrect": "Your files are backed up automatically every 24 hours to our secure cloud servers, which means you can always access previous versions of your work if you need to restore a file by going to the file browser and right-clicking the file you want to restore and selecting version history from the dropdown menu and choosing the version you want." },
+        { "id": "STR-03", "rule": "Use parallel structure in lists. Each item should follow the same grammatical pattern.", "correct": "Upload your photo. Crop to fit. Apply a filter. Save your changes.", "incorrect": "Upload your photo. The photo should be cropped. You can apply a filter. Saving is the last step." },
+        { "id": "STR-04", "rule": "Front-load key information in tooltips and microcopy. Users may not read to the end.", "correct": "Maximum 5 team members on the free plan. Upgrade for unlimited.", "incorrect": "On your current plan, which is the free tier, you're able to add up to a maximum of 5 team members to your workspace." },
+        { "id": "STR-05", "rule": "Group related information together. Don't scatter details across disconnected sections.", "correct": "Billing section: payment method, billing history, and invoices all in one place.", "incorrect": "Payment method under Settings, billing history under Account, invoices under Documents." }
+      ]
+    }
+  ]
+};
+
+
+// ====================================================================
+// Content type detection (mirrors checker.py logic)
+// ====================================================================
+function detectContentType(text) {
+  const lower = text.toLowerCase().trim();
+  const words = lower.split(/\s+/).length;
+
+  const buttonWords = ["click","tap","save","delete","create","submit","cancel",
+    "confirm","sign","log","get started","try","upgrade"];
+  const errorWords = ["error","fail","couldn't","can't","unable","went wrong","oops"];
+  const confirmWords = ["success","done","complete","ready","saved","sent",
+    "created","updated","deleted"];
+
+  if (words <= 5 && buttonWords.some(w => lower.includes(w))) return "button_cta";
+  if (words <= 15 && errorWords.some(w => lower.includes(w))) return "error_message";
+  if (words <= 20 && !lower.includes("?") && confirmWords.some(w => lower.includes(w))) return "confirmation";
+  if (words <= 30 && lower.includes("?")) return "tooltip_microcopy";
+  if (words <= 8) return "ui_label";
+  if (words <= 40) return "short_ui_copy";
+  return "long_form_copy";
+}
+
+
+// ====================================================================
+// System prompt builder (mirrors checker.py logic)
+// ====================================================================
+function buildSystemPrompt() {
+  let standardsText = "";
+  for (const cat of STANDARDS.categories) {
+    standardsText += `\n## ${cat.name}\n`;
+    for (const std of cat.standards) {
+      standardsText += `\n### ${std.id}: ${std.rule}\n`;
+      standardsText += `- Correct: ${std.correct}\n`;
+      standardsText += `- Incorrect: ${std.incorrect}\n`;
+    }
+  }
+
+  return `You are a content standards checker for UX and UI copy. You evaluate whether a piece of copy meets established content standards.
+
+Here are the standards you check against:
+${standardsText}
+
+## How to evaluate
+
+1. Identify the content type (button/CTA, error message, confirmation, tooltip, UI label, short UI copy, or long-form copy).
+
+2. Check the content against the standards, but apply these rules:
+   - **Only flag clear, unambiguous violations.** If you are less than 90% confident something is a violation, it is not a violation. When in doubt, the content passes.
+   - **Read the literal text exactly as written.** Do not assume or hallucinate characters. If you are checking capitalization, verify each word character by character. "Account settings" has a lowercase "s" — do not flag it as title case.
+   - **Do not flag content for standards that are only marginally relevant.** A standard must clearly apply to the content type and context. Not every standard applies to every piece of copy.
+   - **Do not flag stylistic preferences as violations.** If the content communicates clearly and follows the spirit of the standards, minor stylistic variations are acceptable.
+   - **Default verdict is pass.** Content should only fail when there are clear violations that would meaningfully hurt the user experience.
+
+3. For each genuine violation, cite the standard ID, explain what is wrong, and suggest a fix.
+
+4. Give an overall pass/fail verdict. A single minor issue does not automatically mean fail — use judgment about whether the content is good enough to ship.
+
+Respond in this exact JSON format (no markdown, no backticks):
+{
+  "content_type": "detected type",
+  "overall_verdict": "pass" or "fail",
+  "violations": [
+    {
+      "standard_id": "the standard ID",
+      "rule": "the rule text",
+      "issue": "what's wrong with the content",
+      "suggestion": "how to fix it"
+    }
+  ],
+  "passes": [
+    {
+      "standard_id": "the standard ID",
+      "rule": "brief rule description"
+    }
+  ],
+  "summary": "1-2 sentence plain language summary of the assessment"
+}`;
+}
+
+
+// ====================================================================
+// API call
+// ====================================================================
+let apiKey = "";
+
+async function checkContent(text) {
+  const contentType = detectContentType(text);
+  const systemPrompt = buildSystemPrompt();
+  const userMessage = `Check this ${contentType} content against the standards:\n\n"${text}"`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`API error ${response.status}: ${err}`);
+  }
+
+  const data = await response.json();
+  let raw = data.content[0].text.trim();
+
+  // Strip markdown fences if present
+  if (raw.startsWith("```")) raw = raw.split("\n", 2)[1] || raw.slice(3);
+  if (raw.endsWith("```")) raw = raw.slice(0, -3);
+  raw = raw.trim();
+
+  return JSON.parse(raw);
+}
+
+
+// ====================================================================
+// UI rendering
+// ====================================================================
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(`screen-${id}`).classList.add("active");
+}
+
+function renderResults(text, result) {
+  const area = document.getElementById("results-area");
+  const isPassing = result.overall_verdict === "pass";
+  const violations = result.violations || [];
+
+  // Truncate preview if long
+  const preview = text.length > 120 ? text.slice(0, 120) + "…" : text;
+
+  let html = `<div class="checked-text">"${escapeHtml(preview)}"</div>`;
+
+  html += `<span class="content-type-badge">${escapeHtml(result.content_type || "unknown")}</span>`;
+
+  html += isPassing
+    ? `<div class="verdict verdict-pass"><span class="verdict-icon">✓</span> Pass</div>`
+    : `<div class="verdict verdict-fail"><span class="verdict-icon">✗</span> Fail — ${violations.length} violation${violations.length !== 1 ? "s" : ""}</div>`;
+
+  html += `<div class="summary">${escapeHtml(result.summary || "")}</div>`;
+
+  for (const v of violations) {
+    html += `
+      <div class="violation-card">
+        <div class="standard-id">${escapeHtml(v.standard_id)}</div>
+        <div class="issue">${escapeHtml(v.issue)}</div>
+        <div class="suggestion-label">Suggestion</div>
+        <div class="suggestion">${escapeHtml(v.suggestion)}</div>
+      </div>`;
+  }
+
+  area.innerHTML = html;
+}
+
+function renderError(message) {
+  const area = document.getElementById("results-area");
+  area.innerHTML = `<div class="verdict verdict-fail"><span class="verdict-icon">!</span> ${escapeHtml(message)}</div>`;
+}
+
+function renderEmpty() {
+  const area = document.getElementById("results-area");
+  area.innerHTML = `
+    <div class="empty-state">
+      <div class="icon">📝</div>
+      <p>Select a text layer in Figma and click "Check selected text" to get started.</p>
+    </div>`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+
+// ====================================================================
+// Event handlers
+// ====================================================================
+
+// Save API key
+document.getElementById("btn-save-key").addEventListener("click", () => {
+  const input = document.getElementById("api-key-input");
+  const key = input.value.trim();
+  if (!key) return;
+  parent.postMessage({ pluginMessage: { type: "save-api-key", key } }, "*");
+});
+
+// Check button — ask sandbox for the current selection
+document.getElementById("btn-check").addEventListener("click", () => {
+  parent.postMessage({ pluginMessage: { type: "get-selection" } }, "*");
+});
+
+// Settings link
+document.getElementById("btn-settings").addEventListener("click", () => {
+  showScreen("setup");
+  document.getElementById("api-key-input").value = "";
+});
+
+
+// ====================================================================
+// Message handler — receives data from the sandbox thread
+// ====================================================================
+window.onmessage = async (event) => {
+  const msg = event.data.pluginMessage;
+  if (!msg) return;
+
+  switch (msg.type) {
+
+    case "api-key-loaded": {
+      apiKey = msg.key || "";
+      if (apiKey) {
+        showScreen("main");
+        renderEmpty();
+      } else {
+        showScreen("setup");
+      }
+      break;
+    }
+
+    case "api-key-saved": {
+      apiKey = document.getElementById("api-key-input").value.trim();
+      showScreen("main");
+      renderEmpty();
+      break;
+    }
+
+    case "api-key-cleared": {
+      apiKey = "";
+      showScreen("setup");
+      break;
+    }
+
+    case "selection-result": {
+      const nodes = msg.nodes || [];
+
+      if (nodes.length === 0) {
+        renderError("No text layers selected. Select one or more text layers and try again.");
+        showScreen("main");
+        return;
+      }
+
+      // For v1, concatenate all selected text (or check each — here we do one at a time for the first)
+      // If multiple layers, check the first one for now
+      const node = nodes[0];
+      const text = node.characters;
+
+      if (!text || !text.trim()) {
+        renderError("Selected layer has no text content.");
+        showScreen("main");
+        return;
+      }
+
+      showScreen("loading");
+      document.getElementById("loading-text").textContent =
+        nodes.length > 1
+          ? `Checking "${node.name}" (1 of ${nodes.length})…`
+          : "Checking content…";
+
+      try {
+        const result = await checkContent(text);
+        showScreen("main");
+        renderResults(text, result);
+      } catch (err) {
+        showScreen("main");
+        renderError(`Check failed: ${err.message}`);
+      }
+      break;
+    }
+  }
+};
+
+
+// ====================================================================
+// Init — ask sandbox for stored API key
+// ====================================================================
+parent.postMessage({ pluginMessage: { type: "load-api-key" } }, "*");
+</script>
+
+</body>
+</html>
