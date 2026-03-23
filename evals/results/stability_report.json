@@ -1,705 +1,152 @@
 {
   "run_accuracies": [
-    1.0,
-    1.0,
     1.0
   ],
+  "average_accuracy": 1.0,
+  "false_positive_rate": 0.0,
+  "standard_id_accuracy": 1.0,
+  "average_latency": 6.370336924280439,
+  "estimated_cost_usd": 0.21655200000000002,
   "stability": {
-    "CLR-01 correct": {
+    "TRN-01 correct": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "After you sign in, you'll see your dashboard.",
+      "expected": "pass",
       "status": "stable_pass",
-      "input": "Your payment didn't go through. Try a different card.",
-      "expected": "pass"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "CLR-01 incorrect": {
+    "TRN-01 incorrect": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "Once you sign in, you'll see your dashboard.",
+      "expected": "fail",
       "status": "stable_pass",
-      "input": "Transaction declined due to insufficient authorization parameters.",
-      "expected": "fail"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "CLR-02 correct": {
+    "TRN-02 correct": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "At the top of the page, you'll find a summary of your account.",
+      "expected": "pass",
       "status": "stable_pass",
-      "input": "Save 20% when you upgrade today.",
-      "expected": "pass"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "CLR-02 incorrect": {
+    "TRN-02 incorrect": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "At the top of the page, you'll find a loading summary showing your account.",
+      "expected": "fail",
       "status": "stable_pass",
-      "input": "We're excited to announce that for a limited time, customers who choose to upgrade will receive a 20% discount.",
-      "expected": "fail"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "CLR-03 correct": {
+    "TRN-03 correct": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "The Pro plan includes analytics. The Starter plan does not include analytics.",
+      "expected": "pass",
       "status": "stable_pass",
-      "input": "Your order shipped. It should arrive by Friday.",
-      "expected": "pass"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "CLR-03 incorrect": {
+    "TRN-03 incorrect": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "The Pro plan includes analytics, but not the Starter plan.",
+      "expected": "fail",
       "status": "stable_pass",
-      "input": "We wanted to let you know that the order you placed has been shipped and based on current estimates it should be arriving to you by Friday of this week.",
-      "expected": "fail"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "CLR-04 correct": {
+    "TRN-04 correct": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "This feature is simple to set up.",
+      "expected": "pass",
       "status": "stable_pass",
-      "input": "You can export your data as a CSV. The file will include all records from the selected date range.",
-      "expected": "pass"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "CLR-04 incorrect": {
+    "TRN-04 incorrect": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "Setting up this feature is a piece of cake.",
+      "expected": "fail",
       "status": "stable_pass",
-      "input": "You can export your data as a CSV which will include all records from the selected date range and can be opened in Excel or Google Sheets for further analysis.",
-      "expected": "fail"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "CLR-05 correct": {
+    "TRN-05 correct": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "Make sure that you have saved the file before you close the window.",
+      "expected": "pass",
       "status": "stable_pass",
-      "input": "This action is reversible.",
-      "expected": "pass"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "CLR-05 incorrect": {
+    "TRN-05 incorrect": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "Verify file saved before close window.",
+      "expected": "fail",
       "status": "stable_pass",
-      "input": "This action is not irreversible.",
-      "expected": "fail"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "VT-01 correct": {
+    "TRN-06 correct": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "Plans start at 10 USD per month.",
+      "expected": "pass",
       "status": "stable_pass",
-      "input": "We'll review your application within 2 business days.",
-      "expected": "pass"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "VT-01 incorrect": {
+    "TRN-06 incorrect": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "Plans start at $10/mo.",
+      "expected": "fail",
       "status": "stable_pass",
-      "input": "Your application will be reviewed within 2 business days.",
-      "expected": "fail"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "VT-02 correct": {
+    "TRN-07 correct": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "Create a campaign. Name your campaign. Send your campaign.",
+      "expected": "pass",
       "status": "stable_pass",
-      "input": "You can change your password in settings.",
-      "expected": "pass"
+      "times_correct": 1,
+      "times_wrong": 0
     },
-    "VT-02 incorrect": {
+    "TRN-07 incorrect": {
       "outcomes": [
-        true,
-        true,
         true
       ],
-      "times_correct": 3,
-      "times_wrong": 0,
+      "input": "Create a campaign. Name your email blast. Send your newsletter.",
+      "expected": "fail",
       "status": "stable_pass",
-      "input": "Users can change their password in the settings menu.",
-      "expected": "fail"
-    },
-    "VT-03 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Looks like something went wrong. Let's try that again.",
-      "expected": "pass"
-    },
-    "VT-03 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Oopsie! Something broke lol. Let's give it another go!!",
-      "expected": "fail"
-    },
-    "VT-04 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "This will take about 5 minutes.",
-      "expected": "pass"
-    },
-    "VT-04 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "This should probably take around maybe 5 minutes or so.",
-      "expected": "fail"
-    },
-    "VT-05 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "We couldn't save your changes. Your work isn't lost \u2014 try saving again.",
-      "expected": "pass"
-    },
-    "VT-05 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Save failed. Error code 408.",
-      "expected": "fail"
-    },
-    "CON-01 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Go to Settings. In Settings, select Notifications.",
-      "expected": "pass"
-    },
-    "CON-01 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Go to Settings. In the Preferences panel, select Alerts.",
-      "expected": "fail"
-    },
-    "CON-02 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Manage your notification preferences",
-      "expected": "pass"
-    },
-    "CON-02 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Manage Your Notification Preferences",
-      "expected": "fail"
-    },
-    "CON-03 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "March 16, 2026",
-      "expected": "pass"
-    },
-    "CON-03 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "3/16/26",
-      "expected": "fail"
-    },
-    "CON-04 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Delete this file? You can restore it from Trash within 30 days.",
-      "expected": "pass"
-    },
-    "CON-04 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Remove this file? You can recover it from the Deleted Items bin within 30 days.",
-      "expected": "fail"
-    },
-    "CON-05 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Use Google Drive to store your files.",
-      "expected": "pass"
-    },
-    "CON-05 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Use google drive to store your files.",
-      "expected": "fail"
-    },
-    "ACC-01 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Read our accessibility guidelines",
-      "expected": "pass"
-    },
-    "ACC-01 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Click here to learn more",
-      "expected": "fail"
-    },
-    "ACC-02 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Required fields are marked with an asterisk (*)",
-      "expected": "pass"
-    },
-    "ACC-02 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Required fields are highlighted in red",
-      "expected": "fail"
-    },
-    "ACC-03 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Chart showing a 40% increase in signups from January to March 2026",
-      "expected": "pass"
-    },
-    "ACC-03 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Bar chart image",
-      "expected": "fail"
-    },
-    "ACC-04 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Select a plan from the pricing options.",
-      "expected": "pass"
-    },
-    "ACC-04 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Select a plan from the options on the right.",
-      "expected": "fail"
-    },
-    "ACC-05 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Body text at 16px with a contrast ratio of 4.5:1 or higher",
-      "expected": "pass"
-    },
-    "ACC-05 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Body text at 11px in light gray on white background",
-      "expected": "fail"
-    },
-    "ACT-01 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Create account",
-      "expected": "pass"
-    },
-    "ACT-01 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Account creation",
-      "expected": "fail"
-    },
-    "ACT-02 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Save changes",
-      "expected": "pass"
-    },
-    "ACT-02 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Submit",
-      "expected": "fail"
-    },
-    "ACT-03 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "You can upload files up to 25 MB. For larger files, use our desktop app.",
-      "expected": "pass"
-    },
-    "ACT-03 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "You cannot upload files larger than 25 MB.",
-      "expected": "fail"
-    },
-    "ACT-04 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Your account is ready. Go to your dashboard to get started.",
-      "expected": "pass"
-    },
-    "ACT-04 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Your account has been successfully created.",
-      "expected": "fail"
-    },
-    "STR-01 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "What you'll need: a valid photo ID and a recent utility bill or bank statement.",
-      "expected": "pass"
-    },
-    "STR-01 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "To complete verification you will need to provide a valid government-issued photo ID and you should also have a recent utility bill or bank statement that shows your current address on file with us.",
-      "expected": "fail"
-    },
-    "STR-02 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Your files are backed up every 24 hours. You can restore any version from the last 30 days.",
-      "expected": "pass"
-    },
-    "STR-02 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Your files are backed up automatically every 24 hours to our secure cloud servers, which means you can always access previous versions of your work if you need to restore a file by going to the file browser and right-clicking the file you want to restore and selecting version history from the dropdown menu and choosing the version you want.",
-      "expected": "fail"
-    },
-    "STR-03 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Upload your photo. Crop to fit. Apply a filter. Save your changes.",
-      "expected": "pass"
-    },
-    "STR-03 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Upload your photo. The photo should be cropped. You can apply a filter. Saving is the last step.",
-      "expected": "fail"
-    },
-    "STR-04 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Maximum 5 team members on the free plan. Upgrade for unlimited.",
-      "expected": "pass"
-    },
-    "STR-04 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "On your current plan, which is the free tier, you're able to add up to a maximum of 5 team members to your workspace.",
-      "expected": "fail"
-    },
-    "STR-05 correct": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Billing section: payment method, billing history, and invoices all in one place.",
-      "expected": "pass"
-    },
-    "STR-05 incorrect": {
-      "outcomes": [
-        true,
-        true,
-        true
-      ],
-      "times_correct": 3,
-      "times_wrong": 0,
-      "status": "stable_pass",
-      "input": "Payment method under Settings, billing history under Account, invoices under Documents.",
-      "expected": "fail"
+      "times_correct": 1,
+      "times_wrong": 0
     }
   }
 }
