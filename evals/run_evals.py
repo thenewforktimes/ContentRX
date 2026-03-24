@@ -4,11 +4,17 @@ Tests every standard in the library against its correct and incorrect examples.
 Runs multiple passes to measure stability. Reports accuracy, precision, recall,
 false positive rate, standard ID accuracy, latency, and estimated cost.
 
+Standards with checkable_from != plain_text are skipped by default (they require
+rich text or visual context that the CLI checker can't evaluate).
+
 Usage:
-    python run_evals.py                  # 3 runs (default)
+    python run_evals.py                  # 3 runs, library cases (default)
     python run_evals.py --runs 5         # 5 runs
+    python run_evals.py --novel          # only novel (generalization) cases
+    python run_evals.py --novel --runs 5 # novel cases, 5 runs
     python run_evals.py --new-only       # only test standards with a 'sources' field
     python run_evals.py --category TRN   # only test one category prefix
+    python run_evals.py --all            # include rich_text and visual standards
 """
 
 import json
@@ -26,26 +32,34 @@ SCRIPT_DIR = Path(__file__).parent
 REPO_ROOT = SCRIPT_DIR.parent if SCRIPT_DIR.name == "evals" else SCRIPT_DIR
 
 STANDARDS_PATH = REPO_ROOT / "standards" / "standards_library.json"
+NOVEL_CASES_PATH = SCRIPT_DIR / "novel_cases.json"
 CLI_DIR = REPO_ROOT / "cli"
 
 sys.path.insert(0, str(CLI_DIR))
 from checker import check_content, load_standards, build_system_prompt
 
 
-def build_test_cases(standards_data, category_filter=None, new_only=False):
+def build_test_cases(standards_data, category_filter=None, new_only=False, include_all=False):
     """Build test cases from the standards library.
 
     Each standard produces 2 cases:
       - correct example → expected verdict: pass
       - incorrect example → expected verdict: fail
+
+    By default, only standards with checkable_from=plain_text are included.
+    Use include_all=True to include rich_text and visual standards.
     """
     cases = []
+    skipped = []
     for cat in standards_data["categories"]:
         for std in cat["standards"]:
             # Apply filters
             if category_filter and not std["id"].startswith(category_filter):
                 continue
             if new_only and "sources" not in std:
+                continue
+            if not include_all and std.get("checkable_from", "plain_text") != "plain_text":
+                skipped.append(f"{std['id']} ({std.get('checkable_from', 'unknown')})")
                 continue
 
             cases.append({
@@ -62,6 +76,33 @@ def build_test_cases(standards_data, category_filter=None, new_only=False):
                 "expected": "fail",
                 "category": cat["name"],
             })
+    return cases, skipped
+
+
+def load_novel_cases(category_filter=None):
+    """Load novel (generalization) test cases from novel_cases.json.
+
+    These are hand-written cases that test whether the agent reasons about
+    standards vs. pattern-matching against the library examples.
+    """
+    if not NOVEL_CASES_PATH.exists():
+        print(f"Novel cases file not found: {NOVEL_CASES_PATH}")
+        return []
+
+    with open(NOVEL_CASES_PATH) as f:
+        data = json.load(f)
+
+    cases = []
+    for case in data["cases"]:
+        if category_filter and not case["standard_id"].startswith(category_filter):
+            continue
+        cases.append({
+            "case_id": case["case_id"],
+            "standard_id": case["standard_id"],
+            "input": case["input"],
+            "expected": case["expected"],
+            "category": case["category"],
+        })
     return cases
 
 
@@ -287,8 +328,10 @@ def main():
     parser = argparse.ArgumentParser(description="Run evals for the content standards checker.")
     parser.add_argument("--runs", type=int, default=3, help="Number of eval runs (default: 3)")
     parser.add_argument("--model", default="claude-sonnet-4-20250514", help="Model to use")
+    parser.add_argument("--novel", action="store_true", help="Run novel (generalization) test cases instead of library cases")
     parser.add_argument("--new-only", action="store_true", help="Only test standards with a 'sources' field")
     parser.add_argument("--category", help="Only test standards with this ID prefix (e.g., TRN, GRM)")
+    parser.add_argument("--all", action="store_true", dest="include_all", help="Include rich_text and visual standards (skipped by default)")
     parser.add_argument("--output", default=None, help="Output directory (default: evals/results/)")
     args = parser.parse_args()
 
@@ -297,24 +340,39 @@ def main():
     print(f"Content standards checker — eval runner")
     print(f"Model: {args.model}")
     print(f"Runs: {args.runs}")
+    if args.novel:
+        print(f"Mode: novel (generalization) cases")
 
-    standards_data = load_standards()
-    cases = build_test_cases(
-        standards_data,
-        category_filter=args.category,
-        new_only=args.new_only,
-    )
+    if args.novel:
+        cases = load_novel_cases(category_filter=args.category)
+        skipped = []
+    else:
+        standards_data = load_standards()
+        cases, skipped = build_test_cases(
+            standards_data,
+            category_filter=args.category,
+            new_only=args.new_only,
+            include_all=args.include_all,
+        )
 
     if not cases:
         print("No test cases matched the filters.")
         return
 
-    print(f"Test cases: {len(cases)} ({len(cases) // 2} standards × 2 examples)")
+    if args.novel:
+        unique_standards = len(set(c["standard_id"] for c in cases))
+        print(f"Test cases: {len(cases)} novel cases across {unique_standards} standards")
+    else:
+        print(f"Test cases: {len(cases)} ({len(cases) // 2} standards × 2 examples)")
+    if skipped:
+        print(f"Skipped (not checkable from plain text): {', '.join(skipped)}")
     filters = []
     if args.new_only:
         filters.append("new standards only")
     if args.category:
         filters.append(f"category={args.category}")
+    if args.include_all:
+        filters.append("including rich_text and visual standards")
     if filters:
         print(f"Filters: {', '.join(filters)}")
     print()

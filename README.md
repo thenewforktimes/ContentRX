@@ -1,131 +1,104 @@
 # Content standards checker
 
-An AI agent that checks UX copy against your content standards — inside Figma, from the command line, or in the browser.
+An open source linter for UX and UI copy. Checks content against a structured standards library using Claude as the reasoning engine.
 
-Most organizations have content standards. Almost nobody follows them, because the standards live in a doc somewhere and the copy gets written in Figma. This tool closes that gap by bringing the check to where the writing happens.
+Think ESLint, but for words.
 
-**What it does:** you give it a piece of copy, it tells you whether it passes or fails your standards, which specific rules it violates, and how to fix it.
+## What it does
 
-**How it works:** a structured standards library (29 rules across 6 categories) is embedded in a system prompt sent to Claude. The agent detects the content type, evaluates the copy against relevant standards, and returns a verdict with citations.
+Paste a piece of UI copy — a button label, error message, tooltip, onboarding flow — and the checker evaluates it against 46 content standards covering clarity, voice and tone, consistency, accessibility, action-oriented writing, content structure, grammar and mechanics, inclusive language, and translation readiness.
 
-## Try it
+You get a pass/fail verdict, the specific standards violated, and a suggestion for each. You decide what to fix and how — the tool flags problems, it doesn't rewrite your copy.
 
-### Figma plugin (recommended starting point)
+## Components
 
-The plugin reads selected text layers and checks them in place — no context-switching.
+### Standards library (`standards/`)
 
-1. Clone this repo
-2. In Figma desktop, go to **Plugins → Development → Import plugin from manifest…**
-3. Select `figma-plugin/manifest.json`
-4. Run the plugin and enter your [Anthropic API key](https://console.anthropic.com/)
-5. Select a text layer and click **Check selected text**
+A structured JSON file with 46 standards across 9 categories. Each standard has a rule, a correct example, and an incorrect example. Standards are tagged with metadata:
 
-Your API key is stored locally on your machine via Figma's client storage. It never leaves your device except to call the Anthropic API directly.
+- `rule_type`: `hard` (mechanical, binary check) or `nuanced` (context-dependent, requires judgment)
+- `checkable_from`: `plain_text`, `rich_text`, or `visual` — indicates what context is needed to evaluate the standard
 
-→ [Figma plugin docs](figma-plugin/README.md)
+### CLI (`cli/`)
 
-### Command line
+A Python command-line tool for checking content from the terminal.
 
 ```bash
-cd cli
-pip install anthropic
-export ANTHROPIC_API_KEY=sk-ant-...
-
 # Check a single string
-python checker.py "Click here to learn more"
+python3 cli/checker.py "Click here to learn more"
 
 # Interactive mode
-python checker.py --interactive
+python3 cli/checker.py -i
+
+# JSON output
+python3 cli/checker.py --json "Submit"
 ```
 
-→ [CLI docs](cli/README.md)
+Requires an Anthropic API key set as `ANTHROPIC_API_KEY` in your environment.
 
-### Web app
+### Eval suite (`evals/`)
 
-A React interface with auto-detected content types and a manual override. See [web/README.md](web/README.md) for setup.
+Tests the checker against the standards library and a set of novel edge cases. Reports accuracy, false positive rate, standard ID accuracy, stability across runs, latency, and estimated cost.
 
-## How accurate is it?
+```bash
+cd evals
 
-The eval suite tests all 58 cases from the standards library (29 standards × 1 correct + 1 incorrect example each). Results from 3 consecutive runs:
+# Run library cases (3 passes by default)
+python3 run_evals.py
 
-| Metric | Result |
-|--------|--------|
-| Accuracy | 100% across all 3 runs |
-| Stable passes | 58/58 |
-| Unstable cases | 0/58 |
-| False positives | 0 |
+# Run novel (generalization) cases
+python3 run_evals.py --novel
 
-→ [Full eval results](evals/results/stability_report.md)
+# Filter by category
+python3 run_evals.py --category GRM
 
-These evals run against `claude-sonnet-4-20250514`. The system prompt is tuned to avoid false positives — the default verdict is pass, and only clear, unambiguous violations are flagged.
-
-## Standards library
-
-The standards are organized into 6 categories with 29 total rules. Each rule includes a correct example, an incorrect example, and a plain-language description.
-
-| Category | Standards | What it covers |
-|----------|-----------|---------------|
-| Clarity | CLR-01 through CLR-05 | Plain language, sentence length, one idea per sentence |
-| Voice and tone | VT-01 through VT-05 | Active voice, direct address, empathy in errors |
-| Consistency | CON-01 through CON-05 | Terminology, casing, date formats, product names |
-| Accessibility | ACC-01 through ACC-05 | Link text, color reliance, alt text, directional language |
-| Action-oriented writing | ACT-01 through ACT-04 | Verb-led CTAs, specific verbs, positive framing |
-| Content structure | STR-01 through STR-05 | Scannability, paragraph length, parallel structure |
-
-The library is a single JSON file at [`standards/standards_library.json`](standards/standards_library.json). To customize it for your org, edit that file — all three tools read from it (the Figma plugin embeds a copy at build time).
-
-## Repo structure
-
-```
-standards/              Shared standards library (single source of truth)
-  standards_library.json
-
-figma-plugin/           Figma plugin (no build step, load directly)
-  manifest.json
-  code.js               Sandbox thread — reads Figma layers
-  ui.html               UI thread — API calls, results display
-
-cli/                    Python CLI
-  checker.py            Agent logic, content type detection, API calls
-
-evals/                  Evaluation suite
-  results/              Stability reports from eval runs
-
-web/                    React web app (browser-based checker)
+# Include standards that require rich text or visual context
+python3 run_evals.py --all
 ```
 
-## Architecture
+Current eval results (v3.1.1, Claude Sonnet):
 
-The core agent logic is the same across all three surfaces:
+- Library cases: 98.8% accuracy, 1.2% false positive rate
+- Novel cases: 82.1% accuracy across 41 adversarial edge cases
 
-1. **Content type detection** — auto-classifies the input as a button/CTA, error message, confirmation, tooltip, UI label, short UI copy, or long-form copy
-2. **System prompt construction** — embeds the full standards library with correct/incorrect examples for each rule
-3. **Evaluation with guardrails** — the prompt is tuned to only flag clear violations at >90% confidence, read text literally (no hallucinated characters), and default to pass
-4. **Structured response** — returns JSON with verdict, violations (with standard IDs and fix suggestions), and a plain-language summary
+### Figma plugin (`figma-plugin/`)
 
-The Figma plugin adds a layer on top: a sandbox thread reads selected text layers from the Figma document and relays them to the UI iframe, which handles the API call and renders results.
+A Figma plugin that checks selected text layers in your designs. See `figma-plugin/README.md` for setup instructions.
 
-## Why this exists
+## Standards coverage
 
-Content standards exist at most organizations. They get written, shared, maybe even celebrated — and then ignored. Not because people don't care, but because there's no mechanism to surface them at the point of creation. The copy gets written in Figma, and the standards live in a Google Doc three clicks away.
+| Category | Standards | Type |
+|---|---|---|
+| Clarity | CLR-01 through CLR-05 | Mostly nuanced |
+| Voice and tone | VT-01 through VT-05 | All nuanced |
+| Consistency | CON-01 through CON-05 | Mix of hard and nuanced |
+| Accessibility | ACC-01 through ACC-07 | Mix (2 require rich text or visual context) |
+| Action-oriented writing | ACT-01 through ACT-04 | All nuanced |
+| Content structure | STR-01 through STR-06 | Mix (1 requires rich text context) |
+| Grammar and mechanics | GRM-01 through GRM-05 | All hard |
+| Inclusive language | INC-01 through INC-02 | Mix |
+| Translation readiness | TRN-01 through TRN-07 | Mix |
 
-This project is an attempt to close that gap: check the copy against the standards in the place where the copy is being written, at the moment it's being written.
+## How it evaluates
 
-## Customizing the standards
+The checker uses a system prompt that embeds the full standards library and instructs Claude to:
 
-The `standards/standards_library.json` file is the single source of truth. Each standard has:
+1. Identify the content type (button/CTA, error message, confirmation, tooltip, UI label, short UI copy, or long-form copy)
+2. Check against standards with a high confidence threshold — if less than 90% confident something is a violation, it passes
+3. Cite the specific standard ID, explain the issue, and suggest a fix
+4. Give an overall pass/fail verdict using judgment, not a mechanical tally
 
-- `id` — a unique identifier (e.g., `CLR-01`)
-- `rule` — a plain-language description of the standard
-- `correct` — an example that passes
-- `incorrect` — an example that fails
+## Roadmap
 
-To use your organization's standards, replace or extend this file. The eval suite will automatically test against whatever standards are in the library.
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+- Deterministic pre-processing layer for mechanical rules (Oxford comma, numerals, ampersands, capitalization) to improve accuracy on grammar and style checks without API calls
+- Standards packs for specific industries and style guides (GOV.UK, Google, Microsoft)
+- Multi-layer text checking in the Figma plugin
+- `pip install` distribution via PyPI
 
 ## Contributing
 
-Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See `CONTRIBUTING.md` for guidelines.
+
+## License
+
+See `LICENSE` for details.
