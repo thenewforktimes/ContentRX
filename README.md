@@ -10,62 +10,139 @@ Paste a piece of UI copy — a button label, error message, tooltip, onboarding 
 
 You get a pass/fail verdict, the specific standards violated, and a suggestion for each. You decide what to fix and how — the tool flags problems, it doesn't rewrite your copy.
 
-## Components
+## Setup
 
-### Standards library (`standards/`)
-
-A structured JSON file with 46 standards across 9 categories. Each standard has a rule, a correct example, and an incorrect example. Standards are tagged with metadata:
-
-- `rule_type`: `hard` (mechanical, binary check) or `nuanced` (context-dependent, requires judgment)
-- `checkable_from`: `plain_text`, `rich_text`, or `visual` — indicates what context is needed to evaluate the standard
-
-### CLI (`cli/`)
-
-A Python command-line tool for checking content from the terminal.
+Requires Python 3.10+ and an Anthropic API key.
 
 ```bash
-# Check a single string
-python3 cli/checker.py "Click here to learn more"
+# Install the package
+pip install -e ".[dev]"
 
-# Interactive mode
-python3 cli/checker.py -i
-
-# JSON output
-python3 cli/checker.py --json "Submit"
+# Set your API key
+export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Requires an Anthropic API key set as `ANTHROPIC_API_KEY` in your environment.
+## Usage
 
-### Eval suite (`evals/`)
-
-Tests the checker against the standards library and a set of novel edge cases. Reports accuracy, false positive rate, standard ID accuracy, stability across runs, latency, and estimated cost.
+### Check a single string
 
 ```bash
-cd evals
-
-# Run library cases (3 passes by default)
-python3 run_evals.py
-
-# Run novel (generalization) cases
-python3 run_evals.py --novel
-
-# Filter by category
-python3 run_evals.py --category GRM
-
-# Include standards that require rich text or visual context
-python3 run_evals.py --all
+content-checker "Click here to learn more"
 ```
 
-Current eval results (v3.1.1, Claude Sonnet):
+### Interactive mode
 
-- Library cases: 98.8% accuracy, 1.2% false positive rate
-- Novel cases: 82.1% accuracy across 41 adversarial edge cases
+```bash
+content-checker --interactive
+```
 
-### Figma plugin (`figma-plugin/`)
+### Batch mode
 
-A Figma plugin that checks selected text layers in your designs. See `figma-plugin/README.md` for setup instructions.
+Check multiple strings at once. Catches individual violations and cross-snippet consistency issues (terminology switching, inconsistent action verbs).
 
-## Standards coverage
+```bash
+# Plain text file, one string per line
+content-checker --batch strings.txt
+
+# JSON with metadata
+content-checker --batch flow.json --verbose
+```
+
+A batch JSON file can be a simple array of strings or an array of objects with metadata:
+
+```json
+[
+  {"text": "Go to Settings", "label": "Nav link"},
+  {"text": "Open the Preferences panel", "label": "Help text"},
+  {"text": "Update your Alerts", "label": "Section heading"}
+]
+```
+
+### Options
+
+| Flag | Description |
+|---|---|
+| `--interactive`, `-i` | Enter interactive mode |
+| `--batch FILE` | Check multiple strings from a .txt or .json file |
+| `--json` | Output raw JSON |
+| `--type TYPE` | Override auto-detected content type |
+| `--verbose`, `-v` | Show pipeline details, latency, and token usage |
+| `--model MODEL` | Use a different Claude model |
+| `--heuristic` | Use heuristic classifier instead of LLM (faster, less accurate) |
+| `--unfiltered` | Skip filtering and validation (uses all standards) |
+
+### As a Python library
+
+```python
+from content_checker import check, check_batch
+from content_checker.models import ContentItem
+
+# Single string
+result, latency, tokens = check("Your payment didn't go through. Try a different card.")
+print(result.overall_verdict)  # "pass"
+
+# Batch with consistency checking
+items = [
+    ContentItem("Go to Settings", label="Nav link"),
+    ContentItem("Open the Preferences panel", label="Help text"),
+]
+batch = check_batch(items)
+print(batch.overall_verdict)           # "fail"
+print(batch.consistency_violations)    # CON-01: terminology inconsistency
+```
+
+## How it works
+
+The checker runs a 5-stage pipeline:
+
+1. **Classify** — an LLM call identifies the content type (button, error message, confirmation, tooltip, label, short UI copy, or long-form copy). Falls back to a heuristic when no API key is available.
+2. **Filter** — the standards library is pruned to only the rules relevant to that content type. A button gets 6 standards, not 46. This reduces false positives and API costs.
+3. **Scan** — two parallel tracks: a deterministic pre-processor catches mechanical violations (Oxford commas, ampersands, numerals, date formats) at zero cost, while an LLM call checks the nuanced rules against the filtered set.
+4. **Validate** — a second LLM call reviews each candidate violation and confirms or rejects it with full context, including content-type-specific notes (e.g., passive voice is acceptable in confirmations).
+5. **Merge** — deterministic and LLM results are combined, deduplicated, and a final verdict is produced.
+
+For batch mode, each item runs through the pipeline individually, then a consistency pass checks CON-01, CON-04, and TRN-07 across the full set.
+
+## Project structure
+
+```
+src/content_checker/       # Core library (pip installable)
+  pipeline.py              # Single-string pipeline orchestrator
+  batch.py                 # Batch handler + consistency checker
+  classify.py              # Content type classifier (LLM + heuristic)
+  filter.py                # Standards filter by content type
+  preprocess.py            # Deterministic checks (GRM-01, GRM-04, GRM-05, CON-03)
+  validate.py              # Validation pass with content_type_notes
+  models.py                # Typed data contracts (Violation, CheckResult, etc.)
+  standards/
+    loader.py              # Standards library path resolution
+    standards_library.json # 46 standards, v4.0.0
+cli/
+  main.py                  # CLI entry point (single, interactive, batch modes)
+figma-plugin/              # Figma plugin (see figma-plugin/README.md)
+evals/
+  run_evals.py             # Eval runner (library + novel modes)
+  novel_cases.json         # 41 adversarial test cases
+tests/                     # 116 pytest tests
+```
+
+## Standards library (v4.0.0)
+
+A structured JSON file with 46 standards across 9 categories. Each standard has:
+
+| Field | Description |
+|---|---|
+| `id` | Unique identifier (e.g., CLR-01, GRM-04) |
+| `rule` | The standard in plain language |
+| `correct` | Example that passes |
+| `incorrect` | Example that violates |
+| `rule_type` | `hard` (mechanical, binary) or `nuanced` (context-dependent) |
+| `checkable_from` | `plain_text`, `rich_text`, or `visual` |
+| `relevant_content_types` | Which content types this standard applies to |
+| `content_type_notes` | Context-specific evaluation guidance (optional) |
+| `requires_multi_snippet` | Whether this standard needs batch mode to evaluate (optional) |
+
+### Standards coverage
 
 | Category | Standards | Type |
 |---|---|---|
@@ -79,21 +156,47 @@ A Figma plugin that checks selected text layers in your designs. See `figma-plug
 | Inclusive language | INC-01 through INC-02 | Mix |
 | Translation readiness | TRN-01 through TRN-07 | Mix |
 
-## How it evaluates
+### Standards per content type
 
-The checker uses a system prompt that embeds the full standards library and instructs Claude to:
+| Content type | Standards checked | Reduction from full set |
+|---|---|---|
+| Button / CTA | 6 | 86% fewer |
+| Error message | 21 | 51% fewer |
+| Confirmation | 17 | 60% fewer |
+| Tooltip / microcopy | 23 | 47% fewer |
+| UI label | 11 | 74% fewer |
+| Short UI copy | 37 | 14% fewer |
+| Long-form copy | 37 | 14% fewer |
 
-1. Identify the content type (button/CTA, error message, confirmation, tooltip, UI label, short UI copy, or long-form copy)
-2. Check against standards with a high confidence threshold — if less than 90% confident something is a violation, it passes
-3. Cite the specific standard ID, explain the issue, and suggest a fix
-4. Give an overall pass/fail verdict using judgment, not a mechanical tally
+## Eval results
+
+Current results (v4.0.0, Claude Sonnet):
+
+| Eval | Accuracy | False positive rate | Cost per run |
+|---|---|---|---|
+| Library (86 cases) | 100% | 0.0% | $1.36 |
+| Novel (41 adversarial cases) | 91.9% | 14.3% | $0.60 |
+
+Run evals:
+
+```bash
+# Library cases (regression gate)
+python -m evals.run_evals
+
+# Novel cases (real-world accuracy)
+python -m evals.run_evals --novel
+
+# Filter by category
+python -m evals.run_evals --novel --category GRM
+```
 
 ## Roadmap
 
-- Deterministic pre-processing layer for mechanical rules (Oxford comma, numerals, ampersands, capitalization) to improve accuracy on grammar and style checks without API calls
+- Code scanner: extract user-facing strings from JSX/TSX/HTML and check them automatically
 - Standards packs for specific industries and style guides (GOV.UK, Google, Microsoft)
-- Multi-layer text checking in the Figma plugin
-- `pip install` distribution via PyPI
+- Multi-layer text checking in the Figma plugin with batch consistency
+- Deterministic post-processing to suppress known LLM false positives
+- `pip install content-standards-checker` distribution via PyPI
 
 ## Contributing
 

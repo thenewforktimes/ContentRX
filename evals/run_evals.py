@@ -1,59 +1,48 @@
 """Eval runner for the content standards checker.
 
 Tests every standard in the library against its correct and incorrect examples.
-Runs multiple passes to measure stability. Reports accuracy, precision, recall,
-false positive rate, standard ID accuracy, latency, and estimated cost.
-
-Standards with checkable_from != plain_text are skipped by default (they require
-rich text or visual context that the CLI checker can't evaluate).
+Runs multiple passes to measure stability.
 
 Usage:
-    python run_evals.py                  # 3 runs, library cases (default)
-    python run_evals.py --runs 5         # 5 runs
-    python run_evals.py --novel          # only novel (generalization) cases
-    python run_evals.py --novel --runs 5 # novel cases, 5 runs
-    python run_evals.py --new-only       # only test standards with a 'sources' field
-    python run_evals.py --category TRN   # only test one category prefix
-    python run_evals.py --all            # include rich_text and visual standards
+    python -m evals.run_evals                  # 3 runs, library cases
+    python -m evals.run_evals --novel          # novel (generalization) cases
+    python -m evals.run_evals --novel --runs 5 # novel cases, 5 runs
+    python -m evals.run_evals --category TRN   # only one category prefix
 """
 
+from __future__ import annotations
+
+import argparse
 import json
-import sys
-import time
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# Resolve paths — works from evals/ or repo root
-# ---------------------------------------------------------------------------
+from content_checker import check, check_unfiltered, load_standards
 
 SCRIPT_DIR = Path(__file__).parent
-REPO_ROOT = SCRIPT_DIR.parent if SCRIPT_DIR.name == "evals" else SCRIPT_DIR
-
-STANDARDS_PATH = REPO_ROOT / "standards" / "standards_library.json"
 NOVEL_CASES_PATH = SCRIPT_DIR / "novel_cases.json"
-CLI_DIR = REPO_ROOT / "cli"
-
-sys.path.insert(0, str(CLI_DIR))
-from checker import check_content, load_standards, build_system_prompt
 
 
-def build_test_cases(standards_data, category_filter=None, new_only=False, include_all=False):
+# ---------------------------------------------------------------------------
+# Test case builders
+# ---------------------------------------------------------------------------
+
+
+def build_library_cases(
+    standards_data: dict,
+    category_filter: str | None = None,
+    new_only: bool = False,
+    include_all: bool = False,
+) -> tuple[list[dict], list[str]]:
     """Build test cases from the standards library.
 
-    Each standard produces 2 cases:
-      - correct example → expected verdict: pass
-      - incorrect example → expected verdict: fail
-
-    By default, only standards with checkable_from=plain_text are included.
-    Use include_all=True to include rich_text and visual standards.
+    Each standard produces 2 cases: correct (expect pass) + incorrect (expect fail).
     """
     cases = []
     skipped = []
+
     for cat in standards_data["categories"]:
         for std in cat["standards"]:
-            # Apply filters
             if category_filter and not std["id"].startswith(category_filter):
                 continue
             if new_only and "sources" not in std:
@@ -62,39 +51,26 @@ def build_test_cases(standards_data, category_filter=None, new_only=False, inclu
                 skipped.append(f"{std['id']} ({std.get('checkable_from', 'unknown')})")
                 continue
 
-            # Pick a content type where this standard is relevant.
-            # Library evals test the scan + validation pipeline, not the classifier.
-            relevant_types = std.get("relevant_content_types", [])
-            content_type = relevant_types[0] if relevant_types else "short_ui_copy"
+            for label, text_key, expected in [("correct", "correct", "pass"), ("incorrect", "incorrect", "fail")]:
+                cases.append({
+                    "case_id": f"{std['id']} {label}",
+                    "standard_id": std["id"],
+                    "input": std[text_key],
+                    "expected": expected,
+                    "category": cat["name"],
+                })
 
-            cases.append({
-                "case_id": f"{std['id']} correct",
-                "standard_id": std["id"],
-                "input": std["correct"],
-                "expected": "pass",
-                "category": cat["name"],
-                "content_type": content_type,
-            })
-            cases.append({
-                "case_id": f"{std['id']} incorrect",
-                "standard_id": std["id"],
-                "input": std["incorrect"],
-                "expected": "fail",
-                "category": cat["name"],
-                "content_type": content_type,
-            })
     return cases, skipped
 
 
-def load_novel_cases(category_filter=None, standards_data=None):
-    """Load novel (generalization) test cases from novel_cases.json.
+def load_novel_cases(
+    category_filter: str | None = None,
+    standards_data: dict | None = None,
+) -> list[dict]:
+    """Load novel test cases from novel_cases.json.
 
-    These are hand-written cases that test whether the agent reasons about
-    standards vs. pattern-matching against the library examples.
-
-    Each case should have a content_type field specifying the context it
-    should be evaluated in. Falls back to deriving from the standard's
-    relevant_content_types if the field is missing.
+    Each case should have a content_type field. Falls back to deriving
+    from the standard's relevant_content_types if missing.
     """
     if not NOVEL_CASES_PATH.exists():
         print(f"Novel cases file not found: {NOVEL_CASES_PATH}")
@@ -103,8 +79,7 @@ def load_novel_cases(category_filter=None, standards_data=None):
     with open(NOVEL_CASES_PATH) as f:
         data = json.load(f)
 
-    # Fallback lookup for cases missing content_type
-    type_lookup = {}
+    type_lookup: dict[str, str] = {}
     if standards_data:
         for cat in standards_data["categories"]:
             for std in cat["standards"]:
@@ -126,13 +101,19 @@ def load_novel_cases(category_filter=None, standards_data=None):
     return cases
 
 
-def run_single_eval(cases, model, run_number, total_runs, check_kwargs=None):
-    """Run one pass of all test cases. Returns list of result dicts.
+# ---------------------------------------------------------------------------
+# Eval execution
+# ---------------------------------------------------------------------------
 
-    check_kwargs: extra keyword arguments passed to check_content
-    (e.g., skip_validation=True for library runs).
-    """
-    check_kwargs = check_kwargs or {}
+
+def run_single_eval(
+    cases: list[dict],
+    model: str,
+    run_number: int,
+    total_runs: int,
+    novel: bool = False,
+) -> list[dict]:
+    """Run one pass of all test cases."""
     results = []
     total = len(cases)
 
@@ -141,20 +122,24 @@ def run_single_eval(cases, model, run_number, total_runs, check_kwargs=None):
         print(f"  {label}...", end=" ", flush=True)
 
         try:
-            result, latency, tokens = check_content(
-                case["input"],
-                content_type_override=case.get("content_type"),
-                model=model,
-                **check_kwargs,
-            )
-            verdict = result.get("overall_verdict", "error")
+            if novel:
+                result, latency, tokens = check(
+                    case["input"],
+                    content_type=case.get("content_type"),
+                    model=model,
+                )
+            else:
+                result, latency, tokens = check_unfiltered(
+                    case["input"],
+                    model=model,
+                )
+
+            verdict = result.overall_verdict
             correct = verdict == case["expected"]
 
-            # Check if the agent cited the right standard ID on failures
             standard_id_match = None
             if case["expected"] == "fail" and verdict == "fail":
-                violations = result.get("violations", [])
-                cited_ids = [v.get("standard_id", "") for v in violations]
+                cited_ids = [v.standard_id for v in result.violations]
                 standard_id_match = case["standard_id"] in cited_ids
 
             icon = "✓" if correct else "✗"
@@ -171,7 +156,7 @@ def run_single_eval(cases, model, run_number, total_runs, check_kwargs=None):
                 "correct": correct,
                 "standard_id_match": standard_id_match,
                 "latency": latency,
-                "tokens": tokens,
+                "tokens": tokens.to_dict(),
             })
 
         except Exception as e:
@@ -193,16 +178,20 @@ def run_single_eval(cases, model, run_number, total_runs, check_kwargs=None):
     return results
 
 
-def compute_metrics(all_runs, cases):
+# ---------------------------------------------------------------------------
+# Metrics and reporting
+# ---------------------------------------------------------------------------
+
+
+def compute_metrics(all_runs: list[list[dict]], cases: list[dict]) -> dict:
     """Compute aggregate metrics across all runs."""
     run_accuracies = []
-    stability = {}
-    total_latency = 0
+    stability: dict = {}
+    total_latency = 0.0
     total_input_tokens = 0
     total_output_tokens = 0
     total_checks = 0
 
-    # Per-case tracking across runs
     for case in cases:
         stability[case["case_id"]] = {
             "outcomes": [],
@@ -221,8 +210,7 @@ def compute_metrics(all_runs, cases):
             total_output_tokens += r["tokens"]["output"]
             total_checks += 1
 
-    # Classify stability
-    for case_id, data in stability.items():
+    for data in stability.values():
         times_correct = sum(data["outcomes"])
         times_wrong = len(data["outcomes"]) - times_correct
         if times_wrong == 0:
@@ -234,12 +222,10 @@ def compute_metrics(all_runs, cases):
         data["times_correct"] = times_correct
         data["times_wrong"] = times_wrong
 
-    # Count stability categories
     stable_passes = sum(1 for d in stability.values() if d["status"] == "stable_pass")
     stable_fails = sum(1 for d in stability.values() if d["status"] == "stable_fail")
     unstable = sum(1 for d in stability.values() if d["status"] == "unstable")
 
-    # False positive rate (correct examples incorrectly flagged as fail)
     pass_cases_total = 0
     false_positives = 0
     for run_results in all_runs:
@@ -249,7 +235,6 @@ def compute_metrics(all_runs, cases):
                 if r["actual"] == "fail":
                     false_positives += 1
 
-    # Standard ID accuracy (when agent correctly fails, did it cite the right ID?)
     id_checks_total = 0
     id_checks_correct = 0
     for run_results in all_runs:
@@ -259,7 +244,6 @@ def compute_metrics(all_runs, cases):
                 if r["standard_id_match"]:
                     id_checks_correct += 1
 
-    # Cost estimate (Claude Sonnet pricing: $3/M input, $15/M output)
     estimated_cost = (total_input_tokens / 1_000_000 * 3) + (total_output_tokens / 1_000_000 * 15)
 
     return {
@@ -280,14 +264,13 @@ def compute_metrics(all_runs, cases):
     }
 
 
-def write_reports(metrics, model, num_runs, output_dir):
+def write_reports(metrics: dict, model: str, num_runs: int, output_dir: str) -> Path:
     """Write markdown and JSON reports."""
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-    # Markdown report
     md = f"""# Stability report: {num_runs} eval runs
 
 **Date:** {now}
@@ -321,7 +304,6 @@ def write_reports(metrics, model, num_runs, output_dir):
 - Estimated cost: ${metrics['estimated_cost_usd']:.2f}
 """
 
-    # Flag unstable cases
     unstable_cases = {k: v for k, v in metrics["stability"].items() if v["status"] == "unstable"}
     if unstable_cases:
         md += "\n## Unstable cases\n\n"
@@ -330,10 +312,8 @@ def write_reports(metrics, model, num_runs, output_dir):
             md += f"  - Input: \"{data['input']}\"\n"
             md += f"  - Expected: {data['expected']}\n"
 
-    with open(output_dir / "stability_report.md", "w") as f:
-        f.write(md)
+    (out / "stability_report.md").write_text(md)
 
-    # JSON report
     json_report = {
         "run_accuracies": metrics["run_accuracies"],
         "average_accuracy": metrics["average_accuracy"],
@@ -343,44 +323,42 @@ def write_reports(metrics, model, num_runs, output_dir):
         "estimated_cost_usd": metrics["estimated_cost_usd"],
         "stability": metrics["stability"],
     }
+    (out / "stability_report.json").write_text(json.dumps(json_report, indent=2))
 
-    with open(output_dir / "stability_report.json", "w") as f:
-        json.dump(json_report, f, indent=2)
-
-    return output_dir / "stability_report.md"
+    return out / "stability_report.md"
 
 
-def main():
-    import argparse
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
+
+def main() -> None:
     parser = argparse.ArgumentParser(description="Run evals for the content standards checker.")
     parser.add_argument("--runs", type=int, default=3, help="Number of eval runs (default: 3)")
     parser.add_argument("--model", default="claude-sonnet-4-20250514", help="Model to use")
-    parser.add_argument("--novel", action="store_true", help="Run novel (generalization) test cases instead of library cases")
-    parser.add_argument("--new-only", action="store_true", help="Only test standards with a 'sources' field")
-    parser.add_argument("--category", help="Only test standards with this ID prefix (e.g., TRN, GRM)")
-    parser.add_argument("--all", action="store_true", dest="include_all", help="Include rich_text and visual standards (skipped by default)")
-    parser.add_argument("--output", default=None, help="Output directory (default: evals/results/)")
+    parser.add_argument("--novel", action="store_true", help="Run novel test cases")
+    parser.add_argument("--new-only", action="store_true", help="Only standards with 'sources' field")
+    parser.add_argument("--category", help="Only test standards with this ID prefix")
+    parser.add_argument("--all", action="store_true", dest="include_all", help="Include rich_text/visual standards")
+    parser.add_argument("--output", default=None, help="Output directory")
     args = parser.parse_args()
 
-    output_dir = args.output or str(REPO_ROOT / "evals" / "results")
+    output_dir = args.output or str(SCRIPT_DIR / "results")
 
-    print(f"Content standards checker — eval runner")
+    print("Content standards checker — eval runner")
     print(f"Model: {args.model}")
     print(f"Runs: {args.runs}")
-    if args.novel:
-        print(f"Mode: novel (generalization) cases")
+
+    standards_data = load_standards()
 
     if args.novel:
-        standards_data = load_standards()
-        cases = load_novel_cases(
-            category_filter=args.category,
-            standards_data=standards_data,
-        )
-        skipped = []
+        print("Mode: novel (generalization) cases")
+        cases = load_novel_cases(category_filter=args.category, standards_data=standards_data)
+        skipped: list[str] = []
     else:
-        standards_data = load_standards()
-        cases, skipped = build_test_cases(
+        print("Mode: library cases (unfiltered)")
+        cases, skipped = build_library_cases(
             standards_data,
             category_filter=args.category,
             new_only=args.new_only,
@@ -392,46 +370,26 @@ def main():
         return
 
     if args.novel:
-        unique_standards = len(set(c["standard_id"] for c in cases))
-        print(f"Test cases: {len(cases)} novel cases across {unique_standards} standards")
+        unique = len(set(c["standard_id"] for c in cases))
+        print(f"Test cases: {len(cases)} novel cases across {unique} standards")
     else:
         print(f"Test cases: {len(cases)} ({len(cases) // 2} standards × 2 examples)")
     if skipped:
-        print(f"Skipped (not checkable from plain text): {', '.join(skipped)}")
-    filters = []
-    if args.new_only:
-        filters.append("new standards only")
-    if args.category:
-        filters.append(f"category={args.category}")
-    if args.include_all:
-        filters.append("including rich_text and visual standards")
-    if filters:
-        print(f"Filters: {', '.join(filters)}")
+        print(f"Skipped: {', '.join(skipped)}")
     print()
 
     all_runs = []
-
-    # Library evals test "does the system know its own rules" — use all standards
-    # with no content type context or validation. This is preprocess + one LLM call
-    # against the full library, matching v3.1.1 behavior plus deterministic checks.
-    # Novel evals test real-world accuracy with the full pipeline.
-    if args.novel:
-        check_kwargs = {}
-    else:
-        check_kwargs = {"skip_validation": True, "skip_filter": True}
-        print(f"Library mode: all standards, no filtering, no validation\n")
-
     for run_num in range(1, args.runs + 1):
         print(f"── Run {run_num}/{args.runs} ──")
-        results = run_single_eval(cases, args.model, run_num, args.runs, check_kwargs=check_kwargs)
+        results = run_single_eval(cases, args.model, run_num, args.runs, novel=args.novel)
         all_runs.append(results)
         correct = sum(1 for r in results if r["correct"])
-        print(f"  Run {run_num} accuracy: {correct}/{len(results)} ({correct/len(results)*100:.1f}%)\n")
+        print(f"  Run {run_num} accuracy: {correct}/{len(results)} ({correct / len(results) * 100:.1f}%)\n")
 
     metrics = compute_metrics(all_runs, cases)
     report_path = write_reports(metrics, args.model, args.runs, output_dir)
 
-    print(f"── Summary ──")
+    print("── Summary ──")
     print(f"Average accuracy: {metrics['average_accuracy'] * 100:.1f}%")
     print(f"Stable passes: {metrics['stable_passes']}/{metrics['total_cases']}")
     print(f"Unstable: {metrics['unstable']}/{metrics['total_cases']}")
