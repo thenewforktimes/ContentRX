@@ -34,5 +34,8 @@ Thumbs.db
 *.swo
 *~
 
+# --- Claude Code workspace metadata ---
+.claude/
+
 # --- Eval run artifacts (regenerable) ---
 evals/results/
