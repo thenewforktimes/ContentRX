@@ -7,6 +7,10 @@
 Next.js 15 App Router app deployed to Vercel. Backend for the ContentRX
 Figma plugin, CLI, and GitHub Action. Landing page lives at `/`.
 
+This lives **inside the main `contentRX` monorepo** at `contentrx-app/`
+(one level below the Python engine at `src/content_checker/`). Both
+ship from the same GitHub repo: `thenewforktimes/contentRX`.
+
 ## Locked architectural decisions
 
 - Framework: Next.js 15 App Router, TypeScript, Tailwind v4
@@ -58,21 +62,28 @@ time when `DATABASE_URL` is not yet provisioned, and it avoids the
 
 ## Python engine
 
-The evaluation pipeline lives in `python/content_checker/` as a **vendored copy** of
-the engine repo. `api/evaluate.py` is a Vercel Python function that imports from
-there. The TS `/api/check` calls the Python function over internal HTTP via
-`src/lib/evaluate.ts`.
+The evaluation pipeline's canonical source lives at the **monorepo root**
+in `../src/content_checker/` (the Python package). `api/evaluate.py` is a
+Vercel Python function that imports from `python/content_checker/`, which
+is a generated copy of `../src/content_checker/`.
 
-**Sync policy:** the vendored copy is manually synced from the engine repo
-(`contentRX` on GitHub) until Session 7 publishes `contentrx-cli` to PyPI.
-After Session 7, switch `api/requirements.txt` to `contentrx-cli>=X.Y.Z` and
-delete `python/content_checker/`. Do not edit the vendored copy in place —
-fix it upstream and re-sync.
+**Sync is automated, not manual.** `python/content_checker/` is gitignored.
+`npm run sync-engine` copies the engine source from the monorepo root into
+`python/content_checker/`. This script runs automatically as:
+- `predev`  → before every `npm run dev`
+- `prebuild` → before every `npm run build` (including on Vercel)
+
+So there is no drift to worry about and no "vendored copy" to maintain —
+the canonical engine at `../src/content_checker/` is always the truth, and
+the Vercel deployment bundle gets a fresh copy at build time.
+
+**Do not commit `python/content_checker/`.** It's gitignored for this
+reason. If you want to change the engine, edit `../src/content_checker/`
+(the real engine), then `npm run sync-engine` to refresh the local copy.
 
 **Internal secret:** `/api/evaluate` checks `x-internal-secret` against
-`INTERNAL_EVAL_SECRET`. Both runtimes read the same env var. Without this,
-anyone on the internet could hit `/api/evaluate` directly and burn our
-Anthropic budget.
+`INTERNAL_EVAL_SECRET` using `hmac.compare_digest`. Fails closed when the
+env var is unset. Both runtimes read the same env var.
 
 ## What not to do
 
@@ -85,8 +96,9 @@ Anthropic budget.
 - Don't wrap the Drizzle `db` object in a JavaScript `Proxy` for lazy
   init — it silently breaks libraries that inspect adapter shape. Use
   the `getDb()` pattern that's already in place.
-- Don't edit files under `python/content_checker/` directly — it's a
-  vendored copy. Fix the upstream engine and re-sync.
+- Don't edit files under `python/content_checker/` directly — it's
+  auto-generated from `../src/content_checker/`. `npm run sync-engine`
+  overwrites anything you put there.
 - Don't expose `/api/evaluate` as a public surface; it's an internal
   helper guarded by `INTERNAL_EVAL_SECRET`. All real clients call
   `/api/check`.
