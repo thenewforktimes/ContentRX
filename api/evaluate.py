@@ -24,6 +24,7 @@ Response:
 
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import sys
@@ -41,11 +42,20 @@ from content_checker import check  # noqa: E402
 
 class handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
-        expected = os.environ.get("INTERNAL_EVAL_SECRET")
-        if expected:
-            provided = self.headers.get("x-internal-secret", "")
-            if provided != expected:
-                return self._respond(401, {"error": "Unauthorized"})
+        expected = os.environ.get("INTERNAL_EVAL_SECRET", "")
+        if not expected:
+            # Fail closed: without a shared secret this endpoint is a billing
+            # DoS vector and a plaintext-leaking proxy. We log to stderr but
+            # return a generic error to callers.
+            print("INTERNAL_EVAL_SECRET is not set; refusing all requests", file=sys.stderr)
+            return self._respond(500, {"error": "Server not configured"})
+
+        provided = self.headers.get("x-internal-secret", "")
+        # hmac.compare_digest is constant-time; provided != expected
+        # short-circuits at the first mismatching byte and leaks length
+        # and prefix information under repeated requests.
+        if not hmac.compare_digest(provided.encode("utf-8"), expected.encode("utf-8")):
+            return self._respond(401, {"error": "Unauthorized"})
 
         try:
             length = int(self.headers.get("content-length", "0"))

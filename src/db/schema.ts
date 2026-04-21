@@ -60,22 +60,33 @@ export const subscriptions = pgTable("subscriptions", {
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
 });
 
-export const teamMembers = pgTable("team_members", {
-  id: cuid(),
-  teamOwnerUserId: text("team_owner_user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  memberUserId: text("member_user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  role: text("role", { enum: ["admin", "member"] })
-    .notNull()
-    .default("member"),
-  invitedAt: timestamp("invited_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
-});
+export const teamMembers = pgTable(
+  "team_members",
+  {
+    id: cuid(),
+    teamOwnerUserId: text("team_owner_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    memberUserId: text("member_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["admin", "member"] })
+      .notNull()
+      .default("member"),
+    invitedAt: timestamp("invited_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  },
+  (t) => [
+    // A user can be a member of a given team exactly once. Prevents
+    // double-invites from inflating seat counts in analytics (Session 17).
+    uniqueIndex("team_members_owner_member_idx").on(
+      t.teamOwnerUserId,
+      t.memberUserId,
+    ),
+  ],
+);
 
 export const teamRules = pgTable(
   "team_rules",

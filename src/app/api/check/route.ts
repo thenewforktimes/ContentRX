@@ -16,6 +16,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { resolveAuth } from "@/lib/auth";
+import { AUDIENCES, CONTENT_TYPES, MOMENTS } from "@/lib/engine-taxonomy";
 import { evaluate } from "@/lib/evaluate";
 import { hashText, logViolations } from "@/lib/log-violations";
 import { currentMonth, monthlyQuota } from "@/lib/quotas";
@@ -28,10 +29,13 @@ import {
 import { getCurrentUsage, incrementUsage } from "@/lib/usage";
 
 const RequestSchema = z.object({
+  // Engine enforces MAX_CONTENT_LENGTH=100_000; match that exactly.
   text: z.string().min(1).max(100_000),
-  content_type: z.string().optional(),
-  audience: z.enum(["product_ui", "general"]).optional(),
-  moment: z.string().optional(),
+  // content_type and moment go INTO the LLM system prompt verbatim.
+  // Accepting arbitrary strings here is a prompt-injection vector.
+  content_type: z.enum(CONTENT_TYPES).optional(),
+  audience: z.enum(AUDIENCES).optional(),
+  moment: z.enum(MOMENTS).optional(),
   source: z.enum(["plugin", "cli", "action", "ditto"]).default("plugin"),
 });
 
@@ -90,8 +94,14 @@ export async function POST(req: Request) {
   try {
     evalResponse = await evaluate({ text, content_type, audience, moment });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown evaluation error";
-    return NextResponse.json({ error: message }, { status: 502 });
+    // Log detail to stderr (Sentry ingests via Vercel). Return an opaque
+    // message to the caller — the Python-side error can include file paths,
+    // model names, Anthropic error bodies, or a truncated LLM response.
+    console.error("evaluate() failed:", err);
+    return NextResponse.json(
+      { error: "Evaluation service unavailable" },
+      { status: 502 },
+    );
   }
 
   const filtered = applyDisabledFilter(evalResponse.result, teamRules.disabledStandardIds);

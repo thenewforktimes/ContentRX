@@ -7,11 +7,13 @@
  * /api/evaluate directly even though it's public-by-default on Vercel.
  */
 
+import type { Audience, ContentType, Moment } from "./engine-taxonomy";
+
 export type EvaluateParams = {
   text: string;
-  content_type?: string;
-  audience?: "product_ui" | "general";
-  moment?: string;
+  content_type?: ContentType;
+  audience?: Audience;
+  moment?: Moment;
 };
 
 export type EvaluationResult = {
@@ -38,6 +40,21 @@ export type EvaluateResponse = {
 };
 
 function internalEvaluateUrl(): string {
+  // In production we REQUIRE an explicit INTERNAL_EVAL_URL. Falling back
+  // to NEXT_PUBLIC_APP_URL lets a misconfigured hostname leak the
+  // internal secret + user text to the wrong origin. Only the dev
+  // localhost fallback is allowed.
+  if (process.env.NODE_ENV === "production") {
+    const url = process.env.INTERNAL_EVAL_URL;
+    if (!url) {
+      throw new Error(
+        "INTERNAL_EVAL_URL must be set in production — refusing to fall " +
+          "back to NEXT_PUBLIC_APP_URL",
+      );
+    }
+    return `${url.replace(/\/$/, "")}/api/evaluate`;
+  }
+
   const base =
     process.env.INTERNAL_EVAL_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??

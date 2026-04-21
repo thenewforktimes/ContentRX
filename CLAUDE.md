@@ -120,6 +120,66 @@ survive pulls.
 - `authMiddleware()` is removed — we use `clerkMiddleware()`
 - Minimum Node 20.9.0 (we target Node 24 LTS on Vercel)
 
+## Known limitations (deferred audit findings)
+
+Things the post-Session-3 audit flagged that we consciously chose NOT to
+fix immediately. Track these so they don't get forgotten.
+
+1. **API keys are stored plaintext on `users.api_key`.** Lookups via
+   Drizzle's `eq(users.apiKey, apiKey)` on the unique b-tree index have
+   a timing signal in theory — tree descent terminates on first ordering
+   divergence. Over the public internet jitter dominates, but best
+   practice is hash-storage: store `sha256(key)`, look up by hash.
+   **Target:** Session 9 (dashboard key generation + rotation). Use
+   `cuid2` for the key body; SHA-256 the stored form.
+
+2. **`getCurrentUsage` → `incrementUsage` race.** A user can fire up to
+   their rate-limit ceiling (60/min) of concurrent requests through the
+   quota gate before any of them increment. On a free plan (25/mo) the
+   overshoot is bounded. Correct fix is an atomic "claim a slot" upsert
+   with a conditional `WHERE count < quota`. **Target:** Session 10
+   when we add plugin-side quota UX.
+
+3. **Webhook idempotency.** `svix.Webhook.verify` enforces a 5-minute
+   timestamp tolerance but within that window the same payload can
+   replay. `user.created` is protected by `onConflictDoNothing`;
+   `user.updated` is a raw `.set({ email })` that can roll an email
+   backwards. **Fix:** track `svix-id` in a dedupe table (or a Redis
+   set) before processing. **Target:** whenever we harden against
+   abuse, not blocking launch.
+
+4. **No DB-level CHECK constraints on enum columns.** `text("plan", {
+   enum: [...] })` and friends in `schema.ts` are TS-only. A direct SQL
+   write can set `plan = 'enterprise'` and the app silently accepts it.
+   Use `pgEnum` if DB-level protection matters. Low priority — we
+   control every writer.
+
+5. **`users.email` has no unique constraint.** Clerk prevents duplicate
+   verified primary emails per instance, but allows unverified
+   duplicates, and a `user.updated` webhook could collide. Decision
+   deferred: do we want two Clerk accounts → one logical user, or
+   reject the second at the webhook? Revisit when we have a team
+   invite flow (Session 9) since email-based lookup starts mattering
+   there.
+
+6. **No unique constraint on `subscriptions.userId`.** Historical rows
+   (upgrade, downgrade, re-sub) are legitimate. Proper fix is a partial
+   unique index on `(user_id) WHERE status = 'active'`. **Target:**
+   Session 8 when Stripe lands.
+
+7. **`check_batch` has no aggregate size ceiling** (engine-side). A CLI
+   caller can concatenate up to `MAX_BATCH_FILE_SIZE` worth of strings
+   into a single consistency prompt. Cost DoS, not a security breach.
+   **Target:** before CLI ships broadly (Session 11).
+
+8. **Standards-library prompt-injection surface.** Engine's
+   `build_system_prompt` embeds `content_type` and user text directly.
+   `/api/check` now validates `content_type` against the 8-member enum
+   from `engine-taxonomy.ts`, which closes the injection at this
+   boundary. Engine-side hardening (sentinel delimiters around user
+   text) is still worth doing when engine-level test coverage for it
+   exists.
+
 ## Before every commit
 
 - `npm run lint`
