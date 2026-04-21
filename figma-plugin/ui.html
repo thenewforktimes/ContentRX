@@ -1618,7 +1618,7 @@ function checkClr01RedundantPhrases(text) {
   // "In order to" → "to" is always correct. "Prior to" → "before"
   // is always correct. No judgment needed.
 
-  // Canonical list from Python preprocessor — 20 phrases.
+  // Canonical list from Python preprocessor — 22 phrases.
   // Every major content design system agrees these are replaceable.
   const phrases = [
     { pattern: /\bin order to\b/i,            replacement: "to" },
@@ -1838,8 +1838,14 @@ const COMPOUND_MOD_UNITS = [
 const _compoundUnitsAlt = COMPOUND_MOD_UNITS.map(u => `${u}s?`).join('|');
 
 const COMPOUND_STOPWORDS = [
-  'of', 'in', 'to', 'for', 'from', 'ago', 'later',
-  'or', 'and', 'is', 'are', 'was', 'were', 'has', 'have',
+  // Prepositions and temporal markers
+  'of', 'in', 'to', 'for', 'from', 'with', 'at', 'on', 'by',
+  'ago', 'later',
+  // Conjunctions
+  'or', 'and',
+  // Auxiliaries
+  'is', 'are', 'was', 'were', 'will', 'has', 'have', 'had',
+  // Quantifiers / tails
   'remaining', 'left', 'total', 'each', 'per', 'every',
 ];
 const _stopwordLookahead = COMPOUND_STOPWORDS.map(w => `${w}\\b`).join('|');
