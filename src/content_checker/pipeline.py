@@ -7,11 +7,11 @@ Use check() for the full pipeline, or call individual stages directly.
 
 from __future__ import annotations
 
-import json
 import time
 
 from content_checker.classify import classify, classify_heuristic
 from content_checker.filter import filter_standards, get_content_type_descriptions
+from content_checker.llm_json import parse_llm_json
 from content_checker.models import (
     CheckResult,
     PassedStandard,
@@ -22,6 +22,19 @@ from content_checker.models import (
 from content_checker.preprocess import run_preprocess
 from content_checker.standards.loader import load_standards
 from content_checker.validate import validate_candidates
+
+MAX_CONTENT_LENGTH = 100_000
+
+
+def _validate_text_input(text: str) -> None:
+    """Guard against runaway prompts and accidental upload of large files."""
+    if not isinstance(text, str):
+        raise TypeError(f"text must be a string, got {type(text).__name__}")
+    if len(text) > MAX_CONTENT_LENGTH:
+        raise ValueError(
+            f"Content too long: {len(text):,} characters "
+            f"(max {MAX_CONTENT_LENGTH:,})"
+        )
 
 
 def build_system_prompt(standards_data: dict, content_type: str | None = None) -> str:
@@ -124,22 +137,15 @@ def _llm_scan(
         output=response.usage.output_tokens,
     )
 
-    raw = response.content[0].text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
-    if raw.endswith("```"):
-        raw = raw[:-3]
-    raw = raw.strip()
-
-    try:
-        result = json.loads(raw)
-    except json.JSONDecodeError:
+    raw = response.content[0].text
+    result = parse_llm_json(raw)
+    if result is None:
         result = {
             "content_type": content_type or "unknown",
             "overall_verdict": "error",
             "violations": [],
             "passes": [],
-            "summary": f"Failed to parse response: {raw[:200]}",
+            "summary": f"Failed to parse response: {raw.strip()[:200]}",
         }
 
     return result, latency, tokens
@@ -194,6 +200,8 @@ def check(
     Returns:
         (CheckResult, total_latency, total_tokens)
     """
+    _validate_text_input(text)
+
     standards_data = load_standards()
     total_latency = 0.0
     total_tokens = TokenUsage()
@@ -277,6 +285,8 @@ def check_unfiltered(
     Used for library evals where synthetic test strings need the full rulebook
     without content type context.
     """
+    _validate_text_input(text)
+
     standards_data = load_standards()
 
     # Deterministic preprocess

@@ -9,10 +9,10 @@ Single-string mode can't detect terminology inconsistency — batch mode can.
 
 from __future__ import annotations
 
-import json
 import time
 
 from content_checker.filter import get_multi_snippet_standards
+from content_checker.llm_json import parse_llm_json
 from content_checker.models import (
     BatchResult,
     ConsistencyViolation,
@@ -113,16 +113,8 @@ def _check_consistency(
         output=response.usage.output_tokens,
     )
 
-    raw = response.content[0].text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
-    if raw.endswith("```"):
-        raw = raw[:-3]
-    raw = raw.strip()
-
-    try:
-        result = json.loads(raw)
-    except json.JSONDecodeError:
+    result = parse_llm_json(response.content[0].text)
+    if result is None:
         return [], latency, tokens
 
     violations = []
