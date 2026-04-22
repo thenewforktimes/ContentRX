@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
@@ -24,6 +25,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Plausible is just a script tag — the site is identified by data-domain.
+  // No-op when NEXT_PUBLIC_PLAUSIBLE_DOMAIN is unset (dev / preview).
+  const plausibleDomain = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
   return (
     <ClerkProvider
       signInFallbackRedirectUrl="/dashboard"
@@ -34,6 +38,14 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           {children}
+          {plausibleDomain && (
+            <Script
+              defer
+              data-domain={plausibleDomain}
+              src="https://plausible.io/js/script.outbound-links.js"
+              strategy="afterInteractive"
+            />
+          )}
         </body>
       </html>
     </ClerkProvider>

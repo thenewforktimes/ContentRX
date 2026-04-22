@@ -16,6 +16,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { resolveAuth } from "@/lib/auth";
+import { appUrl as emailAppUrl, sendEmail } from "@/lib/email";
 import { AUDIENCES, CONTENT_TYPES, MOMENTS } from "@/lib/engine-taxonomy";
 import { evaluate } from "@/lib/evaluate";
 import { hashText, logViolations } from "@/lib/log-violations";
@@ -29,6 +30,8 @@ import {
   recomputeVerdict,
 } from "@/lib/team-rules";
 import { claimQuotaSlot } from "@/lib/usage";
+import { QuotaExhaustedEmail } from "@/emails/quota-exhausted";
+import { QuotaWarningEmail } from "@/emails/quota-warning";
 
 // CORS: the Figma plugin iframe has Origin: null. We allow any origin
 // because the request is gated on the Authorization header, not on
@@ -110,6 +113,12 @@ export async function POST(req: Request) {
   // Limitation #2 from the 2026-04-22 audit).
   const claim = await claimQuotaSlot(auth.user.id, quota);
   if (!claim.granted) {
+    void notifyQuotaExhausted({
+      to: auth.user.email,
+      plan: auth.plan,
+      quota,
+      userId: auth.user.id,
+    });
     return json(
       {
         error: "Monthly quota exhausted",
@@ -123,6 +132,16 @@ export async function POST(req: Request) {
     );
   }
   const newUsed = claim.count;
+  const remainingAfter = Math.max(0, quota - newUsed);
+  if (remainingAfter <= warningThreshold(auth.plan, quota) && remainingAfter > 0) {
+    void notifyQuotaWarning({
+      to: auth.user.email,
+      used: newUsed,
+      quota,
+      plan: auth.plan,
+      userId: auth.user.id,
+    });
+  }
 
   const teamRules = await loadTeamRules(auth.teamOwnerUserId);
 
@@ -198,4 +217,61 @@ function monthResetISO(): string {
   const now = new Date();
   const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
   return next.toISOString();
+}
+
+function warningThreshold(plan: "free" | "pro" | "team", quota: number): number {
+  // Free plan emails when 5 scans remain (matches the in-plugin warning
+  // banner threshold). Paid plans use 10% of quota with a floor of 10
+  // so a 5,000-scan plan still gets a heads-up before the wall.
+  return plan === "free" ? 5 : Math.max(10, Math.round(quota * 0.1));
+}
+
+async function notifyQuotaWarning(args: {
+  to: string;
+  used: number;
+  quota: number;
+  plan: "free" | "pro" | "team";
+  userId: string;
+}) {
+  try {
+    await sendEmail({
+      to: args.to,
+      subject: `Heads up — ${Math.max(0, args.quota - args.used)} ContentRX scans left this month`,
+      react: QuotaWarningEmail({
+        appUrl: emailAppUrl(),
+        used: args.used,
+        quota: args.quota,
+        plan: args.plan,
+      }),
+      dedupeKey: `warning:${args.userId}:${currentMonth()}`,
+    });
+  } catch (err) {
+    console.warn("quota-warning email failed", err);
+  }
+}
+
+async function notifyQuotaExhausted(args: {
+  to: string;
+  plan: "free" | "pro" | "team";
+  quota: number;
+  userId: string;
+}) {
+  try {
+    await sendEmail({
+      to: args.to,
+      subject: "You've hit this month's ContentRX limit",
+      react: QuotaExhaustedEmail({
+        appUrl: emailAppUrl(),
+        quota: args.quota,
+        plan: args.plan,
+        resetsAt: new Date(monthResetISO()).toLocaleDateString(undefined, {
+          month: "long",
+          day: "numeric",
+        }),
+      }),
+      dedupeKey: `exhausted:${args.userId}:${currentMonth()}`,
+    });
+  } catch (err) {
+    console.warn("quota-exhausted email failed", err);
+  }
 }
