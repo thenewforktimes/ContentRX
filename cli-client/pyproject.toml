@@ -36,8 +36,10 @@ dev = ["pytest>=8.0"]
 
 [project.urls]
 Homepage = "https://content-rx.vercel.app"
-Documentation = "https://content-rx.vercel.app/docs"
+Documentation = "https://github.com/thenewforktimes/contentRX/blob/main/cli-client/README.md"
+Repository = "https://github.com/thenewforktimes/contentRX"
 Issues = "https://github.com/thenewforktimes/contentRX/issues"
+Changelog = "https://github.com/thenewforktimes/contentRX/releases"
 
 [project.scripts]
 contentrx = "contentrx.main:main"
