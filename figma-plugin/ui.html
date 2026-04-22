@@ -277,10 +277,21 @@
     background: var(--figma-color-bg-secondary, #f8f8f8);
     cursor: pointer;
     user-select: none;
+    /* button reset — keep this looking like the prior <div> */
+    border: 0;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
   }
 
   .node-card-header:hover {
     background: var(--figma-color-bg-hover, #f0f0f0);
+  }
+
+  .node-card-header:focus-visible {
+    outline: 2px solid var(--figma-color-border-selected, #18a0fb);
+    outline-offset: -2px;
   }
 
   .node-verdict-dot {
@@ -561,7 +572,7 @@
   <h2>Waiting for your browser...</h2>
   <p>Finish signing in in the browser tab we just opened. This plugin will pick it up automatically.</p>
   <div class="progress-container" style="padding: 16px 0;">
-    <div class="progress-bar-track">
+    <div class="progress-bar-track" role="progressbar" aria-label="Sign-in progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10">
       <div class="progress-bar-fill" id="signin-progress-fill" style="width: 10%;"></div>
     </div>
     <div class="progress-status" id="signin-status">Opened your browser. Complete sign-in there...</div>
@@ -577,7 +588,7 @@
   <h2>Content standards checker</h2>
   <p>Scan text layers against 47 content standards. Mechanical issues are caught instantly; nuanced rules are evaluated by AI.</p>
 
-  <div id="quota-banner" class="quota-banner" style="display:none;"></div>
+  <div id="quota-banner" class="quota-banner" role="alert" aria-live="polite" style="display:none;"></div>
 
   <div class="btn-row">
     <button class="btn btn-primary" id="btn-scan-page">Scan page</button>
@@ -612,7 +623,7 @@
 <div id="screen-scanning" class="screen">
   <div class="progress-container">
     <h2 id="scan-title">Scanning...</h2>
-    <div class="progress-bar-track">
+    <div class="progress-bar-track" role="progressbar" aria-label="Scan progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div class="progress-bar-fill" id="progress-fill"></div>
     </div>
     <div class="progress-status" id="progress-status">Collecting text layers...</div>
@@ -631,7 +642,7 @@
 // Controls visibility of the "Export results" button and any other
 // internal tooling that alpha testers should not see.
 // ---------------------------------------------------------------------------
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 // /api/check evaluates one string per call, so we don't batch multiple
 // strings together client-side anymore. MAX_CONCURRENT is the pool size
@@ -2732,7 +2743,9 @@ function renderBatchResults(results) {
   // Attach card toggle listeners
   area.querySelectorAll(".node-card-header").forEach(header => {
     header.addEventListener("click", () => {
-      header.parentElement.classList.toggle("open");
+      const card = header.parentElement;
+      const opened = card.classList.toggle("open");
+      header.setAttribute("aria-expanded", opened ? "true" : "false");
     });
   });
 
@@ -2864,18 +2877,19 @@ function renderNodeCard(result) {
     ? `${violationCount} issue${violationCount !== 1 ? "s" : ""}`
     : isError ? "Error" : "Pass";
 
+  const gotoLabel = `Go to layer in Figma${result.parentName ? " (" + result.parentName + ")" : ""}`;
   let html = `<div class="node-card" data-verdict="${filterClass}">`;
-  html += `<div class="node-card-header">
-    <div class="node-verdict-dot ${dotClass}"></div>
-    <div class="node-card-title" title="${escapeHtml(result.text)}">${escapeHtml(preview)}</div>
-    <div class="node-card-meta">${meta}</div>
-  </div>`;
+  html += `<button type="button" class="node-card-header" aria-expanded="false">
+    <span class="node-verdict-dot ${dotClass}" aria-hidden="true"></span>
+    <span class="node-card-title" title="${escapeHtml(result.text)}">${escapeHtml(preview)}</span>
+    <span class="node-card-meta">${meta}</span>
+  </button>`;
 
   html += `<div class="node-card-body">`;
 
   // Go to layer button
-  html += `<button class="btn-goto" data-node-id="${escapeHtml(result.nodeId)}">
-    &#8599; Go to layer${result.parentName ? " · " + escapeHtml(result.parentName) : ""}
+  html += `<button class="btn-goto" type="button" data-node-id="${escapeHtml(result.nodeId)}" aria-label="${escapeHtml(gotoLabel)}">
+    <span aria-hidden="true">&#8599;</span> Go to layer${result.parentName ? " · " + escapeHtml(result.parentName) : ""}
   </button>`;
 
   // Full text preview
@@ -2966,13 +2980,13 @@ function updateProgress(data) {
 
   switch (data.phase) {
     case "preprocess":
-      fill.style.width = "5%";
+      setProgressBar(fill, 5);
       status.textContent = `Found ${data.total} text layer${data.total !== 1 ? "s" : ""}. Running instant checks...`;
       detail.textContent = "";
       break;
 
     case "preprocess-done":
-      fill.style.width = "15%";
+      setProgressBar(fill, 15);
       status.textContent = data.instantViolations > 0
         ? `Instant checks: ${data.instantViolations} issue${data.instantViolations !== 1 ? "s" : ""} caught`
         : "Instant checks complete. No mechanical issues.";
@@ -2981,17 +2995,31 @@ function updateProgress(data) {
 
     case "evaluating":
       const pct = 15 + Math.round((data.current / data.total) * 80);
-      fill.style.width = pct + "%";
+      setProgressBar(fill, pct);
       status.textContent = `AI evaluation: ${data.current} of ${data.total} layer${data.total !== 1 ? "s" : ""}...`;
       detail.textContent = "This could take a few seconds or a couple minutes.";
       break;
 
     case "complete":
-      fill.style.width = "100%";
+      setProgressBar(fill, 100);
       status.textContent = "Scan complete.";
       detail.textContent = "";
       break;
   }
+}
+
+
+/**
+ * Update a progress bar's visible fill and the parent track's
+ * aria-valuenow in lock-step, so screen readers stay in sync with
+ * the visual progress.
+ */
+function setProgressBar(fillEl, pct) {
+  if (!fillEl) return;
+  const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+  fillEl.style.width = clamped + "%";
+  const track = fillEl.parentElement;
+  if (track) track.setAttribute("aria-valuenow", String(clamped));
 }
 
 
@@ -3121,7 +3149,7 @@ async function startSigninFlow() {
   const statusEl = document.getElementById("signin-status");
   const fillEl = document.getElementById("signin-progress-fill");
   statusEl.textContent = "Opened your browser. Complete sign-in there...";
-  fillEl.style.width = "10%";
+  setProgressBar(fillEl, 10);
 
   // Remember this URL so the "Re-open" button can reuse it.
   window._lastSigninUrl = signinUrl;
@@ -3129,7 +3157,7 @@ async function startSigninFlow() {
   signinPollAbortController = new AbortController();
   try {
     const token = await pollForToken(handoffCode, signinPollAbortController.signal);
-    fillEl.style.width = "100%";
+    setProgressBar(fillEl, 100);
     statusEl.textContent = "Signed in! Loading...";
     cxToken = token;
     parent.postMessage({ pluginMessage: { type: "save-token", token } }, "*");
@@ -3474,17 +3502,30 @@ function renderQuotaExhaustedBanner(info) {
   // In-results banner — echo of the above-results quota-banner so users
   // who scroll into the results area still see "you hit the limit"
   // context beside the partial results from the aborted scan.
+  //
+  // Built as DOM nodes (rather than concatenating into innerHTML) so
+  // escaping bugs can't hide and so existing event listeners on
+  // already-rendered children survive the prepend.
   const area = document.getElementById("results-area");
+  if (!area) return;
   const quota = info && info.details && info.details.quota;
   const message = quota
     ? `You've used all ${quota} scans for this month. Upgrade or wait for the next reset to scan more.`
     : (info && info.message) || "Monthly quota exhausted.";
-  const banner = `
-    <div class="verdict verdict-fail" style="margin-bottom:12px;">
-      <span class="verdict-icon">!</span> ${escapeHtml(message)}
-    </div>
-  `;
-  area.innerHTML = banner + area.innerHTML;
+
+  const banner = document.createElement("div");
+  banner.className = "verdict verdict-fail";
+  banner.style.marginBottom = "12px";
+  banner.setAttribute("role", "alert");
+
+  const icon = document.createElement("span");
+  icon.className = "verdict-icon";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = "!";
+  banner.appendChild(icon);
+  banner.appendChild(document.createTextNode(" " + message));
+
+  area.insertBefore(banner, area.firstChild);
 }
 
 
