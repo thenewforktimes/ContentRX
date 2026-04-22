@@ -22,7 +22,9 @@ import { hashText, logViolations } from "@/lib/log-violations";
 import { currentMonth, monthlyQuota } from "@/lib/quotas";
 import { checkRateLimit } from "@/lib/ratelimit";
 import {
+  applyAddedRules,
   applyDisabledFilter,
+  applyOverrides,
   loadTeamRules,
   recomputeVerdict,
 } from "@/lib/team-rules";
@@ -126,8 +128,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const filtered = applyDisabledFilter(evalResponse.result, teamRules.disabledStandardIds);
-  const result = recomputeVerdict(filtered);
+  // Team-rule pipeline: disable first (strip), then override display fields
+  // on the survivors, then append custom team-added rule matches, then
+  // recompute verdict from the final violations list.
+  const disabled = applyDisabledFilter(evalResponse.result, teamRules.disabledStandardIds);
+  const overridden = applyOverrides(disabled, teamRules.overridesByStandardId);
+  const withAdds = applyAddedRules(overridden, text, teamRules.adds);
+  const result = recomputeVerdict(withAdds);
 
   // Log + increment are observational — if they fail, the user still gets
   // their result. We surface the failure through Sentry, not to the user.

@@ -1,25 +1,57 @@
 /**
- * Team rule loading + post-evaluation filtering.
+ * Team rule loading, post-evaluation filtering, and custom-rule matching.
  *
- * Session 3 scope: load disabled standard IDs for a team and strip any
- * violations the engine produces for those IDs. This gives the "team can
- * turn off GRM-03" acceptance test without touching the engine itself.
+ * The flow in /api/check is:
+ *   1. Call the engine (the Python pipeline evaluates against the 47
+ *      standard-library rules).
+ *   2. `applyDisabledFilter` strips violations whose standard_id the
+ *      team has disabled. (This existed from Session 3.)
+ *   3. `applyOverrides` rewrites the display fields (rule text,
+ *      severity) of violations whose standard_id the team has
+ *      overridden. Cosmetic-only — the engine still evaluates against
+ *      the original library; overrides change how the result is
+ *      presented, not whether it fires.
+ *   4. `applyAddedRules` scans the original input text against each
+ *      team-custom rule's regex `pattern` and appends violations for
+ *      any matches.
+ *   5. `recomputeVerdict` finalises pass/fail after the above.
  *
- * Session 16 expands this to full CRUD + pre-evaluation library merging
- * (override + add actions). Keep the signature stable so Session 16 can
- * swap the implementation without touching /api/check.
+ * Session 16 shipped (3) and (4) on top of Session 3's (2) and (5).
+ * A fuller "merge library before preprocessing" path (custom rules
+ * evaluated by the LLM) is still deferred — acceptable for v1 because
+ * BUILD_PLAN's only acceptance test for `add` is a word-match against
+ * text the user pastes in, which regex handles deterministically.
  */
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+
+export const CUSTOM_STANDARD_PREFIX = "TEAM-";
+export const CUSTOM_STANDARD_ID_REGEX = /^TEAM-\d{2,}$/;
 
 type RuleAction = "disable" | "override" | "add";
 
-type LoadedRules = {
+export type TeamRuleRow = typeof schema.teamRules.$inferSelect;
+
+export type OverrideFields = {
+  rule?: string;
+  severity?: string;
+  title?: string;
+};
+
+export type AddFields = {
+  title: string;
+  rule: string;
+  severity: string;
+  pattern: string;
+  case_insensitive?: boolean;
+  content_types?: string[];
+};
+
+export type LoadedRules = {
   disabledStandardIds: Set<string>;
-  // Placeholders for Session 16:
-  overrides: typeof schema.teamRules.$inferSelect[];
-  adds: typeof schema.teamRules.$inferSelect[];
+  overridesByStandardId: Map<string, OverrideFields>;
+  adds: Array<{ standardId: string; fields: AddFields }>;
 };
 
 export async function loadTeamRules(
@@ -27,10 +59,9 @@ export async function loadTeamRules(
 ): Promise<LoadedRules> {
   const empty: LoadedRules = {
     disabledStandardIds: new Set<string>(),
-    overrides: [],
+    overridesByStandardId: new Map(),
     adds: [],
   };
-
   if (!teamOwnerUserId) return empty;
 
   const db = getDb();
@@ -40,50 +71,114 @@ export async function loadTeamRules(
     .where(eq(schema.teamRules.teamOwnerUserId, teamOwnerUserId));
 
   const disabled = new Set<string>();
-  const overrides: LoadedRules["overrides"] = [];
+  const overrides = new Map<string, OverrideFields>();
   const adds: LoadedRules["adds"] = [];
 
   for (const row of rows) {
     const action = row.action as RuleAction;
-    if (action === "disable") disabled.add(row.standardId);
-    else if (action === "override") overrides.push(row);
-    else if (action === "add") adds.push(row);
+    if (action === "disable") {
+      disabled.add(row.standardId);
+    } else if (action === "override") {
+      overrides.set(row.standardId, normalizeOverride(row.ruleJson));
+    } else if (action === "add") {
+      const fields = normalizeAdd(row.ruleJson);
+      if (fields) adds.push({ standardId: row.standardId, fields });
+    }
   }
 
-  return { disabledStandardIds: disabled, overrides, adds };
+  return {
+    disabledStandardIds: disabled,
+    overridesByStandardId: overrides,
+    adds,
+  };
 }
 
-type EvaluationResult = {
-  violations?: Array<{ standard_id?: string; [k: string]: unknown }>;
-  passes?: Array<{ standard_id?: string; [k: string]: unknown }>;
+// ---------------------------------------------------------------------------
+// Result mutators — each returns a new object; none mutate the input.
+// ---------------------------------------------------------------------------
+
+type Violation = {
+  standard_id?: string;
+  rule?: string;
+  issue?: string;
+  suggestion?: string;
+  severity?: string;
+  source?: string;
+  title?: string;
   [k: string]: unknown;
 };
 
-/**
- * Filter violations whose standard_id appears in the disabled set.
- * Returns a new object; does not mutate.
- */
+export type EvaluationResult = {
+  violations?: Violation[];
+  passes?: Array<{ standard_id?: string; [k: string]: unknown }>;
+  // Matches the engine's wider union — "error" shows up when the
+  // pipeline couldn't complete a scan; we still run these through
+  // the team-rule stages so the result keeps shape.
+  overall_verdict?: "pass" | "fail" | "error";
+  [k: string]: unknown;
+};
+
 export function applyDisabledFilter<T extends EvaluationResult>(
   result: T,
   disabled: Set<string>,
 ): T {
   if (disabled.size === 0) return result;
-
   const violations = (result.violations ?? []).filter(
     (v) => !v.standard_id || !disabled.has(v.standard_id),
   );
-
-  const next = { ...result, violations };
-
-  // If a violation was disabled, it's effectively "passing" for this team.
-  // Keep the passes list unchanged — promoting a disabled rule into passes
-  // would misrepresent what the engine decided.
-  return next;
+  return { ...result, violations };
 }
 
-/**
- * overall_verdict: fail ⟺ any violation remains. Recompute after filtering.
- */
+export function applyOverrides<T extends EvaluationResult>(
+  result: T,
+  overridesByStandardId: Map<string, OverrideFields>,
+): T {
+  if (overridesByStandardId.size === 0) return result;
+  const violations = (result.violations ?? []).map((v) => {
+    if (!v.standard_id) return v;
+    const patch = overridesByStandardId.get(v.standard_id);
+    if (!patch) return v;
+    return {
+      ...v,
+      ...(patch.rule !== undefined ? { rule: patch.rule } : {}),
+      ...(patch.severity !== undefined ? { severity: patch.severity } : {}),
+      ...(patch.title !== undefined ? { title: patch.title } : {}),
+    };
+  });
+  return { ...result, violations };
+}
+
+export function applyAddedRules<T extends EvaluationResult>(
+  result: T,
+  text: string,
+  adds: LoadedRules["adds"],
+): T {
+  if (adds.length === 0) return result;
+
+  const existingViolations = result.violations ?? [];
+  const appended: Violation[] = [];
+
+  for (const add of adds) {
+    const { standardId, fields } = add;
+    const re = compilePattern(fields);
+    if (!re) continue;
+    const match = text.match(re);
+    if (!match) continue;
+
+    appended.push({
+      standard_id: standardId,
+      title: fields.title,
+      rule: fields.rule,
+      issue: buildIssueMessage(fields.rule, match[0]),
+      severity: fields.severity,
+      source: "team-rule",
+    });
+  }
+
+  if (appended.length === 0) return result;
+  return { ...result, violations: [...existingViolations, ...appended] };
+}
+
 export function recomputeVerdict<T extends EvaluationResult>(
   result: T,
 ): T & { overall_verdict: "pass" | "fail" } {
@@ -92,4 +187,93 @@ export function recomputeVerdict<T extends EvaluationResult>(
     ...result,
     overall_verdict: violations.length > 0 ? "fail" : "pass",
   };
+}
+
+// ---------------------------------------------------------------------------
+// Next available custom standard ID for a team — caller uses this when
+// creating a new `add` rule so we don't leak gap-filling logic into routes.
+// ---------------------------------------------------------------------------
+export async function nextCustomStandardId(
+  teamOwnerUserId: string,
+): Promise<string> {
+  const db = getDb();
+  const rows = await db
+    .select({ id: schema.teamRules.standardId })
+    .from(schema.teamRules)
+    .where(
+      and(
+        eq(schema.teamRules.teamOwnerUserId, teamOwnerUserId),
+        eq(schema.teamRules.action, "add"),
+      ),
+    );
+
+  let max = 0;
+  for (const row of rows) {
+    const match = row.id.match(/^TEAM-(\d+)$/);
+    if (!match) continue;
+    const n = Number(match[1]);
+    if (n > max) max = n;
+  }
+  return `${CUSTOM_STANDARD_PREFIX}${String(max + 1).padStart(2, "0")}`;
+}
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+function normalizeOverride(raw: unknown): OverrideFields {
+  const obj = (raw ?? {}) as Record<string, unknown>;
+  const out: OverrideFields = {};
+  if (typeof obj.rule === "string") out.rule = obj.rule;
+  if (typeof obj.severity === "string") out.severity = obj.severity;
+  if (typeof obj.title === "string") out.title = obj.title;
+  return out;
+}
+
+function normalizeAdd(raw: unknown): AddFields | null {
+  const obj = (raw ?? {}) as Record<string, unknown>;
+  if (
+    typeof obj.title !== "string" ||
+    typeof obj.rule !== "string" ||
+    typeof obj.pattern !== "string"
+  ) {
+    return null;
+  }
+  const severity =
+    typeof obj.severity === "string" ? obj.severity : "medium";
+  const fields: AddFields = {
+    title: obj.title,
+    rule: obj.rule,
+    severity,
+    pattern: obj.pattern,
+    case_insensitive: obj.case_insensitive === true,
+  };
+  if (Array.isArray(obj.content_types)) {
+    fields.content_types = obj.content_types
+      .filter((t): t is string => typeof t === "string");
+  }
+  return fields;
+}
+
+function compilePattern(fields: AddFields): RegExp | null {
+  try {
+    const flags = fields.case_insensitive === true ? "i" : "";
+    return new RegExp(fields.pattern, flags);
+  } catch {
+    // A malformed pattern is logged but doesn't crash evaluation —
+    // users editing rules shouldn't be able to break their own team's
+    // /api/check by saving a bad regex.
+    console.warn("Team rule has invalid regex pattern", fields.pattern);
+    return null;
+  }
+}
+
+function buildIssueMessage(rule: string, matched: string): string {
+  const trimmed = matched.trim();
+  if (trimmed.length === 0) return rule;
+  return `${rule} Matched: "${truncate(trimmed, 80)}".`;
+}
+
+function truncate(s: string, max: number): string {
+  if (s.length <= max) return s;
+  return s.slice(0, max - 1) + "…";
 }
