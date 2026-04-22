@@ -10,6 +10,7 @@ const isProtected = createRouteMatcher([
   "/api/integrations/(.*)",
   "/api/portal(.*)",
   "/api/checkout(.*)",
+  "/api/violations/(.*)",
 ]);
 
 // Routes whose own handler validates a ContentRX Bearer token (cx_...) in
@@ -22,6 +23,7 @@ const acceptsApiKey = createRouteMatcher([
   "/api/team-rules(.*)",
   "/api/team-analytics(.*)",
   "/api/integrations/(.*)",
+  "/api/violations/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

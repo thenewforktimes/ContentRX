@@ -121,9 +121,34 @@ export default async function DashboardPage() {
         <>
           <TeamRulesLink isAdmin={user.teamOwnerUserId === null} />
           <TeamAnalyticsLink />
+          <OverridesLink isAdmin={user.teamOwnerUserId === null} />
         </>
       )}
     </div>
+  );
+}
+
+function OverridesLink({ isAdmin }: { isAdmin: boolean }) {
+  return (
+    <section className="rounded-lg border border-neutral-200 p-5 dark:border-neutral-800">
+      <header className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Override report</h2>
+        <span className="text-xs text-neutral-500">
+          {isAdmin ? "Last 30 days" : "Admin only"}
+        </span>
+      </header>
+      <p className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
+        {isAdmin
+          ? "The rules your team dismisses most. Use this to decide which standards to tune or disable in team rules."
+          : "The team owner can see which rules your team dismisses most. Ask them if you want to discuss tuning."}
+      </p>
+      <Link
+        href="/dashboard/overrides"
+        className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+      >
+        Open override report
+      </Link>
+    </section>
   );
 }
 
