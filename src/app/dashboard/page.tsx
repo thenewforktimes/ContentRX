@@ -9,6 +9,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { and, eq, inArray } from "drizzle-orm";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db";
 import { currentMonth, monthlyQuota, type Plan } from "@/lib/quotas";
@@ -116,8 +117,36 @@ export default async function DashboardPage() {
         }
       />
 
+      {plan === "team" && (
+        <TeamRulesLink isAdmin={user.teamOwnerUserId === null} />
+      )}
+
       <DittoPanel />
     </div>
+  );
+}
+
+function TeamRulesLink({ isAdmin }: { isAdmin: boolean }) {
+  return (
+    <section className="rounded-lg border border-neutral-200 p-5 dark:border-neutral-800">
+      <header className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Team rules</h2>
+        <span className="text-xs text-neutral-500">
+          {isAdmin ? "Admin" : "Read-only"}
+        </span>
+      </header>
+      <p className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
+        {isAdmin
+          ? "Disable standards or add your team's custom rules. Changes apply to every evaluation your team runs."
+          : "See which standards your team owner has disabled or added. Only the owner can make changes."}
+      </p>
+      <Link
+        href="/dashboard/team/rules"
+        className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+      >
+        Open team rules
+      </Link>
+    </section>
   );
 }
 
