@@ -188,6 +188,60 @@ export const dittoSyncs = pgTable("ditto_syncs", {
     .defaultNow(),
 });
 
+// Violation overrides — Session 11 of BUILD_PLAN_v2.
+//
+// Captures every time a user dismisses, accepts-as-review, or marks-as-
+// false-positive a violation. This is the implicit-labeling feedback
+// loop: aggregated override rates surface "rules your team disagrees
+// with" (dashboard) and "rules >25% of all teams override" (admin
+// review queue) — the data behind the human-eval differentiator.
+//
+// Privacy: only the sha256 of the offending text persists. The team_id
+// scopes per-team analytics; the standard_id + moment scope global
+// rollups. No plaintext, ever.
+export const violationOverrides = pgTable(
+  "violation_overrides",
+  {
+    id: cuid(),
+    teamId: text("team_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // Optional pointer to the originating violations row, when the
+    // override comes from a logged violation (plugin dismiss). PR-comment
+    // ignores from CI may not have a single source row, so this stays
+    // nullable.
+    violationId: text("violation_id").references(() => violations.id, {
+      onDelete: "set null",
+    }),
+    standardId: text("standard_id").notNull(),
+    moment: text("moment"),
+    textHash: text("text_hash").notNull(),
+    overrideType: text("override_type", {
+      enum: ["dismiss", "accept_as_review", "mark_false_positive"],
+    }).notNull(),
+    overrideReason: text("override_reason"),
+    source: text("source", {
+      enum: ["plugin", "cli", "action", "dashboard"],
+    }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("violation_overrides_team_std_idx").on(t.teamId, t.standardId),
+    index("violation_overrides_user_created_idx").on(t.userId, t.createdAt),
+    // Aggregation hot path: counts per (team, standard, moment).
+    index("violation_overrides_team_std_moment_idx").on(
+      t.teamId,
+      t.standardId,
+      t.moment,
+    ),
+  ],
+);
+
 export type User = InferSelectModel<typeof users>;
 export type Usage = InferSelectModel<typeof usage>;
 export type Subscription = InferSelectModel<typeof subscriptions>;
@@ -195,3 +249,4 @@ export type TeamMember = InferSelectModel<typeof teamMembers>;
 export type TeamRule = InferSelectModel<typeof teamRules>;
 export type Violation = InferSelectModel<typeof violations>;
 export type DittoSync = InferSelectModel<typeof dittoSyncs>;
+export type ViolationOverride = InferSelectModel<typeof violationOverrides>;

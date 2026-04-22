@@ -1,0 +1,279 @@
+/**
+ * /dashboard/overrides — Team-plan override-rate report.
+ *
+ * Server component, no client-side fetch. Reads aggregate counts from
+ * `violation_overrides` directly via Drizzle so the page renders in one
+ * round-trip with no client JS budget.
+ *
+ * Mirrors the gating pattern in /dashboard/team/analytics:
+ *   - Free/Pro plan → upsell card
+ *   - Team-member (non-admin) → 403 explanation
+ *   - Admin → the actual report
+ *
+ * BUILD_PLAN_v2 Session 11.
+ */
+
+import { auth } from "@clerk/nextjs/server";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getDb, schema } from "@/db";
+
+const RANGE_DAYS = 30;
+
+export default async function OverridesPage() {
+  const { userId: clerkId } = await auth();
+  if (!clerkId) {
+    redirect("/sign-in?redirect_url=/dashboard/overrides");
+  }
+
+  const db = getDb();
+  const [user] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.clerkId, clerkId))
+    .limit(1);
+
+  if (!user) {
+    return (
+      <section className="rounded-lg border border-neutral-200 p-6 text-sm dark:border-neutral-800">
+        <p>We&apos;re finishing setting up your account. Refresh in a moment.</p>
+      </section>
+    );
+  }
+
+  if (user.plan !== "team") {
+    return (
+      <section className="flex flex-col items-start gap-3 rounded-lg border border-neutral-200 p-6 dark:border-neutral-800">
+        <h1 className="text-lg font-semibold">Override report</h1>
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          The override report is a Team-plan feature. It surfaces the
+          rules your team disagrees with most so you can disable or
+          tune them in custom team rules.
+        </p>
+        <Link
+          href="/dashboard"
+          className="rounded-md bg-black px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 dark:bg-white dark:text-black"
+        >
+          Upgrade to Team
+        </Link>
+      </section>
+    );
+  }
+
+  const isAdmin = user.teamOwnerUserId === null;
+  if (!isAdmin) {
+    return (
+      <section className="flex flex-col items-start gap-3 rounded-lg border border-neutral-200 p-6 dark:border-neutral-800">
+        <h1 className="text-lg font-semibold">Override report</h1>
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          Only the team owner can see the override report. Ask your team
+          owner if you want to discuss which rules your team is dismissing
+          most.
+        </p>
+        <Link
+          href="/dashboard"
+          className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+        >
+          Back to dashboard
+        </Link>
+      </section>
+    );
+  }
+
+  const teamId = user.teamOwnerUserId ?? user.id;
+  const since = new Date(Date.now() - RANGE_DAYS * 24 * 60 * 60 * 1000);
+
+  const [{ overrides_count = 0 } = { overrides_count: 0 }] = (await db
+    .select({ overrides_count: sql<number>`count(*)::int` })
+    .from(schema.violationOverrides)
+    .where(
+      and(
+        eq(schema.violationOverrides.teamId, teamId),
+        gte(schema.violationOverrides.createdAt, since),
+      ),
+    )) as Array<{ overrides_count: number }>;
+
+  const [{ violations_count = 0 } = { violations_count: 0 }] = (await db
+    .select({ violations_count: sql<number>`count(*)::int` })
+    .from(schema.violations)
+    .where(
+      and(
+        eq(schema.violations.teamId, teamId),
+        gte(schema.violations.createdAt, since),
+      ),
+    )) as Array<{ violations_count: number }>;
+
+  const overrideRate =
+    violations_count > 0
+      ? Math.round((overrides_count / violations_count) * 1000) / 10
+      : null;
+
+  const topStandards = (await db
+    .select({
+      standard_id: schema.violationOverrides.standardId,
+      moment: schema.violationOverrides.moment,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(schema.violationOverrides)
+    .where(
+      and(
+        eq(schema.violationOverrides.teamId, teamId),
+        gte(schema.violationOverrides.createdAt, since),
+      ),
+    )
+    .groupBy(
+      schema.violationOverrides.standardId,
+      schema.violationOverrides.moment,
+    )
+    .orderBy(desc(sql`count(*)`))
+    .limit(10)) as Array<{
+    standard_id: string;
+    moment: string | null;
+    count: number;
+  }>;
+
+  const byType = (await db
+    .select({
+      override_type: schema.violationOverrides.overrideType,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(schema.violationOverrides)
+    .where(
+      and(
+        eq(schema.violationOverrides.teamId, teamId),
+        gte(schema.violationOverrides.createdAt, since),
+      ),
+    )
+    .groupBy(schema.violationOverrides.overrideType)
+    .orderBy(desc(sql`count(*)`))) as Array<{
+    override_type: string;
+    count: number;
+  }>;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <header>
+        <p className="text-xs font-mono uppercase tracking-widest text-neutral-500">
+          Last {RANGE_DAYS} days
+        </p>
+        <h1 className="mt-2 text-2xl font-semibold">Override report</h1>
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+          The rules your team dismisses most. Use this to decide which
+          standards to disable or override in your{" "}
+          <Link
+            href="/dashboard/team/rules"
+            className="underline underline-offset-2"
+          >
+            team rules
+          </Link>
+          .
+        </p>
+      </header>
+
+      <section className="grid grid-cols-3 gap-4">
+        <Stat label="Overrides" value={overrides_count.toLocaleString()} />
+        <Stat
+          label="Violations in window"
+          value={violations_count.toLocaleString()}
+        />
+        <Stat
+          label="Override rate"
+          value={
+            overrideRate === null
+              ? "—"
+              : `${overrideRate.toLocaleString()}%`
+          }
+          tone={
+            overrideRate !== null && overrideRate > 25 ? "warn" : "default"
+          }
+        />
+      </section>
+
+      {overrides_count === 0 ? (
+        <section className="rounded-lg border border-dashed border-neutral-300 p-6 text-sm text-neutral-500 dark:border-neutral-700">
+          No overrides yet. When team members dismiss a violation in the
+          Figma plugin or comment{" "}
+          <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-xs dark:bg-neutral-900">
+            /contentrx ignore &lt;STD&gt;
+          </code>{" "}
+          on a PR, the dismissal lands here so you can decide whether to
+          tune the rule.
+        </section>
+      ) : (
+        <>
+          <section>
+            <h2 className="mb-3 text-sm font-semibold">
+              Most-overridden standards
+            </h2>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 text-left text-xs uppercase tracking-wider text-neutral-500 dark:border-neutral-800">
+                  <th className="py-2">Standard</th>
+                  <th className="py-2">Moment</th>
+                  <th className="py-2 text-right">Overrides</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topStandards.map((s) => (
+                  <tr
+                    key={`${s.standard_id}|${s.moment ?? ""}`}
+                    className="border-b border-neutral-100 dark:border-neutral-900"
+                  >
+                    <td className="py-2 font-mono text-xs">{s.standard_id}</td>
+                    <td className="py-2 text-xs text-neutral-600 dark:text-neutral-400">
+                      {s.moment ?? "—"}
+                    </td>
+                    <td className="py-2 text-right">
+                      {s.count.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          <section>
+            <h2 className="mb-3 text-sm font-semibold">By dismissal type</h2>
+            <ul className="flex flex-col gap-2">
+              {byType.map((t) => (
+                <li
+                  key={t.override_type}
+                  className="flex items-center justify-between rounded-md border border-neutral-200 p-3 text-sm dark:border-neutral-800"
+                >
+                  <span className="font-mono text-xs">{t.override_type}</span>
+                  <span className="font-medium">
+                    {t.count.toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "warn";
+}) {
+  const valueColor =
+    tone === "warn"
+      ? "text-amber-700 dark:text-amber-300"
+      : "text-neutral-900 dark:text-neutral-100";
+  return (
+    <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+      <p className="text-xs uppercase tracking-wider text-neutral-500">
+        {label}
+      </p>
+      <p className={`mt-1 text-2xl font-semibold ${valueColor}`}>{value}</p>
+    </div>
+  );
+}

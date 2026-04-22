@@ -364,6 +364,33 @@
     color: var(--figma-color-text, #333);
   }
 
+  /* v2 Session 11 — per-violation Dismiss button. Records an override
+     so the team's override-rate analytics knows about it. */
+  .btn-dismiss {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--figma-color-border, #ddd);
+    background: transparent;
+    color: var(--figma-color-text-secondary, #888);
+    cursor: pointer;
+  }
+  .btn-dismiss:hover {
+    background: var(--figma-color-bg-hover, #f0f0f0);
+    color: var(--figma-color-text, #333);
+  }
+  .btn-dismiss:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .btn-dismiss.dismissed {
+    color: var(--figma-color-text-success, #1a7f37);
+    border-color: var(--figma-color-text-success, #1a7f37);
+  }
+
   /* ------------------------------------------------------------------ */
   /* Progress / scanning screen                                          */
   /* ------------------------------------------------------------------ */
@@ -2782,6 +2809,45 @@ function renderBatchResults(results) {
     });
   });
 
+  // Attach dismiss-violation listeners (BUILD_PLAN_v2 Session 11).
+  // POSTs to /api/violations/override so the team's override-rate
+  // analytics records "this team dismissed standard X on this string."
+  area.querySelectorAll(".btn-dismiss").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (btn.disabled || btn.classList.contains("dismissed")) return;
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = "Dismissing…";
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/violations/override`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${cxToken}`,
+          },
+          body: JSON.stringify({
+            standard_id: btn.dataset.standardId,
+            text: btn.dataset.text || "",
+            moment: btn.dataset.moment || undefined,
+            override_type: "dismiss",
+            source: "plugin",
+          }),
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        btn.classList.add("dismissed");
+        btn.textContent = "Dismissed ✓";
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = original;
+        console.warn("dismiss failed:", err);
+        // No alert — silent failure is fine for an opt-in feedback signal.
+      }
+    });
+  });
+
   // Attach export button listener (dev mode only)
   const exportBtn = document.getElementById("btn-export-results");
   if (exportBtn) {
@@ -2962,11 +3028,21 @@ function renderNodeCard(result) {
       v.standard_id, v.suggestion || "", result.text || "",
     );
 
+    // Dismiss button — POSTs to /api/violations/override so the team's
+    // override-rate report (BUILD_PLAN_v2 Session 11) tracks "rules
+    // your team actually disagrees with."
     html += `<div class="violation-card" data-standard-id="${escapeHtml(v.standard_id)}">
       <div class="standard-id">${escapeHtml(label)} ${sourceBadge}</div>
       <div class="issue">${escapeHtml(v.issue)}</div>
       ${enrichedSuggestion ? `<div class="suggestion-label">Suggestion</div>
       <div class="suggestion">${escapeHtml(enrichedSuggestion)}</div>` : ""}
+      <button class="btn-dismiss" type="button"
+              data-standard-id="${escapeHtml(v.standard_id)}"
+              data-text="${escapeHtml(result.text || "")}"
+              data-moment="${escapeHtml(result.moment || "")}"
+              aria-label="Dismiss this violation and tell ContentRX it doesn't apply">
+        Dismiss
+      </button>
     </div>`;
   }
 
