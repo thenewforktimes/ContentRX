@@ -3,6 +3,9 @@ import { Webhook } from "svix";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { getRedis } from "@/lib/redis";
+import { trackEvent } from "@/lib/analytics";
+import { appUrl, sendEmail } from "@/lib/email";
+import { WelcomeEmail } from "@/emails/welcome";
 
 const DEDUPE_PREFIX = "clerk_event:";
 const DEDUPE_TTL_SECONDS = 24 * 60 * 60;
@@ -95,6 +98,28 @@ export async function POST(req: Request) {
         plan: "free",
       })
       .onConflictDoNothing({ target: schema.users.clerkId });
+
+    // Side-effects: welcome email + signup analytics. Both are
+    // best-effort — a failure here doesn't fail the webhook (Clerk would
+    // retry the user.created event and re-send the welcome on every
+    // retry, which is worse than missing one).
+    const base = appUrl();
+    await Promise.allSettled([
+      sendEmail({
+        to: email,
+        subject: "Welcome to ContentRX",
+        react: WelcomeEmail({
+          appUrl: base,
+          pluginUrl: "https://www.figma.com/community/plugin/contentrx",
+        }),
+      }),
+      trackEvent("signup", {
+        userId: evt.data.id,
+        forwardedFor: hdrs.get("x-forwarded-for"),
+        props: { plan: "free" },
+      }),
+    ]);
+
     return Response.json({ ok: true });
   }
 

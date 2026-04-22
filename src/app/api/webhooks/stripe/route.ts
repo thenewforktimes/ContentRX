@@ -22,6 +22,9 @@ import { and, eq, not } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getDb, schema } from "@/db";
+import { trackEvent } from "@/lib/analytics";
+import { appUrl, sendEmail } from "@/lib/email";
+import { monthlyQuota } from "@/lib/quotas";
 import { getRedis } from "@/lib/redis";
 import {
   getStripe,
@@ -29,6 +32,7 @@ import {
   planFromPriceId,
   type PaidPlan,
 } from "@/lib/stripe";
+import { SubscriptionConfirmationEmail } from "@/emails/subscription-confirmation";
 
 const DEDUPE_PREFIX = "stripe_event:";
 const DEDUPE_TTL_SECONDS = 24 * 60 * 60;
@@ -171,6 +175,41 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
   await upsertSubscription({ userId, subscription, customerId: customerId ?? null });
+
+  // Welcome to paid: confirmation email + upgrade analytics. Best-effort —
+  // a Resend or Plausible outage shouldn't 500 the webhook.
+  try {
+    const [paidUser] = await getDb()
+      .select({ email: schema.users.email, plan: schema.users.plan })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+    if (paidUser?.email && (paidUser.plan === "pro" || paidUser.plan === "team")) {
+      const seats = subscription.items.data[0]?.quantity ?? 1;
+      const quota = monthlyQuota(paidUser.plan, seats);
+      await Promise.allSettled([
+        sendEmail({
+          to: paidUser.email,
+          subject:
+            paidUser.plan === "team"
+              ? "Welcome to ContentRX Team"
+              : "Welcome to ContentRX Pro",
+          react: SubscriptionConfirmationEmail({
+            appUrl: appUrl(),
+            plan: paidUser.plan,
+            seats,
+            quota,
+          }),
+        }),
+        trackEvent("upgrade", {
+          userId,
+          props: { plan: paidUser.plan, seats },
+        }),
+      ]);
+    }
+  } catch (err) {
+    console.warn("post-checkout email/analytics failed", err);
+  }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
