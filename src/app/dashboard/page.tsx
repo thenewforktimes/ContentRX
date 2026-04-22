@@ -8,11 +8,12 @@
  */
 
 import { auth } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db";
 import { currentMonth, monthlyQuota, type Plan } from "@/lib/quotas";
 import { ApiKeyPanel } from "./api-key-panel";
+import { SubscriptionPanel } from "./subscription-panel";
 
 function nextMonthReset(): string {
   const now = new Date();
@@ -53,6 +54,7 @@ export default async function DashboardPage() {
   const quota = monthlyQuota(plan, seats);
   const used = await loadCurrentUsage(user.id);
   const usedPct = quota > 0 ? Math.min(100, Math.round((used / quota) * 100)) : 0;
+  const activeSub = await loadActiveSubscription(user.id, user.teamOwnerUserId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -96,7 +98,16 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      <SubscriptionPanel plan={plan} />
+      <SubscriptionPanel
+        plan={plan}
+        seats={seats}
+        currentPeriodEnd={
+          activeSub?.currentPeriodEnd
+            ? activeSub.currentPeriodEnd.toISOString()
+            : null
+        }
+        subscriptionStatus={activeSub?.status ?? null}
+      />
 
       <ApiKeyPanel
         initialPrefix={user.apiKeyPrefix}
@@ -107,35 +118,6 @@ export default async function DashboardPage() {
 
       <DittoPanel />
     </div>
-  );
-}
-
-function SubscriptionPanel({ plan }: { plan: Plan }) {
-  const label = plan === "free" ? "Upgrade plan" : "Manage subscription";
-  const copy =
-    plan === "free"
-      ? "You're on the Free plan (25 scans / month). Upgrade to Pro for 5,000 scans."
-      : "Billing is handled by Stripe. The Customer Portal lets you change plans, update payment methods, or cancel.";
-  return (
-    <section className="rounded-lg border border-neutral-200 p-5 dark:border-neutral-800">
-      <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Subscription</h2>
-        <span className="text-xs text-neutral-500">
-          Billing wiring arrives in the Stripe session
-        </span>
-      </header>
-      <p className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
-        {copy}
-      </p>
-      <button
-        type="button"
-        disabled
-        className="rounded-md bg-black px-3 py-1.5 text-xs font-medium text-white opacity-50 dark:bg-white dark:text-black"
-        title="Available after the Stripe integration lands"
-      >
-        {label}
-      </button>
-    </section>
   );
 }
 
@@ -175,6 +157,32 @@ async function loadSeats(
     )
     .limit(1);
   return sub?.seats ?? 1;
+}
+
+async function loadActiveSubscription(
+  userId: string,
+  teamOwnerUserId: string | null,
+): Promise<{
+  status: string;
+  currentPeriodEnd: Date | null;
+} | null> {
+  // For team members, the billing status lives on the team owner's row.
+  const ownerId = teamOwnerUserId ?? userId;
+  const db = getDb();
+  const [row] = await db
+    .select({
+      status: schema.subscriptions.status,
+      currentPeriodEnd: schema.subscriptions.currentPeriodEnd,
+    })
+    .from(schema.subscriptions)
+    .where(
+      and(
+        eq(schema.subscriptions.userId, ownerId),
+        inArray(schema.subscriptions.status, ["active", "trialing", "past_due"]),
+      ),
+    )
+    .limit(1);
+  return row ?? null;
 }
 
 async function loadCurrentUsage(userId: string): Promise<number> {
