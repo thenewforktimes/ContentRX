@@ -187,9 +187,11 @@ to fix immediately. Track these so they don't get forgotten.
    revisit when the team invite flow (Session 9) makes email-based
    lookup matter.
 
-6. **No unique constraint on `subscriptions.userId`.** Historical rows
-   are legitimate. Proper fix is a partial unique index on
-   `(user_id) WHERE status = 'active'`. **Target:** Session 8.
+6. ~~No unique constraint on `subscriptions.userId`.~~ Resolved in
+   Session 8: partial unique index `subscriptions_user_active_idx` on
+   `(user_id) WHERE status = 'active'`. Historical canceled rows stay.
+   `stripe_sub_id` also got a uniqueness constraint so webhook upserts
+   can target it deterministically.
 
 7. **`check_batch` has no aggregate size ceiling** (engine-side).
    Cost DoS, not a security breach. **Target:** before CLI ships

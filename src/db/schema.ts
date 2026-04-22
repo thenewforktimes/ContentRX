@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -35,6 +36,11 @@ export const users = pgTable("users", {
   // by design — collisions are vanishingly unlikely but not disallowed.
   apiKeyPrefix: text("api_key_prefix"),
   apiKeyCreatedAt: timestamp("api_key_created_at", { withTimezone: true }),
+  // Stripe Customer ID. Set on first successful checkout and reused for
+  // every subsequent subscription + Customer Portal session. Persists even
+  // after a cancellation so the same customer lineage continues if the
+  // user re-subscribes later.
+  stripeCustomerId: text("stripe_customer_id").unique(),
   dittoApiKeyEncrypted: text("ditto_api_key_encrypted"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -57,18 +63,29 @@ export const usage = pgTable(
   (t) => [uniqueIndex("usage_user_month_idx").on(t.userId, t.month)],
 );
 
-export const subscriptions = pgTable("subscriptions", {
-  id: cuid(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  stripeCustomerId: text("stripe_customer_id").notNull(),
-  stripeSubId: text("stripe_sub_id").notNull(),
-  status: text("status").notNull(),
-  plan: text("plan", { enum: ["pro", "team"] }).notNull(),
-  seats: integer("seats").notNull().default(1),
-  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
-});
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: cuid(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    stripeCustomerId: text("stripe_customer_id").notNull(),
+    stripeSubId: text("stripe_sub_id").notNull().unique(),
+    status: text("status").notNull(),
+    plan: text("plan", { enum: ["pro", "team"] }).notNull(),
+    seats: integer("seats").notNull().default(1),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  },
+  (t) => [
+    // Exactly one active subscription per user. Historical rows with
+    // status="canceled" / "incomplete_expired" are legitimate and allowed.
+    // Closes CLAUDE.md known limitation #6.
+    uniqueIndex("subscriptions_user_active_idx")
+      .on(t.userId)
+      .where(sql`status = 'active'`),
+  ],
+);
 
 export const teamMembers = pgTable(
   "team_members",
