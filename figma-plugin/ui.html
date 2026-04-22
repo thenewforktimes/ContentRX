@@ -501,6 +501,45 @@
     transition: width 0.3s;
   }
   .quota-indicator.exhausted .quota-bar-fill { background: #dc2626; }
+
+  /* Quota banner — shown above the scan buttons when approaching or at limit */
+  .quota-banner {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.45;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .quota-banner .quota-banner-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .quota-banner .quota-banner-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .quota-banner .btn {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .quota-banner.warning {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    color: #78350f;
+  }
+  .quota-banner.exhausted {
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #7f1d1d;
+  }
+  .quota-banner.exhausted .btn-primary {
+    background: #dc2626;
+  }
 </style>
 </head>
 <body>
@@ -537,6 +576,8 @@
 <div id="screen-main" class="screen">
   <h2>Content standards checker</h2>
   <p>Scan text layers against 47 content standards. Mechanical issues are caught instantly; nuanced rules are evaluated by AI.</p>
+
+  <div id="quota-banner" class="quota-banner" style="display:none;"></div>
 
   <div class="btn-row">
     <button class="btn btn-primary" id="btn-scan-page">Scan page</button>
@@ -3207,7 +3248,7 @@ async function executeBatchScan(nodes) {
     } else if (outcome.terminated === "cancelled") {
       // No-op — cancel handler already rendered a message.
     }
-    renderQuotaIndicator();
+    applyQuotaUI();
   } catch (err) {
     showScreen("main");
     if (err.name === "AbortError") {
@@ -3220,8 +3261,97 @@ async function executeBatchScan(nodes) {
 
 
 // ====================================================================
-// Quota indicator
+// Quota indicator + banner + hard block
+//
+// Three states, decided entirely from the server's quota response:
+//   - ok        → small counter below results, nothing above
+//   - warning   → amber banner above scan buttons; buttons still work
+//   - exhausted → red banner with Upgrade CTA; scan buttons disabled
+//
+// We never do client-side quota math — the server is the source of truth
+// for `used` / `quota` / `remaining`. When we haven't scanned yet this
+// session and latestUsage is null, we leave the UI in its default
+// non-gated state; the first /api/check response will drive state.
 // ====================================================================
+const UPGRADE_URL = `${API_BASE_URL}/dashboard?upgrade=pro`;
+
+function quotaState(usage) {
+  if (!usage) return "unknown";
+  if (usage.remaining === 0) return "exhausted";
+  const quota = usage.quota || 0;
+  const threshold =
+    usage.plan === "free" ? 5 : Math.max(10, Math.round(quota * 0.1));
+  if (quota > 0 && usage.remaining <= threshold) return "warning";
+  return "ok";
+}
+
+function applyQuotaUI() {
+  const state = quotaState(latestUsage);
+  renderQuotaBanner(state);
+  renderQuotaIndicator();
+  setScanButtonsEnabled(state !== "exhausted");
+}
+
+function setScanButtonsEnabled(enabled) {
+  const scanBtn = document.getElementById("btn-scan-page");
+  const selBtn = document.getElementById("btn-check-selection");
+  if (scanBtn) scanBtn.disabled = !enabled;
+  if (selBtn) selBtn.disabled = !enabled;
+}
+
+function renderQuotaBanner(state) {
+  const el = document.getElementById("quota-banner");
+  if (!el) return;
+  if (state === "ok" || state === "unknown") {
+    el.style.display = "none";
+    el.classList.remove("warning", "exhausted");
+    el.innerHTML = "";
+    return;
+  }
+
+  const usage = latestUsage || {};
+  const quota = usage.quota || 0;
+  const remaining = Math.max(0, usage.remaining ?? 0);
+
+  let title, body, cta;
+  if (state === "warning") {
+    title = "Approaching your monthly limit";
+    body =
+      usage.plan === "free"
+        ? `${remaining} scan${remaining === 1 ? "" : "s"} left this month. Upgrade to Pro for 5,000 scans.`
+        : `${remaining} scan${remaining === 1 ? "" : "s"} left this month.`;
+    cta = usage.plan === "free" ? "Upgrade" : "";
+  } else {
+    title = "You've hit your monthly limit";
+    body =
+      usage.plan === "free"
+        ? `Used all ${quota} free scans. Upgrade to keep going, or wait for the next reset.`
+        : `Used all ${quota} scans. Wait for the reset or manage your plan.`;
+    cta = "Upgrade";
+  }
+
+  el.classList.toggle("warning", state === "warning");
+  el.classList.toggle("exhausted", state === "exhausted");
+  el.innerHTML = `
+    <div class="quota-banner-body">
+      <div class="quota-banner-title">${escapeHtml(title)}</div>
+      <div>${escapeHtml(body)}</div>
+    </div>
+    ${cta ? `<button class="btn btn-primary" id="btn-quota-upgrade">${escapeHtml(cta)}</button>` : ""}
+  `;
+  el.style.display = "flex";
+
+  const upgradeBtn = document.getElementById("btn-quota-upgrade");
+  if (upgradeBtn) {
+    upgradeBtn.addEventListener("click", () => {
+      parent.postMessage(
+        { pluginMessage: { type: "open-external", url: UPGRADE_URL } },
+        "*",
+      );
+    });
+  }
+}
+
 function renderQuotaIndicator() {
   const el = document.getElementById("quota-indicator");
   if (!el) return;
@@ -3251,6 +3381,13 @@ function hideQuotaIndicator() {
   if (el) el.style.display = "none";
   const settingsEl = document.getElementById("settings-quota");
   if (settingsEl) settingsEl.style.display = "none";
+  const banner = document.getElementById("quota-banner");
+  if (banner) {
+    banner.style.display = "none";
+    banner.classList.remove("warning", "exhausted");
+    banner.innerHTML = "";
+  }
+  setScanButtonsEnabled(true);
 }
 
 function buildQuotaHTML(usage) {
@@ -3265,6 +3402,9 @@ function buildQuotaHTML(usage) {
 }
 
 function renderQuotaExhaustedBanner(info) {
+  // In-results banner — echo of the above-results quota-banner so users
+  // who scroll into the results area still see "you hit the limit"
+  // context beside the partial results from the aborted scan.
   const area = document.getElementById("results-area");
   const quota = info && info.details && info.details.quota;
   const message = quota
