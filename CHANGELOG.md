@@ -10,6 +10,30 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
+### Unreleased — 2026-04-23 (human-eval build plan Sessions 1 + 2 + 3 + 4)
+
+Session 4 — structured override reasons + session aggregation:
+
+- `violation_overrides` gains two columns: `override_reason_code`
+  (5-item enum) and `session_id` (free-form text). Both nullable;
+  `npm run db:push` to apply.
+- `POST /api/violations/override` accepts both new fields.
+- New helper `src/lib/override-reasons.ts` codifies the five codes
+  (`not_applicable_here`, `standard_too_strict`, `fix_is_worse`,
+  `shipping_anyway`, `confusing_need_more_context`) plus each code's
+  *typical* (not mechanical) mapping to Robo's `triage_category`
+  vocabulary.
+- New helper `src/lib/session-aggregation.ts` collapses three or more
+  same-standard overrides from a single session into a
+  `standard_pushback` review-queue entry. Rows without a `session_id`
+  fall back to a `(user_id, 10-minute-window)` pseudo-session.
+- Figma plugin: after Disagree or Ship-anyway the card reveals a
+  reason `<select>`; submission waits for a selection. Agree still
+  submits immediately. Each scan now generates a `currentSessionId`
+  and sends it on every override.
+- Dashboard `/dashboard/overrides` adds a "Standard pushbacks" panel
+  above the most-overridden list.
+
 ### Unreleased — 2026-04-23 (human-eval build plan Sessions 1 + 2 + 3)
 
 Session 3 — in-product signal instrumentation:

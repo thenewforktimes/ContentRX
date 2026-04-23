@@ -22,6 +22,7 @@ import {
   summarizeQuadrants,
   type BehaviorQuadrant,
 } from "@/lib/behavior-quadrant";
+import { aggregateOverrides } from "@/lib/session-aggregation";
 
 const RANGE_DAYS = 30;
 
@@ -179,6 +180,33 @@ export default async function OverridesPage() {
 
   const quadrantCounts = summarizeQuadrants(quadrantRows);
 
+  // Session 4 — pull per-row ids + session_id so we can collapse
+  // same-standard-same-session clusters into standard_pushback rows
+  // in the review queue.
+  const recentRows = (await db
+    .select({
+      id: schema.violationOverrides.id,
+      userId: schema.violationOverrides.userId,
+      standardId: schema.violationOverrides.standardId,
+      sessionId: schema.violationOverrides.sessionId,
+      createdAt: schema.violationOverrides.createdAt,
+    })
+    .from(schema.violationOverrides)
+    .where(
+      and(
+        eq(schema.violationOverrides.teamId, teamId),
+        gte(schema.violationOverrides.createdAt, since),
+      ),
+    )) as Array<{
+    id: string;
+    userId: string;
+    standardId: string;
+    sessionId: string | null;
+    createdAt: Date;
+  }>;
+
+  const { pushbacks } = aggregateOverrides(recentRows);
+
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -230,6 +258,41 @@ export default async function OverridesPage() {
         </section>
       ) : (
         <>
+          {pushbacks.length > 0 && (
+            <section>
+              <h2 className="mb-1 text-sm font-semibold">Standard pushbacks</h2>
+              <p className="mb-3 text-xs text-neutral-600 dark:text-neutral-400">
+                Clusters of 3+ overrides on the same standard inside a
+                single session (scan, CI run, dashboard session).
+                Strongest signal that a rule needs a refinement-log look.
+              </p>
+              <ul className="flex flex-col gap-2">
+                {pushbacks.map((p) => (
+                  <li
+                    key={p.key}
+                    className="flex items-start justify-between gap-4 rounded-md border border-amber-300 bg-amber-50/60 p-3 text-sm dark:border-amber-900 dark:bg-amber-950/40"
+                  >
+                    <div>
+                      <p className="font-mono text-xs">{p.standardId}</p>
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                        Session{" "}
+                        <code className="font-mono">
+                          {p.sessionKey.startsWith("pseudo:")
+                            ? "(inferred)"
+                            : p.sessionKey}
+                        </code>{" "}
+                        · {p.firstAt.toLocaleString()}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-amber-200 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-800 dark:text-amber-100">
+                      {p.count}× pushback
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <section>
             <h2 className="mb-3 text-sm font-semibold">
               Most-overridden standards

@@ -279,6 +279,27 @@ export const violationOverrides = pgTable(
     // review — derivable from the hashes, not stored.
     suggestedTextHash: text("suggested_text_hash"),
     appliedTextHash: text("applied_text_hash"),
+    // Human-eval build plan Session 4 — structured reason + session.
+    //
+    // `overrideReasonCode` is the five-item user-facing vocabulary (see
+    // src/lib/override-reasons.ts). Distinct from Robo's triage_category
+    // — the two feed different loops. The existing free-text
+    // `overrideReason` column stays for optional single-line detail.
+    overrideReasonCode: text("override_reason_code", {
+      enum: [
+        "not_applicable_here",
+        "standard_too_strict",
+        "fix_is_worse",
+        "shipping_anyway",
+        "confusing_need_more_context",
+      ],
+    }),
+    // `sessionId` groups overrides from the same Figma scan, CI run, or
+    // web session. Three+ overrides on the same standard inside one
+    // session collapse to a single `standard_pushback` row in the
+    // review queue (dashboard + Session 8). Nullable — legacy rows
+    // without a session fall back to user+time-window grouping.
+    sessionId: text("session_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -296,6 +317,9 @@ export const violationOverrides = pgTable(
     // find all overrides pointing at it to apply ON DELETE SET NULL —
     // without this, that's a table scan.
     index("violation_overrides_violation_idx").on(t.violationId),
+    // Session aggregation hot path (Session 4): group-by
+    // (session_id, standard_id) to collapse into standard_pushback.
+    index("violation_overrides_session_std_idx").on(t.sessionId, t.standardId),
   ],
 ).enableRLS();
 

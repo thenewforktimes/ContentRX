@@ -220,6 +220,37 @@ The dashboard `/dashboard/overrides` surfaces the quadrant tally per team over a
 
 Surface coverage as of Session 3: the Figma plugin is fully wired (three-button stance row + collapsible rationale + timing). CLI and MCP remain queued for follow-up sessions — they're non-interactive surfaces that need separate interaction design before they can submit overrides.
 
+### Two-vocabulary pattern for overrides (v1.5.0, human-eval build plan Session 4)
+
+User override reasons and Robo's `triage_category` are two distinct vocabularies that feed two distinct loops. They are reconciled case-by-case during review, not translated mechanically.
+
+**User reason codes** (stored in `violation_overrides.override_reason_code`, defined in `src/lib/override-reasons.ts`):
+
+| Code | User-facing label | Typical `triage_category` on review |
+|---|---|---|
+| `not_applicable_here` | Not applicable here | `context_gap` |
+| `standard_too_strict` | Too strict for this case | `missing_standard` |
+| `fix_is_worse` | Suggested fix is worse | `misclassification` |
+| `shipping_anyway` | I agree — shipping anyway | `correct` |
+| `confusing_need_more_context` | Confusing, need more context | `missing_standard` |
+
+**Robo's `triage_category`** (from `EVAL_PROTOCOL.md`): `correct`, `misclassification`, `hallucination`, `missing_standard`, `context_gap`.
+
+The "typical" column is a prior, not a promise. A user's `not_applicable_here` usually becomes `context_gap` on Robo's review, but sometimes becomes `misclassification` when the situation detector was right and the user misread the flagged string. The reconciliation is Session 8's job; Session 4 just captures the raw user signal.
+
+**Why two vocabularies?** User codes inform UX, weighting, and which items escalate to Robo's queue. Triage categories drive architectural responses (classifier work, standards library gap, audience/moment gating). Collapsing them into one vocabulary would force users to think like engine authors — and would deny Robo the room to decide that a user's "not applicable" actually isn't a gap at all.
+
+### Session aggregation (v1.5.0, Session 4)
+
+Three or more overrides on the same standard inside one session collapse to a single `standard_pushback` entry in the review queue. Threshold is the plan-spec default (`DEFAULT_PUSHBACK_THRESHOLD = 3`). Individual rows are preserved for drill-down; only the queue rendering changes.
+
+**Session boundaries:**
+- **Figma plugin** — one session per scan (`fig-<ts>-<rand>`, regenerated in `renderBatchResults`).
+- **CLI / CI / dashboard** — clients supply their own `session_id` per run or per tab. Spec-compliant but not yet wired.
+- **Fallback** — rows without a `session_id` pseudo-session by `(user_id, 10-minute-window)` so legacy traffic still aggregates sensibly.
+
+Aggregation is pure-logic, done on read (see `src/lib/session-aggregation.ts`) — no extra table, no write-path branching. Grouping key is `${sessionKey}|${standardId}`.
+
 ## Two entry points, two use cases
 
 `check(text, content_type, audience)` — full 5-stage pipeline. Used in production, the CLI, and the Figma plugin. Content-type-aware filtering and audience-aware gating reduce false positives. Audience defaults to `product_ui`.
