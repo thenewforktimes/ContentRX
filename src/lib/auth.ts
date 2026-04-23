@@ -102,7 +102,9 @@ async function enrichWithSeats(
   };
 }
 
-function parseBearerToken(header: string | null): string | null {
+// Exported for unit testing; not intended for use by other modules
+// (resolveAuth is the public entry point).
+export function parseBearerToken(header: string | null): string | null {
   if (!header) return null;
   const match = header.match(/^Bearer\s+(.+)$/i);
   if (!match) return null;

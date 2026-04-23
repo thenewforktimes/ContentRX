@@ -229,6 +229,7 @@ to fix immediately. Track these so they don't get forgotten.
 ## Before every commit
 
 - `python3 -m pytest tests/` — engine tests must stay green
+- `npm test` — web-app vitest suite (pure-logic tests for lib helpers); must stay green
 - `npm run lint` — app linter
 - `npm run build` — catches typecheck + Next.js build errors together
 - Run through the acceptance criteria from the current BUILD_PLAN_v2
