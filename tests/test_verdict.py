@@ -12,7 +12,14 @@ from content_checker.models import (
     CONFIDENCE_THRESHOLD,
     DEFAULT_CONFIDENCE_LLM,
     DEFAULT_CONFIDENCE_PREPROCESSOR,
+    REVIEW_LOW_CONFIDENCE,
+    REVIEW_NOVEL_PATTERN,
+    REVIEW_OUT_OF_DISTRIBUTION,
+    REVIEW_REASON_PRECEDENCE,
+    REVIEW_SITUATION_AMBIGUITY,
+    REVIEW_STANDARDS_CONFLICT,
     SCHEMA_VERSION,
+    VALID_REVIEW_REASONS,
     VALID_VERDICTS,
     VERDICT_ERROR,
     VERDICT_PASS,
@@ -24,11 +31,11 @@ from content_checker.models import (
 
 
 class TestSchemaVersionBump:
-    def test_schema_version_is_1_2_0(self):
-        # Human-eval build plan Session 1 bump — additive (Violation
-        # gained related_standards + ambiguity_flag + rule_version;
-        # CheckResult gained rationale_chain).
-        assert SCHEMA_VERSION == "1.2.0"
+    def test_schema_version_is_1_3_0(self):
+        # Human-eval build plan Session 2 bump — additive (four new
+        # review_reason enum variants: standards_conflict,
+        # situation_ambiguity, out_of_distribution, novel_pattern).
+        assert SCHEMA_VERSION == "1.3.0"
 
 
 class TestVerdictConstants:
@@ -133,3 +140,171 @@ class TestViolationConfidence:
         d = v.to_dict()
         assert d["confidence"] == 1.0
         assert d["source"] == "deterministic"
+
+
+def _high_conf_violation() -> Violation:
+    return Violation(
+        standard_id="CLR-01", rule="r", issue="i", suggestion="s",
+        source="llm", confidence=0.9,
+    )
+
+
+class TestReviewReasonVocabulary:
+    """Human-eval build plan Session 2 — typed subtypes."""
+
+    def test_every_constant_is_in_frozenset(self):
+        assert REVIEW_LOW_CONFIDENCE in VALID_REVIEW_REASONS
+        assert REVIEW_STANDARDS_CONFLICT in VALID_REVIEW_REASONS
+        assert REVIEW_SITUATION_AMBIGUITY in VALID_REVIEW_REASONS
+        assert REVIEW_OUT_OF_DISTRIBUTION in VALID_REVIEW_REASONS
+        assert REVIEW_NOVEL_PATTERN in VALID_REVIEW_REASONS
+
+    def test_frozenset_has_exactly_five(self):
+        assert len(VALID_REVIEW_REASONS) == 5
+
+    def test_precedence_tuple_covers_every_reason(self):
+        assert set(REVIEW_REASON_PRECEDENCE) == VALID_REVIEW_REASONS
+
+    def test_precedence_puts_standards_conflict_first(self):
+        # standards_conflict is the richest taxonomic signal — it
+        # should win over any co-firing subtype.
+        assert REVIEW_REASON_PRECEDENCE[0] == REVIEW_STANDARDS_CONFLICT
+
+    def test_precedence_puts_low_confidence_last(self):
+        # low_confidence is the baseline; a more specific signal
+        # should always shadow it.
+        assert REVIEW_REASON_PRECEDENCE[-1] == REVIEW_LOW_CONFIDENCE
+
+
+class TestDeriveVerdictSubtypes:
+    """derive_verdict emits the right typed subtype per signal."""
+
+    def test_standards_conflict_emits_when_validate_rejected(self):
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[_high_conf_violation()],
+            scan_validate_disagreement=True,
+        )
+        assert verdict == VERDICT_REVIEW_RECOMMENDED
+        assert reason == REVIEW_STANDARDS_CONFLICT
+
+    def test_situation_ambiguity_emits_when_moment_uncertain(self):
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[_high_conf_violation()],
+            moment_ambiguous=True,
+        )
+        assert verdict == VERDICT_REVIEW_RECOMMENDED
+        assert reason == REVIEW_SITUATION_AMBIGUITY
+
+    def test_out_of_distribution_emits_when_signal_fires(self):
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[_high_conf_violation()],
+            out_of_distribution=True,
+        )
+        assert verdict == VERDICT_REVIEW_RECOMMENDED
+        assert reason == REVIEW_OUT_OF_DISTRIBUTION
+
+    def test_novel_pattern_emits_when_signal_fires(self):
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[_high_conf_violation()],
+            novel_pattern=True,
+        )
+        assert verdict == VERDICT_REVIEW_RECOMMENDED
+        assert reason == REVIEW_NOVEL_PATTERN
+
+    def test_low_confidence_still_wins_over_high_confidence_only_path(self):
+        """Baseline — low confidence alone emits the low_confidence subtype."""
+        v = Violation(
+            standard_id="X", rule="", issue="", suggestion="",
+            source="llm", confidence=0.5,
+        )
+        verdict, reason = derive_verdict(
+            overall_verdict="fail", violations=[v],
+        )
+        assert verdict == VERDICT_REVIEW_RECOMMENDED
+        assert reason == REVIEW_LOW_CONFIDENCE
+
+
+class TestDeriveVerdictPrecedence:
+    """Multiple signals firing at once — precedence decides the subtype."""
+
+    def test_standards_conflict_beats_situation_ambiguity(self):
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[_high_conf_violation()],
+            scan_validate_disagreement=True,
+            moment_ambiguous=True,
+        )
+        assert reason == REVIEW_STANDARDS_CONFLICT
+
+    def test_standards_conflict_beats_low_confidence(self):
+        low = Violation(
+            standard_id="X", rule="", issue="", suggestion="",
+            source="llm", confidence=0.4,
+        )
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[low],
+            scan_validate_disagreement=True,
+        )
+        assert reason == REVIEW_STANDARDS_CONFLICT
+
+    def test_situation_ambiguity_beats_low_confidence(self):
+        low = Violation(
+            standard_id="X", rule="", issue="", suggestion="",
+            source="llm", confidence=0.4,
+        )
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[low],
+            moment_ambiguous=True,
+        )
+        assert reason == REVIEW_SITUATION_AMBIGUITY
+
+    def test_all_signals_firing_gives_standards_conflict(self):
+        low = Violation(
+            standard_id="X", rule="", issue="", suggestion="",
+            source="llm", confidence=0.4,
+        )
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[low],
+            scan_validate_disagreement=True,
+            moment_ambiguous=True,
+            out_of_distribution=True,
+            novel_pattern=True,
+        )
+        # Precedence order: standards_conflict wins over everything.
+        assert reason == REVIEW_STANDARDS_CONFLICT
+
+    def test_no_signals_and_high_confidence_gives_violation(self):
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[_high_conf_violation()],
+        )
+        # No review signals, all violations confident → plain violation.
+        assert verdict == VERDICT_VIOLATION
+        assert reason is None
+
+    def test_signals_ignored_when_no_violations(self):
+        """Review signals only matter when there are violations to review."""
+        verdict, reason = derive_verdict(
+            overall_verdict="pass",
+            violations=[],
+            scan_validate_disagreement=True,
+            moment_ambiguous=True,
+        )
+        assert verdict == VERDICT_PASS
+        assert reason is None
+
+    def test_signals_ignored_when_error(self):
+        verdict, reason = derive_verdict(
+            overall_verdict="error",
+            violations=[],
+            scan_validate_disagreement=True,
+        )
+        assert verdict == VERDICT_ERROR
+        assert reason is None

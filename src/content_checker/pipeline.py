@@ -48,8 +48,9 @@ from content_checker.models import (
     derive_verdict,
 )
 from content_checker.moments import (
-    detect_moment,
+    MOMENT_CONFIDENCE_THRESHOLD,
     build_moment_prompt_section,
+    detect_moment_with_confidence,
     get_moment_weights_applied,
     is_standard_suppressed_by_moment,
 )
@@ -352,12 +353,20 @@ def check(
     # Stage 1b: Detect moment (Phase 1)
     # Runs after classification because the heuristic uses content_type.
     # Zero cost, <1ms. If moment was passed explicitly (Tier 3), skip detection.
+    #
+    # The confidence signal (Session 2) flips `review_reason` to
+    # `situation_ambiguity` when the moment heuristic lacks a specific
+    # pattern match. Explicit moments are treated as fully confident.
     if moment is None:
-        detected_moment = detect_moment(text, detected_type)
+        detected_moment, moment_confidence = detect_moment_with_confidence(
+            text, detected_type,
+        )
         moment_mode = "detected"
     else:
         detected_moment = moment
+        moment_confidence = 1.0
         moment_mode = "explicit"
+    moment_ambiguous = moment_confidence < MOMENT_CONFIDENCE_THRESHOLD
     chain.append(RationaleHop(
         step=HOP_DETECT_MOMENT,
         inputs={
@@ -365,7 +374,11 @@ def check(
             "content_type": detected_type,
             "mode": moment_mode,
         },
-        output={"detected_moment": detected_moment},
+        output={
+            "detected_moment": detected_moment,
+            "ambiguous": moment_ambiguous,
+        },
+        confidence=moment_confidence,
     ))
 
     # Stage 2: Filter (audience-aware — suppresses UI-specific standards in general mode)
@@ -510,9 +523,17 @@ def check(
     # Collect moment metadata for triage
     moment_weights = get_moment_weights_applied(detected_moment)
 
+    # Session 2: scan/validate disagreement is a review signal. The
+    # scan proposed one or more candidates and the validate pass rejected
+    # at least one — richest source for taxonomy refinement.
+    scan_validate_disagreement = len(rejected) > 0
+
     overall = "fail" if final_violations else "pass"
     verdict, review_reason = derive_verdict(
-        overall_verdict=overall, violations=final_violations,
+        overall_verdict=overall,
+        violations=final_violations,
+        scan_validate_disagreement=scan_validate_disagreement,
+        moment_ambiguous=moment_ambiguous,
     )
 
     chain.append(RationaleHop(

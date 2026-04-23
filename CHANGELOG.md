@@ -10,7 +10,9 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
-### Unreleased — 2026-04-23 (human-eval build plan Session 1)
+### Unreleased — 2026-04-23 (human-eval build plan Sessions 1 + 2)
+
+Session 1:
 
 - Per-standard versioning on `standards_library.json`: every standard
   now carries a `version` and `version_history`, so eval records can
@@ -24,7 +26,27 @@ Source of truth: `src/content_checker/__init__.py` (`__version__`).
   detect_moment, filter, preprocess, scan, validate, merge). Each hop
   captures inputs, output, confidence (when applicable),
   `rule_versions` consulted, and an optional typed `ambiguity_flag`.
-- API schema_version bumped 1.1.0 → 1.2.0 (minor, additive).
+
+Session 2:
+
+- `CheckResult.review_reason` gains four new typed subtypes beyond
+  the existing `low_confidence`: `standards_conflict`,
+  `situation_ambiguity`, `out_of_distribution`, `novel_pattern`.
+  Every `review_recommended` verdict now carries a specific typed
+  reason — no generic fallback. Precedence: standards_conflict >
+  situation_ambiguity > out_of_distribution > novel_pattern >
+  low_confidence.
+- `derive_verdict` now accepts optional signal kwargs
+  (`scan_validate_disagreement`, `moment_ambiguous`,
+  `out_of_distribution`, `novel_pattern`); the pipeline passes the
+  first two today.
+- New `moments.detect_moment_with_confidence` returns `(moment, confidence)`.
+  Below `MOMENT_CONFIDENCE_THRESHOLD` (0.6), the pipeline flips the
+  verdict to `review_recommended` with `situation_ambiguity`.
+  `detect_moment` is now a thin wrapper that drops the confidence.
+
+- API schema_version bumped 1.1.0 → 1.3.0 (two minor bumps, both
+  additive).
 
 ### 4.6.1 — 2026-04-22
 

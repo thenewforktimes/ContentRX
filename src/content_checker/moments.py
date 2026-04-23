@@ -57,6 +57,16 @@ VALID_MOMENTS = frozenset(MOMENT_TAXONOMY.keys())
 # The default moment when no pattern matches. Not shown in UI.
 DEFAULT_MOMENT = "browsing_discovery"
 
+# Moment-classifier confidence threshold. Below this, the pipeline
+# emits `situation_ambiguity` on review_reason (human-eval build plan
+# Session 2). The heuristic detector only reports two levels today —
+# a pattern matched (high) or a fallback (low) — but the threshold is
+# expressed as a float so a future LLM-based moment classifier can
+# produce a real confidence without changing the integration.
+MOMENT_CONFIDENCE_THRESHOLD = 0.6
+MOMENT_CONFIDENCE_MATCHED = 0.9   # specific pattern or content_type heuristic fired
+MOMENT_CONFIDENCE_FALLBACK = 0.5  # no specific signal — DEFAULT_MOMENT only
+
 
 # ---------------------------------------------------------------------------
 # Tier 1: text-pattern heuristic detector
@@ -67,6 +77,29 @@ def detect_moment(text: str, content_type: str) -> str:
 
     Returns one of the 13 canonical moment IDs. Falls back to
     'browsing_discovery' when no pattern matches.
+
+    Thin wrapper over `detect_moment_with_confidence` that drops the
+    confidence signal — preserves the pre-Session-2 public contract for
+    callers that only care about the moment string.
+    """
+    moment, _ = detect_moment_with_confidence(text, content_type)
+    return moment
+
+
+def detect_moment_with_confidence(
+    text: str, content_type: str,
+) -> tuple[str, float]:
+    """Detect the moment and return an accompanying confidence signal.
+
+    Returns (moment_id, confidence) where confidence is in [0, 1]:
+      - `MOMENT_CONFIDENCE_MATCHED` (0.9) when a specific pattern or
+        content_type heuristic fired.
+      - `MOMENT_CONFIDENCE_FALLBACK` (0.5) when no specific signal
+        matched and the detector returned DEFAULT_MOMENT as the fallback.
+
+    The pipeline reads this as a typed review signal: confidence below
+    `MOMENT_CONFIDENCE_THRESHOLD` (0.6) trips `situation_ambiguity` on
+    any review_recommended verdict that would otherwise fire.
 
     Priority order matters — destructive_action is checked before
     confirmation because "Are you sure you want to delete?" contains
@@ -82,6 +115,8 @@ def detect_moment(text: str, content_type: str) -> str:
     words = lower.split()
     length = len(words)
 
+    matched = MOMENT_CONFIDENCE_MATCHED
+
     # --- Destructive action (highest specificity, check first) ---
     if re.search(
         r"\b(permanently\s+delete|cannot be undone|can't be undone|"
@@ -89,23 +124,23 @@ def detect_moment(text: str, content_type: str) -> str:
         r"are you sure\s+you\s+want\s+to\s+(delete|remove|cancel))\b",
         lower,
     ):
-        return "destructive_action"
+        return "destructive_action", matched
     if content_type == "button_cta" and re.search(
         r"\b(delete|remove|deactivate|"
         r"close\s+account|cancel\s+(plan|account|subscription))\b",
         lower,
     ):
-        return "destructive_action"
+        return "destructive_action", matched
 
     # --- Error recovery ---
     if content_type == "error_message":
-        return "error_recovery"
+        return "error_recovery", matched
     if length <= 30 and re.search(
         r"\b(went wrong|try again|couldn't|unable to|failed to|"
         r"not found|something.{0,10}wrong|oops|we('re| are) sorry)\b",
         lower,
     ):
-        return "error_recovery"
+        return "error_recovery", matched
 
     # --- Celebration (before confirmation — "Congrats!" is more specific) ---
     if re.search(
@@ -115,23 +150,23 @@ def detect_moment(text: str, content_type: str) -> str:
         r"keep it up|on a roll)\b",
         lower,
     ):
-        return "celebration"
+        return "celebration", matched
     if length <= 25 and re.search(
         r"\bcompleted\s+\d+\b",
         lower,
     ):
-        return "celebration"
+        return "celebration", matched
 
     # --- Confirmation ---
     if content_type == "confirmation":
-        return "confirmation"
+        return "confirmation", matched
     if length <= 25 and re.search(
         r"\b(successfully|has been "
         r"(saved|created|updated|deleted|sent|removed|confirmed|published)|"
         r"you're all set|all done|changes saved)\b",
         lower,
     ):
-        return "confirmation"
+        return "confirmation", matched
 
     # --- Empty state ---
     if re.search(
@@ -140,7 +175,7 @@ def detect_moment(text: str, content_type: str) -> str:
         r"you (haven't|don't have any))\b",
         lower,
     ):
-        return "empty_state"
+        return "empty_state", matched
 
     # --- First encounter / onboarding ---
     if re.search(
@@ -149,7 +184,7 @@ def detect_moment(text: str, content_type: str) -> str:
         r"walkthrough|step\s+\d\s+of\s+\d)\b",
         lower,
     ):
-        return "first_encounter"
+        return "first_encounter", matched
 
     # --- Trust/permission (before decision_point — "allow" is consent, not choice) ---
     if re.search(
@@ -166,7 +201,7 @@ def detect_moment(text: str, content_type: str) -> str:
         r"permission\s+to\s+access)\b",
         lower,
     ):
-        return "trust_permission"
+        return "trust_permission", matched
 
     # --- Decision point ---
     if re.search(
@@ -181,7 +216,7 @@ def detect_moment(text: str, content_type: str) -> str:
         r"credit\s+toward)\b",
         lower,
     ):
-        return "decision_point"
+        return "decision_point", matched
 
     # --- Interruption ---
     if re.search(
@@ -189,13 +224,13 @@ def detect_moment(text: str, content_type: str) -> str:
         r"maybe later|snooze|don't show\s+(this\s+)?again)\b",
         lower,
     ):
-        return "interruption"
+        return "interruption", matched
 
     # --- Wayfinding ---
     if content_type == "ui_label" and length <= 4:
-        return "wayfinding"
+        return "wayfinding", matched
     if content_type == "heading" and length <= 3:
-        return "wayfinding"
+        return "wayfinding", matched
 
     # --- Task execution ---
     if content_type != "button_cta" and re.search(
@@ -204,9 +239,9 @@ def detect_moment(text: str, content_type: str) -> str:
         r"select\s+(your|a|the)|choose\s+(your|a))\b",
         lower,
     ):
-        return "task_execution"
+        return "task_execution", matched
     if content_type == "tooltip_microcopy" and length <= 20:
-        return "task_execution"
+        return "task_execution", matched
 
     # --- Compliance disclosure (regulatory/legal mandated language) ---
     if re.search(
@@ -225,10 +260,10 @@ def detect_moment(text: str, content_type: str) -> str:
         r"not\s+guaranteed)\b",
         lower,
     ):
-        return "compliance_disclosure"
+        return "compliance_disclosure", matched
 
     # --- Default ---
-    return DEFAULT_MOMENT
+    return DEFAULT_MOMENT, MOMENT_CONFIDENCE_FALLBACK
 
 
 # ---------------------------------------------------------------------------

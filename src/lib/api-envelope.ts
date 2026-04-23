@@ -25,7 +25,12 @@
 // 1.2.0 — add `related_standards`, `ambiguity_flag`, `rule_version` on
 //         Violation; add `rationale_chain` on CheckResult
 //         (human-eval build plan Session 1). Additive.
-export const SCHEMA_VERSION = "1.2.0" as const;
+// 1.3.0 — populate the remaining four typed `review_reason` subtypes:
+//         standards_conflict, situation_ambiguity, out_of_distribution,
+//         novel_pattern (human-eval build plan Session 2). Additive —
+//         old clients reading `review_reason` as a raw string keep
+//         working; clients that switch on the value should add arms.
+export const SCHEMA_VERSION = "1.3.0" as const;
 
 /**
  * Adds `schema_version` and `warnings` to a response payload. Existing
