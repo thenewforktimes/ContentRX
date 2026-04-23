@@ -19,17 +19,57 @@ import pytest
 
 from content_checker.moments import (
     DEFAULT_MOMENT,
+    MOMENT_CONFIDENCE_FALLBACK,
+    MOMENT_CONFIDENCE_MATCHED,
+    MOMENT_CONFIDENCE_THRESHOLD,
     MOMENT_TAXONOMY,
     MOMENT_WEIGHTS,
     VALID_MOMENTS,
     MomentWeight,
     build_moment_prompt_section,
     detect_moment,
+    detect_moment_with_confidence,
     get_moment_weights,
     get_moment_weights_applied,
     get_suppressed_standards_for_moment,
     is_standard_suppressed_by_moment,
 )
+
+
+class TestMomentConfidenceSignal:
+    """Human-eval build plan Session 2 — moment confidence signal."""
+
+    def test_matched_pattern_gives_high_confidence(self):
+        moment, conf = detect_moment_with_confidence(
+            "Are you sure you want to delete this?", "short_ui_copy",
+        )
+        assert moment == "destructive_action"
+        assert conf == MOMENT_CONFIDENCE_MATCHED
+        assert conf >= MOMENT_CONFIDENCE_THRESHOLD
+
+    def test_content_type_match_gives_high_confidence(self):
+        moment, conf = detect_moment_with_confidence(
+            "Something happened that I can't identify", "error_message",
+        )
+        assert moment == "error_recovery"
+        assert conf == MOMENT_CONFIDENCE_MATCHED
+
+    def test_fallback_to_default_gives_low_confidence(self):
+        moment, conf = detect_moment_with_confidence(
+            "Hello there friend of mine", "short_ui_copy",
+        )
+        assert moment == DEFAULT_MOMENT
+        assert conf == MOMENT_CONFIDENCE_FALLBACK
+        assert conf < MOMENT_CONFIDENCE_THRESHOLD
+
+    def test_detect_moment_wrapper_still_returns_string(self):
+        """Session 1 callers that only want the moment string keep working."""
+        assert detect_moment("Delete this?", "button_cta") == "destructive_action"
+        assert isinstance(detect_moment("hi", "short_ui_copy"), str)
+
+    def test_threshold_constant_matches_spec(self):
+        # Human-eval build plan Session 2 spec: < 0.6 fires situation_ambiguity.
+        assert MOMENT_CONFIDENCE_THRESHOLD == 0.6
 
 
 # ═══════════════════════════════════════════════════════════════════════

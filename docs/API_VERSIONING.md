@@ -65,6 +65,32 @@ into errors.
 
 ## Changelog
 
+### 1.3.0 (human-eval build plan Session 2)
+
+**Additive bump** — old clients reading `review_reason` as an opaque
+string keep working. Clients that switch on the value should add arms
+for the four new subtypes.
+
+- **`CheckResult.review_reason`** gains four new enum variants beyond
+  the existing `low_confidence`:
+  - `standards_conflict` — scan/validate disagreed (validate rejected
+    at least one scan candidate). Richest signal for taxonomy refinement.
+  - `situation_ambiguity` — moment classifier confidence below the
+    `MOMENT_CONFIDENCE_THRESHOLD` (0.6). Routes to moment-classifier
+    backlog, not standards backlog.
+  - `out_of_distribution` — input doesn't resemble training data.
+    Constant reserved; full emission logic pending later sessions.
+  - `novel_pattern` — classifier confident but override rate on
+    similar strings climbing. Reserved; requires override-rate history
+    from later sessions.
+- **`RationaleHop.confidence`** on the `detect_moment` hop is now
+  populated with the moment-classifier's confidence (0.5 fallback,
+  0.9 pattern-matched). `output.ambiguous` on the same hop is `true`
+  when the confidence falls below threshold.
+- When multiple review signals fire, precedence order decides the
+  subtype: `standards_conflict` > `situation_ambiguity` >
+  `out_of_distribution` > `novel_pattern` > `low_confidence`.
+
 ### 1.2.0 (human-eval build plan Session 1)
 
 **Additive bump** — old clients keep working.

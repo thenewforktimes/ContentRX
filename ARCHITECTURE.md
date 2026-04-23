@@ -180,6 +180,22 @@ Every hop in the pipeline above appends a `RationaleHop` entry to `CheckResult.r
 
 When Robo (or any reviewer) sees a wrong verdict, the chain lets them pinpoint which hop went sideways without re-running the pipeline. The chain is also the substrate for Session 21's "Why this verdict" UI on the product surface.
 
+### Typed review_reason subtypes (v1.3.0, human-eval build plan Session 2)
+
+When `CheckResult.verdict == "review_recommended"`, `review_reason` carries one of five typed subtypes — never a generic fallback. The review queue (Session 8) batches by subtype so reviewers see one coherent kind of uncertainty at a time.
+
+| Subtype | Signal | Routing |
+|---|---|---|
+| `standards_conflict` | Scan proposed ≥1 violation; validate rejected at least one. | Taxonomy refinement log — the disagreement is architectural. |
+| `situation_ambiguity` | Moment-classifier confidence below `MOMENT_CONFIDENCE_THRESHOLD` (0.6). | Moment classifier backlog — not a standards-side bug. |
+| `out_of_distribution` | Input doesn't resemble training data. *Reserved; emission pending later sessions.* | New-moment / new-content-type candidate pool. |
+| `novel_pattern` | Classifier confident but override rate on similar strings climbing. *Reserved; requires override-rate history.* | Drift watchlist. |
+| `low_confidence` | Any violation's `confidence < CONFIDENCE_THRESHOLD` (0.7). | Baseline calibration review. |
+
+**Precedence when multiple signals fire:** `standards_conflict` > `situation_ambiguity` > `out_of_distribution` > `novel_pattern` > `low_confidence`. A taxonomy fix often cascades and resolves the downstream signals, so it's worth triaging first. `low_confidence` is the fallback — more specific signals always shadow it.
+
+Signals are passed as kwargs to `derive_verdict` in `models.py`; the pipeline wires two today (`scan_validate_disagreement` from validate's rejected count; `moment_ambiguous` from `detect_moment_with_confidence`). The remaining two kwargs are reserved for future sessions to populate without a schema change.
+
 ## Two entry points, two use cases
 
 `check(text, content_type, audience)` — full 5-stage pipeline. Used in production, the CLI, and the Figma plugin. Content-type-aware filtering and audience-aware gating reduce false positives. Audience defaults to `product_ui`.

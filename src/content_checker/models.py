@@ -25,7 +25,13 @@ from typing import Any
 # 1.2.0 — add `related_standards`, `ambiguity_flag`, `rule_version` on
 #         Violation; add `rationale_chain` on CheckResult
 #         (human-eval build plan Session 1). Additive only.
-SCHEMA_VERSION = "1.2.0"
+# 1.3.0 — populate the remaining four typed `review_reason` subtypes:
+#         `standards_conflict`, `situation_ambiguity`,
+#         `out_of_distribution`, `novel_pattern`
+#         (human-eval build plan Session 2). New enum variants — old
+#         clients reading `review_reason` as a raw string keep working,
+#         but clients that switch on the value should add the new arms.
+SCHEMA_VERSION = "1.3.0"
 
 
 # Ambiguity-flag vocabulary (human-eval build plan Session 1).
@@ -45,6 +51,48 @@ VALID_AMBIGUITY_FLAGS = frozenset({
     AMBIGUITY_INSUFFICIENT_CONTEXT,
     AMBIGUITY_SITUATION_UNCERTAIN,
 })
+
+
+# Review-reason vocabulary (human-eval build plan Session 2).
+#
+# When CheckResult.verdict == "review_recommended", review_reason carries
+# a specific typed subtype so the review queue (Session 8) becomes
+# sliceable by uncertainty type. Every review_recommended event carries
+# exactly one of these values — no generic fallback.
+#
+# Precedence when multiple signals fire (highest-priority wins):
+#   1. standards_conflict — architectural signal, highest taxonomic value
+#   2. situation_ambiguity — upstream moment-classifier issue
+#   3. out_of_distribution — novel input, routes to new-moment backlog
+#   4. novel_pattern — drift signal, override-rate climbing
+#   5. low_confidence — LLM self-rated confidence below threshold
+#
+# standards_conflict beats the others because fixing the taxonomy
+# clears the downstream disagreement entirely; the other signals often
+# resolve themselves once the taxonomic question is settled.
+REVIEW_LOW_CONFIDENCE = "low_confidence"
+REVIEW_STANDARDS_CONFLICT = "standards_conflict"
+REVIEW_SITUATION_AMBIGUITY = "situation_ambiguity"
+REVIEW_OUT_OF_DISTRIBUTION = "out_of_distribution"
+REVIEW_NOVEL_PATTERN = "novel_pattern"
+
+VALID_REVIEW_REASONS = frozenset({
+    REVIEW_LOW_CONFIDENCE,
+    REVIEW_STANDARDS_CONFLICT,
+    REVIEW_SITUATION_AMBIGUITY,
+    REVIEW_OUT_OF_DISTRIBUTION,
+    REVIEW_NOVEL_PATTERN,
+})
+
+# Precedence list — index 0 wins over index 1, etc. `derive_verdict`
+# consults this ordering when multiple signals fire simultaneously.
+REVIEW_REASON_PRECEDENCE: tuple[str, ...] = (
+    REVIEW_STANDARDS_CONFLICT,
+    REVIEW_SITUATION_AMBIGUITY,
+    REVIEW_OUT_OF_DISTRIBUTION,
+    REVIEW_NOVEL_PATTERN,
+    REVIEW_LOW_CONFIDENCE,
+)
 
 
 # Three-state verdict (BUILD_PLAN_v2 Session 10).
@@ -346,31 +394,73 @@ def derive_verdict(
     *,
     overall_verdict: str,
     violations: list[Violation],
+    scan_validate_disagreement: bool = False,
+    moment_ambiguous: bool = False,
+    out_of_distribution: bool = False,
+    novel_pattern: bool = False,
 ) -> tuple[Verdict, str | None]:
-    """Compute the three-state Verdict + a `review_reason` from raw outputs.
+    """Compute the three-state Verdict + a typed `review_reason` from raw outputs.
 
     Returns (verdict, review_reason). review_reason is non-None only when
-    verdict == "review_recommended", and explains which signal flipped it.
+    verdict == "review_recommended", and carries a specific subtype from
+    VALID_REVIEW_REASONS — never a generic fallback.
 
     Logic:
       - overall_verdict == "error"            → ("error", None)
       - no violations                         → ("pass", None)
-      - any violation.confidence < THRESHOLD  → ("review_recommended",
-                                                 "low_confidence")
+      - any review-signal fires               → ("review_recommended",
+                                                 typed subtype)
       - else                                   → ("violation", None)
 
-    Future signal sources (BUILD_PLAN_v2 Session 10 spec, deferred):
-      - moment classifier confidence < 0.6
-      - historical override rate > 30%
+    When multiple review signals fire, the subtype with the highest
+    precedence (REVIEW_REASON_PRECEDENCE[0]) wins. Precedence order is
+    documented on the constants above.
+
+    Signal sources (human-eval build plan Session 2):
+      - `scan_validate_disagreement` — validate rejected ≥1 scan
+        candidate. Richest signal for taxonomy refinement. Fires
+        `standards_conflict`.
+      - `moment_ambiguous` — moment classifier confidence < 0.6
+        (see moments.MOMENT_CONFIDENCE_THRESHOLD). Routes to moment
+        classifier backlog. Fires `situation_ambiguity`.
+      - `out_of_distribution` — input doesn't resemble training data.
+        Emission logic pending full classifier-confidence plumbing;
+        accepted as an explicit signal here so callers can wire it
+        when upstream infrastructure lands.
+      - `novel_pattern` — classifier confident but override rate on
+        similar strings is climbing. Emission pending override-rate
+        history from later sessions.
+      - any Violation.confidence < CONFIDENCE_THRESHOLD — fires
+        `low_confidence` (the baseline signal from v1.1.0).
     """
     if overall_verdict == "error":
         return VERDICT_ERROR, None
     if not violations:
         return VERDICT_PASS, None
-    low = [v for v in violations if v.confidence < CONFIDENCE_THRESHOLD]
-    if low:
-        return VERDICT_REVIEW_RECOMMENDED, "low_confidence"
-    return VERDICT_VIOLATION, None
+
+    low_confidence = any(v.confidence < CONFIDENCE_THRESHOLD for v in violations)
+
+    fired: set[str] = set()
+    if scan_validate_disagreement:
+        fired.add(REVIEW_STANDARDS_CONFLICT)
+    if moment_ambiguous:
+        fired.add(REVIEW_SITUATION_AMBIGUITY)
+    if out_of_distribution:
+        fired.add(REVIEW_OUT_OF_DISTRIBUTION)
+    if novel_pattern:
+        fired.add(REVIEW_NOVEL_PATTERN)
+    if low_confidence:
+        fired.add(REVIEW_LOW_CONFIDENCE)
+
+    if not fired:
+        return VERDICT_VIOLATION, None
+
+    for reason in REVIEW_REASON_PRECEDENCE:
+        if reason in fired:
+            return VERDICT_REVIEW_RECOMMENDED, reason
+
+    # Unreachable — `fired` is always a subset of REVIEW_REASON_PRECEDENCE.
+    return VERDICT_REVIEW_RECOMMENDED, REVIEW_LOW_CONFIDENCE
 
 
 # ---------------------------------------------------------------------------
