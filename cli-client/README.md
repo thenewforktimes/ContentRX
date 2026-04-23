@@ -1,13 +1,13 @@
 # ContentRX CLI
 
-`contentrx-cli` is a thin command-line client for the [ContentRX](https://content-rx.vercel.app)
+`contentrx-cli` is a thin command-line client for the [ContentRX](https://contentrx.io)
 content-standards checker. It posts your strings to the ContentRX API and
 prints violations — the kind of thing you'd call from a pre-commit hook,
 a CI job, or an ad-hoc terminal check while writing UI copy.
 
 ```
 pip install contentrx-cli
-export CONTENTRX_API_KEY=cx_...      # mint at https://content-rx.vercel.app/dashboard
+export CONTENTRX_API_KEY=cx_...      # mint at https://contentrx.io/dashboard
 contentrx "Click here to learn more"
 ```
 
@@ -21,7 +21,7 @@ includes.
 
 All requests need an API key. Generate one in the dashboard:
 
-> https://content-rx.vercel.app/dashboard → **Generate key** (or **Rotate**)
+> https://contentrx.io/dashboard → **Generate key** (or **Rotate**)
 
 The key is shown exactly once. Store it somewhere you trust. The CLI
 reads it from the `CONTENTRX_API_KEY` environment variable — no global

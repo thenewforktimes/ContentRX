@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "contentrx-mcp"
-version = "0.3.0"
+version = "0.4.0"
 description = "ContentRX MCP server — content-design review for Claude Code, Cursor, and any MCP client."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -37,7 +37,7 @@ dependencies = [
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
 
 [project.urls]
-Homepage = "https://content-rx.vercel.app"
+Homepage = "https://contentrx.io"
 Documentation = "https://github.com/thenewforktimes/contentRX/blob/main/mcp-server/README.md"
 Repository = "https://github.com/thenewforktimes/contentRX"
 Issues = "https://github.com/thenewforktimes/contentRX/issues"

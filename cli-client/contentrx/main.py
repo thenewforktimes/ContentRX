@@ -25,14 +25,14 @@ from typing import Any, Iterable
 
 from . import __version__
 
-DEFAULT_API_URL = "https://content-rx.vercel.app"
+DEFAULT_API_URL = "https://contentrx.io"
 DEFAULT_TIMEOUT_SECONDS = 60
 USER_AGENT = f"contentrx-cli/{__version__}"
 
 MAX_BATCH_FILE_SIZE = 10 * 1024 * 1024  # 10 MB — same ceiling as the engine
 SUPPORTED_BATCH_EXTENSIONS = (".json", ".txt")
 
-DASHBOARD_URL = "https://content-rx.vercel.app/dashboard"
+DASHBOARD_URL = "https://contentrx.io/dashboard"
 
 
 # ---------------------------------------------------------------------------

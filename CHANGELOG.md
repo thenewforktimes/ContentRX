@@ -78,6 +78,17 @@ breaking. See `docs/API_VERSIONING.md`.
 
 ## MCP server — `contentrx-mcp` on PyPI
 
+### 0.4.0 — 2026-04-23
+
+- **Default API URL changed** from `https://content-rx.vercel.app` to
+  `https://contentrx.io`. Existing 0.3.0 installs keep working —
+  Vercel keeps `content-rx.vercel.app` alive as the project's default
+  subdomain indefinitely. Upgrade when convenient; not urgent.
+- Dashboard URL in `AuthError` / `AuthFailedError` / `QuotaExhaustedError`
+  messages now points at `https://contentrx.io/dashboard`.
+- User-Agent bumped to `contentrx-mcp/0.4.0`.
+- PyPI homepage URL updated.
+
 ### 0.3.0 — 2026-04-22
 
 - Forwards `verdict`, `confidence`, `review_reason` on every violation
@@ -103,6 +114,15 @@ breaking. See `docs/API_VERSIONING.md`.
 
 ## CLI — `contentrx-cli` on PyPI
 
+### 0.2.0 — 2026-04-23
+
+- **Default API URL changed** from `https://content-rx.vercel.app` to
+  `https://contentrx.io`. Existing 0.1.0 installs keep working — the
+  old subdomain stays alive on Vercel indefinitely.
+- `DASHBOARD_URL` (used in the key-missing / key-invalid error
+  messages) now points at `https://contentrx.io/dashboard`.
+- PyPI homepage URL updated.
+
 ### 0.1.0 — 2026-04-22
 
 - Initial release. Commands: `contentrx check`, `contentrx check-batch`.
@@ -117,6 +137,14 @@ breaking. See `docs/API_VERSIONING.md`.
 In-tree today; not yet on GitHub Marketplace. See repo README for the
 copy-paste install snippet.
 
+### 2026-04-23
+
+- Default `api-url` input value swapped from `https://content-rx.vercel.app`
+  to `https://contentrx.io`. The PR-comment footer links and dashboard
+  references now use `contentrx.io`.
+- No breaking change — users who've pinned `api-url:` in their workflow
+  keep their override; users on defaults get the new canonical URL.
+
 ### 2026-04-22
 
 - Comment truncation above 60 KB with a "see logs" fallback (fixes
@@ -128,6 +156,16 @@ copy-paste install snippet.
 ---
 
 ## Figma plugin — `figma-plugin/`
+
+### 2026-04-23
+
+- `API_BASE_URL` in `ui.html` swapped from `https://content-rx.vercel.app`
+  to `https://contentrx.io`. Plugin not yet published to Figma
+  Community, so no installed users to migrate.
+- `manifest.json` `networkAccess.allowedDomains` now includes BOTH
+  `https://contentrx.io` (the new default) and `https://content-rx.vercel.app`
+  (transition safety — Figma enforces this whitelist, and keeping both
+  means pre-launch dev builds and future users are covered).
 
 ### 2026-04-22
 

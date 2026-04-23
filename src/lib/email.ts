@@ -95,6 +95,6 @@ export async function sendEmail({
  */
 export function appUrl(): string {
   const raw =
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://content-rx.vercel.app";
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://contentrx.io";
   return raw.replace(/\/$/, "");
 }

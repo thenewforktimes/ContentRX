@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "contentrx-cli"
-version = "0.1.0"
+version = "0.2.0"
 description = "Command-line interface for ContentRX — content-design linter for Figma, code, and CI."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -35,7 +35,7 @@ dependencies = []
 dev = ["pytest>=8.0"]
 
 [project.urls]
-Homepage = "https://content-rx.vercel.app"
+Homepage = "https://contentrx.io"
 Documentation = "https://github.com/thenewforktimes/contentRX/blob/main/cli-client/README.md"
 Repository = "https://github.com/thenewforktimes/contentRX"
 Issues = "https://github.com/thenewforktimes/contentRX/issues"

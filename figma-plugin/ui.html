@@ -680,7 +680,7 @@ const DEV_MODE = false;
 // for parallel requests; 2 stays under the backend's 60-req/min ceiling
 // for a typical page scan while still feeling fast.
 const MAX_CONCURRENT = 2;
-const API_BASE_URL = "https://content-rx.vercel.app";
+const API_BASE_URL = "https://contentrx.io";
 const LIBRARY_VERSION = "4.6.1";
 
 
@@ -3155,7 +3155,7 @@ function escapeHtml(str) {
 //
 // 1. User clicks "Sign in" in the signed-out screen.
 // 2. We generate a random handoff code and ask the sandbox to open
-//    https://content-rx.vercel.app/auth/figma?plugin=1&handoff=<code>
+//    https://contentrx.io/auth/figma?plugin=1&handoff=<code>
 //    in the user's default browser via figma.openExternal.
 // 3. The user completes Clerk sign-in. The /auth/figma-callback page
 //    stashes their cx_token in Redis under the handoff code.

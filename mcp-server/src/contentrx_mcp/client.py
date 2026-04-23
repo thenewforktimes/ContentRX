@@ -17,7 +17,7 @@ import httpx
 
 from .auth import AuthError, get_api_base_url, get_api_key
 
-_USER_AGENT = "contentrx-mcp/0.3.0"
+_USER_AGENT = "contentrx-mcp/0.4.0"
 _TIMEOUT_SECONDS = 60.0
 
 
@@ -131,7 +131,7 @@ class ContentRXClient:
         if not self._api_key:
             raise AuthError(
                 "This call requires CONTENTRX_API_KEY. Generate one at "
-                "https://content-rx.vercel.app/dashboard."
+                "https://contentrx.io/dashboard."
             )
 
     async def check(
@@ -283,12 +283,12 @@ class ContentRXClient:
         if resp.status_code in (401, 403):
             raise AuthFailedError(
                 f"{message}. Re-mint your API key at "
-                f"https://content-rx.vercel.app/dashboard."
+                f"https://contentrx.io/dashboard."
             )
         if resp.status_code == 402:
             quota = body.get("quota")
             used = body.get("used")
-            upgrade = body.get("upgrade_url") or "https://content-rx.vercel.app/dashboard"
+            upgrade = body.get("upgrade_url") or "https://contentrx.io/dashboard"
             raise QuotaExhaustedError(
                 f"Monthly quota exhausted ({used}/{quota} used). "
                 f"Upgrade at {upgrade}."
