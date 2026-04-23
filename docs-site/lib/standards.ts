@@ -1,14 +1,21 @@
 /**
  * Standards loader for the docs site.
  *
- * Reads the engine's `standards_library.json` directly so docs stay in
- * lock-step with the running version of the evaluator. The JSON is
- * resolved relative to the docs-site directory so this works under both
- * `next dev` and the deployed build.
+ * Reads the engine's `standards_library.json` from a build-time copy
+ * inside docs-site/lib/. The copy is refreshed by the `prebuild` /
+ * `predev` npm scripts which cp the canonical file from
+ * `../src/content_checker/standards/standards_library.json`.
+ *
+ * Vercel's build layout places the docs-site working dir at
+ * /vercel/docs-site/ (not /vercel/path0/docs-site/), so the original
+ * `../src/...` relative path doesn't resolve at build time. Copying
+ * into docs-site makes the build self-contained regardless of where
+ * Vercel chroots.
  */
 
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 export type Standard = {
   id: string;
@@ -44,16 +51,14 @@ let cached: StandardsLibrary | null = null;
 
 export function loadLibrary(): StandardsLibrary {
   if (cached) return cached;
-  // Resolve relative to the docs-site root, walking up to the repo root
-  // for the canonical engine path.
-  const path = join(
-    process.cwd(),
-    "..",
-    "src",
-    "content_checker",
-    "standards",
-    "standards_library.json",
-  );
+  // Resolve relative to THIS file, not process.cwd(), so the lookup
+  // works under `next dev`, `next build`, AND Vercel's build chroot.
+  // The prebuild/predev scripts in package.json keep this copy fresh.
+  const here =
+    typeof __dirname !== "undefined"
+      ? __dirname
+      : dirname(fileURLToPath(import.meta.url));
+  const path = join(here, "standards_library.json");
   const raw = readFileSync(path, "utf-8");
   cached = JSON.parse(raw) as StandardsLibrary;
   return cached;

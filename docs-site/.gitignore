@@ -3,3 +3,7 @@ node_modules
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+
+# Build-time copy of the canonical standards library from the engine.
+# Refreshed by `prebuild` / `predev` npm scripts; never commit.
+lib/standards_library.json
