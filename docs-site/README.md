@@ -33,7 +33,7 @@ pages, content types, and moments at compile time.
 ## Deploying to docs.contentrx.io
 
 This site deploys from its own Vercel project (separate from the main
-`content-rx.vercel.app` app, same repo). When setting up the project:
+`contentrx.io` app, same repo). When setting up the project:
 
 1. **Root directory**: `docs-site/`
 2. **Framework preset**: Next.js (default)

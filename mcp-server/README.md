@@ -27,7 +27,7 @@ MCP client launches it.
 ## Configure your MCP client
 
 You need a ContentRX API key (`cx_...`). Generate one at
-[content-rx.vercel.app/dashboard](https://content-rx.vercel.app/dashboard)
+[contentrx.io/dashboard](https://contentrx.io/dashboard)
 — it's shown once at mint time, so save it before closing the page.
 
 ### Claude desktop
@@ -235,7 +235,7 @@ ContentRX flags it and Claude revises before you see the draft.
 | Var | Default | Purpose |
 |---|---|---|
 | `CONTENTRX_API_KEY` | required | Your `cx_...` token from the dashboard |
-| `CONTENTRX_API_URL` | `https://content-rx.vercel.app` | Override for local dev or self-hosting |
+| `CONTENTRX_API_URL` | `https://contentrx.io` | Override for local dev or self-hosting |
 | `CONTENTRX_INSECURE_HTTP` | unset | Set to `1` to allow `http://` for local dev — refuses otherwise so a typo can't leak the token |
 
 ## Errors

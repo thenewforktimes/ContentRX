@@ -50,7 +50,7 @@ def render_markdown(reports: Iterable[FileReport], total_strings: int) -> str:
             "### ContentRX\n\n"
             f"Checked {total_strings} string"
             f"{'' if total_strings == 1 else 's'}. No content-standard violations.\n"
-            "\n*Run by the [ContentRX](https://content-rx.vercel.app) GitHub Action.*"
+            "\n*Run by the [ContentRX](https://contentrx.io) GitHub Action.*"
         )
 
     lines: list[str] = []
@@ -92,9 +92,9 @@ def render_markdown(reports: Iterable[FileReport], total_strings: int) -> str:
     lines.append("---")
     lines.append("")
     lines.append(
-        "*Run by the [ContentRX](https://content-rx.vercel.app) GitHub Action. "
-        "Violations cite specific [content standards](https://content-rx.vercel.app/docs/standards). "
-        "Rotate your API key at the [dashboard](https://content-rx.vercel.app/dashboard).*"
+        "*Run by the [ContentRX](https://contentrx.io) GitHub Action. "
+        "Violations cite specific [content standards](https://contentrx.io/docs/standards). "
+        "Rotate your API key at the [dashboard](https://contentrx.io/dashboard).*"
     )
 
     body = "\n".join(lines)

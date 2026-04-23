@@ -39,13 +39,13 @@ events + browser pageview tracking.
 **Steps:**
 1. Go to https://plausible.io and sign up (or use your existing
    account).
-2. Create a new site. Domain: `content-rx.vercel.app` (use your
-   eventual `contentrx.io` once that exists; `content-rx.vercel.app`
+2. Create a new site. Domain: `contentrx.io` (use your
+   eventual `contentrx.io` once that exists; `contentrx.io`
    works in the meantime).
-3. **Vercel env**: `NEXT_PUBLIC_PLAUSIBLE_DOMAIN=content-rx.vercel.app`
+3. **Vercel env**: `NEXT_PUBLIC_PLAUSIBLE_DOMAIN=contentrx.io`
 4. Redeploy.
 
-**How to test:** open https://content-rx.vercel.app in an incognito
+**How to test:** open https://contentrx.io in an incognito
 window → the Plausible dashboard should register a live visit within
 30 seconds. Sign up for a new account → after the Clerk webhook
 fires, the `signup` event appears under "Goal Conversions."
@@ -134,7 +134,7 @@ all four.
 ### 4b. Configure the webhook
 
 Stripe Dashboard → Developers → Webhooks → Add endpoint:
-- **URL:** `https://content-rx.vercel.app/api/webhooks/stripe`
+- **URL:** `https://contentrx.io/api/webhooks/stripe`
 - **Events to listen for:**
   - `checkout.session.completed`
   - `customer.subscription.updated`
@@ -196,7 +196,7 @@ This needs to flip before you launch publicly.
    - Publishable key: `pk_live_…`
    - Secret key: `sk_live_…`
 4. Configure the **production webhook**:
-   - URL: `https://content-rx.vercel.app/api/webhooks/clerk`
+   - URL: `https://contentrx.io/api/webhooks/clerk`
    - Events: `user.created`, `user.updated`, `user.deleted`
    - Copy the new signing secret (`whsec_…`)
 5. **Vercel env:**
@@ -205,7 +205,7 @@ This needs to flip before you launch publicly.
    - `CLERK_WEBHOOK_SECRET=whsec_...` (the new prod one)
 6. Redeploy.
 
-**How to test:** open `https://content-rx.vercel.app/sign-up` in a
+**How to test:** open `https://contentrx.io/sign-up` in a
 fresh browser → the sign-in/up widget should NOT redirect to
 `great-redfish-54.clerk.accounts.dev` (that's the dev-instance
 hostname). Sign up with a real email → user appears in the Clerk
@@ -298,7 +298,7 @@ fresh Vercel project state).
 
 ```
 # Plausible (1)
-NEXT_PUBLIC_PLAUSIBLE_DOMAIN=content-rx.vercel.app
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=contentrx.io
 
 # Sentry (5)
 SENTRY_DSN=https://...@sentry.io/...

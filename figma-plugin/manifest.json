@@ -8,6 +8,6 @@
   "enableProposedApi": false,
   "editorType": ["figma"],
   "networkAccess": {
-    "allowedDomains": ["https://content-rx.vercel.app"]
+    "allowedDomains": ["https://contentrx.io", "https://content-rx.vercel.app"]
   }
 }

@@ -2,7 +2,7 @@
 
 This is the **ContentRX documentation site**. It deploys to
 `docs.contentrx.io` from its own Vercel project, separate from the main
-`content-rx.vercel.app` app, but lives in the same repo so the docs can
+`contentrx.io` app, but lives in the same repo so the docs can
 read directly from `../src/content_checker/standards/standards_library.json`
 at build time.
 

@@ -1,7 +1,7 @@
 # ContentRX GitHub Action
 
 Lint the UI copy in your pull requests against the
-[ContentRX](https://content-rx.vercel.app) content-design standards.
+[ContentRX](https://contentrx.io) content-design standards.
 Extracts JSX text and copy attributes from changed files, runs each
 string through the ContentRX API, and drops a single comment on the
 PR summarizing any violations.
@@ -21,7 +21,7 @@ once your team is ready to enforce.
 
 ## Quickstart
 
-Generate an API key at [content-rx.vercel.app/dashboard](https://content-rx.vercel.app/dashboard)
+Generate an API key at [contentrx.io/dashboard](https://contentrx.io/dashboard)
 and stash it as a repository secret named `CONTENTRX_API_KEY`. Then
 add this workflow:
 
@@ -62,7 +62,7 @@ below the PR description.
 | `strict`      | no       | `false`                    | Fail the check when any violation is found. |
 | `content-type`| no       | `short_ui_copy`            | Default `content_type` hint for extractor strings. |
 | `paths`       | no       | `**/*.{tsx,jsx,html}`      | Glob for which files to extract from. |
-| `api-url`     | no       | `https://content-rx.vercel.app` | Override for self-hosted / staging. |
+| `api-url`     | no       | `https://contentrx.io` | Override for self-hosted / staging. |
 
 ## Outputs
 

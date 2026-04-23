@@ -49,7 +49,7 @@ class TestGetApiBaseUrl:
     def test_default_is_https_prod(self, monkeypatch):
         monkeypatch.delenv("CONTENTRX_API_URL", raising=False)
         monkeypatch.delenv("CONTENTRX_INSECURE_HTTP", raising=False)
-        assert get_api_base_url() == "https://content-rx.vercel.app"
+        assert get_api_base_url() == "https://contentrx.io"
 
     def test_custom_https_url(self, monkeypatch):
         monkeypatch.setenv("CONTENTRX_API_URL", "https://staging.contentrx.io/")

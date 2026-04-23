@@ -15,10 +15,10 @@ from __future__ import annotations
 
 import os
 
-_DASHBOARD_URL = "https://content-rx.vercel.app/dashboard"
+_DASHBOARD_URL = "https://contentrx.io/dashboard"
 _KEY_ENV_VAR = "CONTENTRX_API_KEY"
 _API_BASE_ENV_VAR = "CONTENTRX_API_URL"
-_DEFAULT_API_BASE = "https://content-rx.vercel.app"
+_DEFAULT_API_BASE = "https://contentrx.io"
 
 
 class AuthError(Exception):
@@ -54,7 +54,7 @@ def get_api_key() -> str:
 def get_api_base_url() -> str:
     """Resolve the ContentRX API base URL.
 
-    Production default is `https://content-rx.vercel.app`. Override with
+    Production default is `https://contentrx.io`. Override with
     `CONTENTRX_API_URL` for local development against `npm run dev`.
     Trailing slashes are stripped so callers can append `/api/check`.
 

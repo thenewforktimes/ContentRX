@@ -29,7 +29,7 @@ graph TB
         DOC["docs.contentrx.io 🟡<br/>(docs-site/, in-tree)<br/>v2 Phase 6: separate Vercel project"]
     end
 
-    subgraph "Vercel — content-rx.vercel.app"
+    subgraph "Vercel — contentrx.io"
         MW["Clerk Middleware<br/>(src/middleware.ts)"]
         NXT["Next.js API routes<br/>/api/check, /api/checkout,<br/>/api/portal, /api/team-rules,<br/>/api/team-analytics, /api/dashboard/*,<br/>/api/webhooks/clerk, /api/webhooks/stripe<br/>🟢"]
         PY["Python eval function<br/>api/evaluate.py<br/>🟢 internal only<br/>(gated by INTERNAL_EVAL_SECRET)"]
@@ -140,7 +140,7 @@ sequenceDiagram
 
     rect rgb(245, 245, 245)
         Note over U,RS: Sign-up + welcome
-        U->>W: visit content-rx.vercel.app
+        U->>W: visit contentrx.io
         W->>CK: redirect to /sign-up
         U->>CK: complete sign-up
         CK->>NXT: webhook user.created (svix-signed)

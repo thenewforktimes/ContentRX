@@ -101,7 +101,7 @@ def test_load_batch_file_rejects_missing(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 def _http_error(code: int, body: dict) -> urllib.error.HTTPError:
     return urllib.error.HTTPError(
-        url="https://content-rx.vercel.app/api/check",
+        url="https://contentrx.io/api/check",
         code=code,
         msg="",
         hdrs=None,  # type: ignore[arg-type]
