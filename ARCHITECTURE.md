@@ -196,6 +196,30 @@ When `CheckResult.verdict == "review_recommended"`, `review_reason` carries one 
 
 Signals are passed as kwargs to `derive_verdict` in `models.py`; the pipeline wires two today (`scan_validate_disagreement` from validate's rejected count; `moment_ambiguous` from `detect_moment_with_confidence`). The remaining two kwargs are reserved for future sessions to populate without a schema change.
 
+### In-product signal instrumentation (v1.4.0, human-eval build plan Session 3)
+
+Every override captured by `POST /api/violations/override` now carries four extra signals on top of the existing `override_type` / `override_reason` / `source`:
+
+| Field | Shape | Captures |
+|---|---|---|
+| `override_stance` | `agree` / `disagree` / `agree_but_overriding` | The user's opinion of the finding. Distinct from `override_type` (what they did with it). |
+| `actor_role` | `designer` / `engineer` / `pm` / `other` | Who is giving the signal. Weighted, not gating. Default inferred per source. |
+| `rationale_expanded` | boolean | Did the user click to expand the rationale before acting? |
+| `time_to_action_ms` | 0–3,600,000 | Elapsed ms from verdict surfaced to user action. |
+
+Plus a **counterfactual triple** when the user rewrote the flagged string: `text` (original) + `suggested_text` (tool's proposal) + `applied_text` (what the user actually shipped). All three are sha256-hashed server-side; raw text never persists. When all three hashes differ, the eval is flagged as `suggestion_rejected_alternative_applied` — derivable from the hashes, not stored.
+
+**Four-quadrant behavior model** (derived, not stored — see `src/lib/behavior-quadrant.ts`):
+
+- **`pattern_match_accept`** — agreed within 2s, rationale NOT expanded. Low individual signal; useful in aggregate.
+- **`informed_accept`** — rationale expanded, then agreed. Medium signal.
+- **`informed_reject`** — rationale expanded, then disagreed (or shipped anyway). Highest-signal reject — primary feed for the taxonomy refinement log.
+- **`reflex_reject`** — rejected within 2s without expanding. Lowest-signal reject.
+
+The dashboard `/dashboard/overrides` surfaces the quadrant tally per team over a 30-day window. Pre-Session-3 rows fall into `unknown`.
+
+Surface coverage as of Session 3: the Figma plugin is fully wired (three-button stance row + collapsible rationale + timing). CLI and MCP remain queued for follow-up sessions — they're non-interactive surfaces that need separate interaction design before they can submit overrides.
+
 ## Two entry points, two use cases
 
 `check(text, content_type, audience)` — full 5-stage pipeline. Used in production, the CLI, and the Figma plugin. Content-type-aware filtering and audience-aware gating reduce false positives. Audience defaults to `product_ui`.

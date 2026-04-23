@@ -18,6 +18,10 @@ import { and, desc, eq, gte, sql } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db";
+import {
+  summarizeQuadrants,
+  type BehaviorQuadrant,
+} from "@/lib/behavior-quadrant";
 
 const RANGE_DAYS = 30;
 
@@ -151,6 +155,30 @@ export default async function OverridesPage() {
     count: number;
   }>;
 
+  // Session 3 — pull the raw behavior signals so we can tally the
+  // four-quadrant model server-side. Only rows with stance captured
+  // contribute meaningful quadrant data; pre-Session-3 rows fall into
+  // `unknown`.
+  const quadrantRows = (await db
+    .select({
+      stance: schema.violationOverrides.overrideStance,
+      rationaleExpanded: schema.violationOverrides.rationaleExpanded,
+      timeToActionMs: schema.violationOverrides.timeToActionMs,
+    })
+    .from(schema.violationOverrides)
+    .where(
+      and(
+        eq(schema.violationOverrides.teamId, teamId),
+        gte(schema.violationOverrides.createdAt, since),
+      ),
+    )) as Array<{
+    stance: "agree" | "disagree" | "agree_but_overriding" | null;
+    rationaleExpanded: boolean | null;
+    timeToActionMs: number | null;
+  }>;
+
+  const quadrantCounts = summarizeQuadrants(quadrantRows);
+
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -249,11 +277,52 @@ export default async function OverridesPage() {
               ))}
             </ul>
           </section>
+
+          <section>
+            <h2 className="mb-1 text-sm font-semibold">
+              Behavior quadrants
+            </h2>
+            <p className="mb-3 text-xs text-neutral-600 dark:text-neutral-400">
+              How your team engaged with each finding.{" "}
+              <em>Informed rejects</em> are the highest-information
+              signal — the user read the rationale and still disagreed.
+              <em> Reflex rejects</em> may be miscalibrated.
+            </p>
+            <ul className="grid grid-cols-2 gap-2">
+              {QUADRANT_ORDER.map((q) => (
+                <li
+                  key={q}
+                  className="flex items-center justify-between rounded-md border border-neutral-200 p-3 text-sm dark:border-neutral-800"
+                >
+                  <span className="text-xs">{QUADRANT_LABELS[q]}</span>
+                  <span className="font-medium">
+                    {quadrantCounts[q].toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </>
       )}
     </div>
   );
 }
+
+const QUADRANT_ORDER: readonly BehaviorQuadrant[] = [
+  "informed_reject",
+  "informed_accept",
+  "pattern_match_accept",
+  "reflex_reject",
+  "unknown",
+] as const;
+
+const QUADRANT_LABELS: Record<BehaviorQuadrant, string> = {
+  informed_reject: "Informed reject",
+  informed_accept: "Informed accept",
+  pattern_match_accept: "Pattern-match accept",
+  reflex_reject: "Reflex reject",
+  unknown: "Unclassified (pre-Session-3)",
+};
 
 function Stat({
   label,

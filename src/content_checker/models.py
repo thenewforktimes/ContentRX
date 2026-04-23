@@ -31,7 +31,13 @@ from typing import Any
 #         (human-eval build plan Session 2). New enum variants — old
 #         clients reading `review_reason` as a raw string keep working,
 #         but clients that switch on the value should add the new arms.
-SCHEMA_VERSION = "1.3.0"
+# 1.4.0 — richer override signal on POST /api/violations/override:
+#         override_stance, actor_role, rationale_expanded,
+#         time_to_action_ms, suggested_text, applied_text
+#         (human-eval build plan Session 3). Web-side only — the
+#         Python engine does not expose the override endpoint. Mirrored
+#         here so the Python envelope doesn't drift.
+SCHEMA_VERSION = "1.4.0"
 
 
 # Ambiguity-flag vocabulary (human-eval build plan Session 1).

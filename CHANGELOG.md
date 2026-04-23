@@ -10,6 +10,29 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
+### Unreleased — 2026-04-23 (human-eval build plan Sessions 1 + 2 + 3)
+
+Session 3 — in-product signal instrumentation:
+
+- `violation_overrides` table gains five columns: `override_stance`,
+  `actor_role`, `rationale_expanded`, `time_to_action_ms`,
+  `suggested_text_hash`, `applied_text_hash`. `npm run db:push` to
+  apply. All nullable — existing rows keep working.
+- `POST /api/violations/override` accepts the richer signal. Hashes
+  `suggested_text` and `applied_text` server-side (same sha256 contract
+  as `text`).
+- Figma plugin: single "Dismiss" button replaced with the three-button
+  stance row (Agree / Disagree / Ship anyway) plus collapsed-by-default
+  rationale. Each stance click POSTs `override_stance`, `actor_role`,
+  `rationale_expanded`, and `time_to_action_ms` alongside the existing
+  fields.
+- Dashboard `/dashboard/overrides` adds a "Behavior quadrants" panel —
+  informed rejects, informed accepts, pattern-match accepts, reflex
+  rejects, and pre-Session-3 rows as "unclassified."
+- New helpers: `src/lib/actor-role.ts` (source → default role) and
+  `src/lib/behavior-quadrant.ts` (signals → quadrant). Pure functions
+  with full vitest coverage.
+
 ### Unreleased — 2026-04-23 (human-eval build plan Sessions 1 + 2)
 
 Session 1:

@@ -391,6 +391,64 @@
     border-color: var(--figma-color-text-success, #1a7f37);
   }
 
+  /* Human-eval build plan Session 3 — three-button stance UI.
+   *
+   * Replaces the single "Dismiss" button per-violation with a stance
+   * triad (Agree / Disagree / Ship anyway) plus a collapsed-by-default
+   * rationale disclosure. Submission happens on the first stance click
+   * and captures `time_to_action_ms` + `rationale_expanded` for the
+   * four-quadrant behavior model.
+   */
+  .btn-expand-rationale {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 0;
+    border: none;
+    background: transparent;
+    color: var(--figma-color-text-brand, #4a7cff);
+    cursor: pointer;
+    text-align: left;
+  }
+  .btn-expand-rationale:hover {
+    text-decoration: underline;
+  }
+  .rationale-body {
+    margin-top: 4px;
+  }
+  .stance-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .btn-stance {
+    flex: 1;
+    min-width: 56px;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--figma-color-border, #ddd);
+    background: transparent;
+    color: var(--figma-color-text-secondary, #888);
+    cursor: pointer;
+  }
+  .btn-stance:hover:not(:disabled) {
+    background: var(--figma-color-bg-hover, #f0f0f0);
+    color: var(--figma-color-text, #333);
+  }
+  .btn-stance:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .btn-stance.active {
+    background: var(--figma-color-bg-brand, #e8efff);
+    border-color: var(--figma-color-border-brand, #4a7cff);
+    color: var(--figma-color-text-brand, #4a7cff);
+  }
+
   /* ------------------------------------------------------------------ */
   /* Progress / scanning screen                                          */
   /* ------------------------------------------------------------------ */
@@ -2809,16 +2867,73 @@ function renderBatchResults(results) {
     });
   });
 
-  // Attach dismiss-violation listeners (BUILD_PLAN_v2 Session 11).
-  // POSTs to /api/violations/override so the team's override-rate
-  // analytics records "this team dismissed standard X on this string."
-  area.querySelectorAll(".btn-dismiss").forEach(btn => {
+  // Human-eval build plan Session 3 — rationale expand + stance submit.
+  //
+  // Expand/collapse toggles the rationale body on the card and records
+  // `rationaleExpanded=true` so the downstream behavior-quadrant
+  // derivation can distinguish pattern_match_accept (fast + not
+  // expanded) from informed_accept (expanded before agreeing).
+  area.querySelectorAll(".btn-expand-rationale").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const card = btn.closest(".violation-card");
+      const body = card && card.querySelector(".rationale-body");
+      if (!card || !body) return;
+      const expanded = card.dataset.rationaleExpanded === "true";
+      if (expanded) {
+        body.setAttribute("hidden", "");
+        card.dataset.rationaleExpanded = "false";
+        btn.setAttribute("aria-expanded", "false");
+        btn.textContent = "Why this was flagged";
+      } else {
+        body.removeAttribute("hidden");
+        card.dataset.rationaleExpanded = "true";
+        btn.setAttribute("aria-expanded", "true");
+        btn.textContent = "Hide rationale";
+      }
+    });
+  });
+
+  // Stance buttons — Agree / Disagree / Ship anyway. First click on
+  // any stance button submits the override; subsequent clicks are
+  // ignored (the card locks). Maps stance → override_type so
+  // pre-Session-3 analytics keeps working:
+  //   agree               → dismiss
+  //   disagree            → mark_false_positive
+  //   agree_but_overriding → accept_as_review
+  const STANCE_TO_TYPE = {
+    agree: "dismiss",
+    disagree: "mark_false_positive",
+    agree_but_overriding: "accept_as_review",
+  };
+  area.querySelectorAll(".btn-stance").forEach(btn => {
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
-      if (btn.disabled || btn.classList.contains("dismissed")) return;
-      btn.disabled = true;
-      const original = btn.textContent;
-      btn.textContent = "Dismissing…";
+      const card = btn.closest(".violation-card");
+      if (!card) return;
+      const row = card.querySelector(".stance-row");
+      // Lock the whole row after the first stance click — one verdict
+      // per card. Re-clicks are ignored (no edit-stance path today).
+      if (row && row.dataset.locked === "true") return;
+      if (row) row.dataset.locked = "true";
+
+      const stance = btn.dataset.stance;
+      const overrideType = STANCE_TO_TYPE[stance];
+      if (!overrideType) {
+        if (row) row.dataset.locked = "false";
+        return;
+      }
+
+      const surfacedAt = Number(card.dataset.surfacedAt) || Date.now();
+      const timeToActionMs = Math.max(0, Date.now() - surfacedAt);
+      const rationaleExpanded = card.dataset.rationaleExpanded === "true";
+
+      // Lock UI state on all stance buttons; highlight the chosen one.
+      card.querySelectorAll(".btn-stance").forEach(other => {
+        other.disabled = true;
+      });
+      btn.classList.add("active");
+
       try {
         const res = await fetch(`${API_BASE_URL}/api/violations/override`, {
           method: "POST",
@@ -2827,23 +2942,29 @@ function renderBatchResults(results) {
             "Authorization": `Bearer ${cxToken}`,
           },
           body: JSON.stringify({
-            standard_id: btn.dataset.standardId,
-            text: btn.dataset.text || "",
-            moment: btn.dataset.moment || undefined,
-            override_type: "dismiss",
+            standard_id: card.dataset.standardId,
+            text: card.dataset.text || "",
+            moment: card.dataset.moment || undefined,
+            override_type: overrideType,
+            override_stance: stance,
+            rationale_expanded: rationaleExpanded,
+            time_to_action_ms: timeToActionMs,
+            actor_role: "designer",  // plugin default; see src/lib/actor-role.ts
             source: "plugin",
           }),
         });
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        btn.classList.add("dismissed");
-        btn.textContent = "Dismissed ✓";
       } catch (err) {
-        btn.disabled = false;
-        btn.textContent = original;
-        console.warn("dismiss failed:", err);
-        // No alert — silent failure is fine for an opt-in feedback signal.
+        // Silent failure — this is an opt-in telemetry signal, not
+        // a user-blocking operation. Unlock so the user can retry.
+        console.warn("stance submit failed:", err);
+        if (row) row.dataset.locked = "false";
+        card.querySelectorAll(".btn-stance").forEach(other => {
+          other.disabled = false;
+        });
+        btn.classList.remove("active");
       }
     });
   });
@@ -3017,7 +3138,16 @@ function renderNodeCard(result) {
     </div>`;
   }
 
-  // Violation cards
+  // Violation cards — human-eval build plan Session 3.
+  //
+  // Each card captures:
+  //   - Three-button stance (Agree / Disagree / Ship anyway)
+  //   - Rationale expand/collapse toggle (issue + suggestion hidden
+  //     by default; shown when user clicks "Why this was flagged")
+  //   - time_to_action_ms (wall-clock delta from render to first
+  //     stance click; stamped via data-surfaced-at)
+  // All four signals POST to /api/violations/override on stance click.
+  const surfacedAt = Date.now();
   for (const v of result.violations) {
     const sourceBadge = v.source === "preprocessor"
       ? `<span class="source-badge source-badge-instant">&#9889; Instant</span>`
@@ -3028,21 +3158,32 @@ function renderNodeCard(result) {
       v.standard_id, v.suggestion || "", result.text || "",
     );
 
-    // Dismiss button — POSTs to /api/violations/override so the team's
-    // override-rate report (BUILD_PLAN_v2 Session 11) tracks "rules
-    // your team actually disagrees with."
-    html += `<div class="violation-card" data-standard-id="${escapeHtml(v.standard_id)}">
+    const rationaleBody = enrichedSuggestion
+      ? `<div class="suggestion-label">Suggestion</div>
+         <div class="suggestion">${escapeHtml(enrichedSuggestion)}</div>`
+      : "";
+
+    html += `<div class="violation-card"
+                  data-standard-id="${escapeHtml(v.standard_id)}"
+                  data-text="${escapeHtml(result.text || "")}"
+                  data-moment="${escapeHtml(result.moment || "")}"
+                  data-suggested-text="${escapeHtml(enrichedSuggestion || "")}"
+                  data-surfaced-at="${surfacedAt}"
+                  data-rationale-expanded="false">
       <div class="standard-id">${escapeHtml(label)} ${sourceBadge}</div>
       <div class="issue">${escapeHtml(v.issue)}</div>
-      ${enrichedSuggestion ? `<div class="suggestion-label">Suggestion</div>
-      <div class="suggestion">${escapeHtml(enrichedSuggestion)}</div>` : ""}
-      <button class="btn-dismiss" type="button"
-              data-standard-id="${escapeHtml(v.standard_id)}"
-              data-text="${escapeHtml(result.text || "")}"
-              data-moment="${escapeHtml(result.moment || "")}"
-              aria-label="Dismiss this violation and tell ContentRX it doesn't apply">
-        Dismiss
+      ${rationaleBody ? `<button class="btn-expand-rationale" type="button" aria-expanded="false">
+        Why this was flagged
       </button>
+      <div class="rationale-body" hidden>${rationaleBody}</div>` : ""}
+      <div class="stance-row" role="group" aria-label="How do you feel about this finding?">
+        <button class="btn-stance" type="button" data-stance="agree"
+                aria-label="Agree — dismiss this finding">Agree</button>
+        <button class="btn-stance" type="button" data-stance="disagree"
+                aria-label="Disagree — mark this as a false positive">Disagree</button>
+        <button class="btn-stance" type="button" data-stance="agree_but_overriding"
+                aria-label="Agree but shipping anyway">Ship anyway</button>
+      </div>
     </div>`;
   }
 
