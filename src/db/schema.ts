@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -244,6 +245,40 @@ export const violationOverrides = pgTable(
     source: text("source", {
       enum: ["plugin", "cli", "action", "dashboard"],
     }).notNull(),
+    // Human-eval build plan Session 3 — richer override signal.
+    //
+    // `overrideStance` is the three-button verdict: whether the user
+    // agrees with the finding, disagrees, or agrees-but-is-shipping-
+    // anyway. This is a different axis from `overrideType` (which
+    // describes what they did with the finding) — together they give
+    // the reviewer both stance and action. Nullable on existing rows
+    // because pre-Session-3 clients didn't capture it.
+    overrideStance: text("override_stance", {
+      enum: ["agree", "disagree", "agree_but_overriding"],
+    }),
+    // `actorRole` weights the signal. A content-designer override is
+    // more informative than an engineer override in most cases, but
+    // both are captured. Inferred at the surface or supplied by the
+    // user. `other` covers cases where we can't infer.
+    actorRole: text("actor_role", {
+      enum: ["designer", "engineer", "pm", "other"],
+    }),
+    // `rationaleExpanded` — did the user click to expand the rationale
+    // before taking action? Feeds the four-quadrant behavior model
+    // (pattern-match / informed / reflex).
+    rationaleExpanded: boolean("rationale_expanded"),
+    // `timeToActionMs` — elapsed ms from verdict surfaced to user
+    // action. Short + unexpanded ≈ reflex; short + expanded ≈
+    // pattern-match after confirmation; long ≈ informed decision.
+    timeToActionMs: integer("time_to_action_ms"),
+    // Counterfactual triple — captured when the user rewrote the
+    // flagged string. `textHash` is the original; `suggestedTextHash`
+    // is what the tool proposed; `appliedTextHash` is what the user
+    // actually shipped. When all three hashes differ, the eval is
+    // flagged as `suggestion_rejected_alternative_applied` during
+    // review — derivable from the hashes, not stored.
+    suggestedTextHash: text("suggested_text_hash"),
+    appliedTextHash: text("applied_text_hash"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

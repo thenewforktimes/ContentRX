@@ -65,6 +65,34 @@ into errors.
 
 ## Changelog
 
+### 1.4.0 (human-eval build plan Session 3)
+
+**Additive bump** — pre-Session-3 clients keep working without
+supplying any of the new fields.
+
+`POST /api/violations/override` now accepts the richer override signal:
+
+- **`override_stance`** (optional, one of `"agree"` / `"disagree"` /
+  `"agree_but_overriding"`) — the three-button verdict. Captures the
+  user's opinion alongside the action-oriented `override_type`.
+- **`actor_role`** (optional, one of `"designer"` / `"engineer"` /
+  `"pm"` / `"other"`) — weights the signal. Default inferred from
+  `source` via `src/lib/actor-role.ts`; clients can override.
+- **`rationale_expanded`** (optional, boolean) — did the user click to
+  expand the rationale before acting? Feeds the four-quadrant
+  behavior model.
+- **`time_to_action_ms`** (optional, integer, 0–3,600,000) — elapsed
+  ms from verdict surfaced to user action. Below 2000ms + not
+  expanded ≈ reflex.
+- **`suggested_text`** / **`applied_text`** (optional, strings, same
+  100k cap as `text`) — the counterfactual triple. Hashed
+  server-side to `suggested_text_hash` / `applied_text_hash`. Raw
+  text never persists.
+
+Stored rows include the new columns in the `returning()` response.
+Behavior-quadrant derivation lives in `src/lib/behavior-quadrant.ts`
+(pure function; surfaced in the `/dashboard/overrides` report).
+
 ### 1.3.0 (human-eval build plan Session 2)
 
 **Additive bump** — old clients reading `review_reason` as an opaque

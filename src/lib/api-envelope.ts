@@ -30,7 +30,12 @@
 //         novel_pattern (human-eval build plan Session 2). Additive —
 //         old clients reading `review_reason` as a raw string keep
 //         working; clients that switch on the value should add arms.
-export const SCHEMA_VERSION = "1.3.0" as const;
+// 1.4.0 — richer override signal on POST /api/violations/override:
+//         override_stance, actor_role, rationale_expanded,
+//         time_to_action_ms, suggested_text, applied_text (human-eval
+//         build plan Session 3). Additive — pre-Session-3 clients
+//         keep working without supplying any of the new fields.
+export const SCHEMA_VERSION = "1.4.0" as const;
 
 /**
  * Adds `schema_version` and `warnings` to a response payload. Existing

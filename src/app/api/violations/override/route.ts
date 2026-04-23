@@ -61,6 +61,21 @@ const RequestSchema = z.object({
   override_reason: z.string().min(1).max(500).optional(),
   source: z.enum(["plugin", "cli", "action", "dashboard"]).default("plugin"),
   violation_id: z.string().min(1).max(64).optional(),
+  // Human-eval build plan Session 3 additions. All optional — pre-
+  // Session-3 clients keep working without supplying any of these.
+  override_stance: z.enum(["agree", "disagree", "agree_but_overriding"]).optional(),
+  actor_role: z.enum(["designer", "engineer", "pm", "other"]).optional(),
+  rationale_expanded: z.boolean().optional(),
+  // Practical upper bound: an hour in ms. Anything longer is almost
+  // certainly the user walking away — stop capturing once the tab
+  // has been idle that long.
+  time_to_action_ms: z.number().int().min(0).max(3_600_000).optional(),
+  // Counterfactual triple: original text hash already lives in
+  // `text_hash` (server-hashed from `text`). These two are the
+  // tool's suggestion and what the user actually applied, also
+  // hashed client-side (same sha256 contract as `text`).
+  suggested_text: z.string().min(1).max(100_000).optional(),
+  applied_text: z.string().min(1).max(100_000).optional(),
 });
 
 export async function POST(req: Request) {
@@ -112,6 +127,12 @@ export async function POST(req: Request) {
     override_reason,
     source,
     violation_id,
+    override_stance,
+    actor_role,
+    rationale_expanded,
+    time_to_action_ms,
+    suggested_text,
+    applied_text,
   } = parsed.data;
 
   // Team scope mirrors violations: free/pro users have team_id=null;
@@ -136,6 +157,12 @@ export async function POST(req: Request) {
         overrideType: override_type,
         overrideReason: override_reason ?? null,
         source,
+        overrideStance: override_stance ?? null,
+        actorRole: actor_role ?? null,
+        rationaleExpanded: rationale_expanded ?? null,
+        timeToActionMs: time_to_action_ms ?? null,
+        suggestedTextHash: suggested_text ? hashText(suggested_text) : null,
+        appliedTextHash: applied_text ? hashText(applied_text) : null,
       })
       .returning();
     return withCors(
