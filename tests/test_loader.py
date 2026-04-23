@@ -66,6 +66,50 @@ class TestBasicLoading:
         assert len(result["content_types"]) == 8
 
 
+class TestPerStandardVersioning:
+    """Human-eval build plan Session 1: every standard carries a version
+    and version_history so eval records can pin a specific rule revision.
+    """
+
+    def test_every_standard_has_version_field(self):
+        result = load_standards()
+        missing = [
+            std["id"] for cat in result["categories"]
+            for std in cat["standards"]
+            if "version" not in std
+        ]
+        assert missing == [], f"Standards without version: {missing}"
+
+    def test_every_standard_has_version_history(self):
+        result = load_standards()
+        missing = [
+            std["id"] for cat in result["categories"]
+            for std in cat["standards"]
+            if "version_history" not in std
+        ]
+        assert missing == [], f"Standards without version_history: {missing}"
+
+    def test_version_history_entries_have_required_fields(self):
+        result = load_standards()
+        for cat in result["categories"]:
+            for std in cat["standards"]:
+                for entry in std.get("version_history", []):
+                    assert "version" in entry, f"{std['id']} history entry missing version"
+                    assert "date" in entry, f"{std['id']} history entry missing date"
+                    assert "change_note" in entry, (
+                        f"{std['id']} history entry missing change_note"
+                    )
+
+    def test_version_is_semver_shape(self):
+        result = load_standards()
+        for cat in result["categories"]:
+            for std in cat["standards"]:
+                parts = std["version"].split(".")
+                assert len(parts) == 3, f"{std['id']} version {std['version']} not semver"
+                for p in parts:
+                    assert p.isdigit(), f"{std['id']} version {std['version']} not numeric"
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Caching
 # ═══════════════════════════════════════════════════════════════════════════

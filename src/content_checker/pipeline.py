@@ -30,10 +30,19 @@ from content_checker.audience import Audience, get_audience_prompt_context, is_s
 from content_checker.classify import classify, classify_heuristic
 from content_checker.filter import filter_standards, get_content_type_descriptions
 from content_checker.models import (
+    AMBIGUITY_STANDARDS_CONFLICT,
     CheckResult,
     DEFAULT_CONFIDENCE_LLM,
+    HOP_CLASSIFY,
+    HOP_DETECT_MOMENT,
+    HOP_FILTER,
+    HOP_MERGE,
+    HOP_PREPROCESS,
+    HOP_SCAN,
+    HOP_VALIDATE,
     PassedStandard,
     PipelineMeta,
+    RationaleHop,
     TokenUsage,
     Violation,
     derive_verdict,
@@ -60,6 +69,34 @@ def _validate_text_input(text: str) -> None:
             f"Content too long: {len(text):,} characters "
             f"(max {MAX_CONTENT_LENGTH:,})"
         )
+
+
+def _build_rule_version_map(standards_data: dict) -> dict[str, str]:
+    """Snapshot standard_id → version from the loaded standards library.
+
+    Populated by the per-standard versioning patch in the library
+    (human-eval build plan Session 1). Used to stamp `rule_version` on
+    every emitted Violation and to populate `rule_versions` on each
+    rationale-chain hop.
+    """
+    versions: dict[str, str] = {}
+    for cat in standards_data.get("categories", []):
+        for std in cat.get("standards", []):
+            sid = std.get("id")
+            ver = std.get("version")
+            if sid and ver:
+                versions[sid] = ver
+    return versions
+
+
+def _stamp_rule_versions(
+    violations: list[Violation],
+    rule_versions: dict[str, str],
+) -> None:
+    """Populate Violation.rule_version from the snapshot. Mutates in place."""
+    for v in violations:
+        if v.rule_version is None:
+            v.rule_version = rule_versions.get(v.standard_id)
 
 
 def build_system_prompt(
@@ -278,12 +315,23 @@ def check(
         audience = Audience.from_str(audience)
 
     standards_data = load_standards()
+    rule_versions = _build_rule_version_map(standards_data)
     total_latency = 0.0
     total_tokens = TokenUsage()
+
+    # Rationale chain — one hop appended per pipeline stage (v1.2.0).
+    # Captures enough state per hop for a reviewer to pinpoint which
+    # stage went sideways without re-running the pipeline.
+    chain: list[RationaleHop] = []
 
     # Stage 1: Classify
     if content_type:
         detected_type = content_type
+        chain.append(RationaleHop(
+            step=HOP_CLASSIFY,
+            inputs={"text_len": len(text), "classify_mode": "explicit"},
+            output={"detected_type": detected_type},
+        ))
     else:
         ct_descriptions = get_content_type_descriptions(standards_data)
         detected_type, cls_latency, cls_tokens = classify(
@@ -291,23 +339,72 @@ def check(
         )
         total_latency += cls_latency
         total_tokens += cls_tokens
+        chain.append(RationaleHop(
+            step=HOP_CLASSIFY,
+            inputs={
+                "text_len": len(text),
+                "classify_mode": "llm" if use_llm_classifier else "heuristic",
+                "candidates": len(ct_descriptions),
+            },
+            output={"detected_type": detected_type},
+        ))
 
     # Stage 1b: Detect moment (Phase 1)
     # Runs after classification because the heuristic uses content_type.
     # Zero cost, <1ms. If moment was passed explicitly (Tier 3), skip detection.
     if moment is None:
         detected_moment = detect_moment(text, detected_type)
+        moment_mode = "detected"
     else:
         detected_moment = moment
+        moment_mode = "explicit"
+    chain.append(RationaleHop(
+        step=HOP_DETECT_MOMENT,
+        inputs={
+            "text_len": len(text),
+            "content_type": detected_type,
+            "mode": moment_mode,
+        },
+        output={"detected_moment": detected_moment},
+    ))
 
     # Stage 2: Filter (audience-aware — suppresses UI-specific standards in general mode)
     filtered = filter_standards(standards_data, detected_type, audience=audience)
     active_notes = filtered.get("active_notes", [])
+    filter_rule_versions = _build_rule_version_map(filtered)
+    chain.append(RationaleHop(
+        step=HOP_FILTER,
+        inputs={
+            "content_type": detected_type,
+            "audience": audience.value,
+            "total_standards": filtered.get("total_count", 0),
+        },
+        output={
+            "filtered_count": filtered.get("filtered_count", 0),
+            "active_notes_count": len(active_notes),
+        },
+        rule_versions=filter_rule_versions,
+    ))
 
     # Stage 3a: Deterministic preprocess (content-type-aware)
     preprocess_violations = run_preprocess(text, detected_type)
+    _stamp_rule_versions(list(preprocess_violations), rule_versions)
     preprocess_ids = {v.standard_id for v in preprocess_violations}
     suppressed_ids = getattr(preprocess_violations, 'suppressed_ids', set())
+    chain.append(RationaleHop(
+        step=HOP_PREPROCESS,
+        inputs={"text_len": len(text), "content_type": detected_type},
+        output={
+            "violations_count": len(list(preprocess_violations)),
+            "standards_fired": sorted(preprocess_ids),
+            "suppressed_count": len(suppressed_ids),
+        },
+        confidence=1.0,  # deterministic
+        rule_versions={
+            sid: ver for sid, ver in rule_versions.items()
+            if sid in preprocess_ids
+        },
+    ))
 
     # Stage 3b: LLM scan (audience + moment context injected into system prompt)
     scan_result, scan_latency, scan_tokens = _llm_scan(
@@ -320,6 +417,26 @@ def check(
 
     llm_violations = _parse_llm_violations(scan_result.get("violations", []))
     llm_passes = _parse_llm_passes(scan_result.get("passes", []))
+    _stamp_rule_versions(llm_violations, rule_versions)
+    llm_scan_ids = sorted({v.standard_id for v in llm_violations})
+    chain.append(RationaleHop(
+        step=HOP_SCAN,
+        inputs={
+            "filtered_count": filtered.get("filtered_count", 0),
+            "content_type": detected_type,
+            "audience": audience.value,
+            "moment": detected_moment,
+        },
+        output={
+            "llm_candidates": len(llm_violations),
+            "llm_passes": len(llm_passes),
+            "standards_flagged": llm_scan_ids,
+        },
+        rule_versions={
+            sid: ver for sid, ver in rule_versions.items()
+            if sid in set(llm_scan_ids)
+        },
+    ))
 
     # Deduplicate: preprocess wins on conflicts
     # Also suppress LLM violations for standards the preprocessor definitively passed
@@ -332,10 +449,24 @@ def check(
             text, detected_type, llm_candidates,
             active_notes=active_notes, model=model,
         )
+        _stamp_rule_versions(confirmed, rule_versions)
+        _stamp_rule_versions(rejected, rule_versions)
         total_latency += val_latency
         total_tokens += val_tokens
     else:
         confirmed, rejected = [], []
+    chain.append(RationaleHop(
+        step=HOP_VALIDATE,
+        inputs={"candidate_count": len(llm_candidates)},
+        output={
+            "confirmed": len(confirmed),
+            "rejected": len(rejected),
+        },
+        rule_versions={
+            sid: ver for sid, ver in rule_versions.items()
+            if sid in {v.standard_id for v in confirmed + rejected}
+        },
+    ))
 
     # Stage 5: Merge
     #
@@ -384,6 +515,29 @@ def check(
         overall_verdict=overall, violations=final_violations,
     )
 
+    chain.append(RationaleHop(
+        step=HOP_MERGE,
+        inputs={
+            "preprocess_active": len(active_preprocess),
+            "confirmed_active": len(active_confirmed),
+            "audience_suppressed_preprocess": (
+                len(list(preprocess_violations)) - len(active_preprocess)
+            ),
+            "moment_suppressed": moment_suppressed_count,
+        },
+        output={
+            "final_violations": len(final_violations),
+            "final_passes": len(final_passes),
+            "overall_verdict": overall,
+            "verdict": verdict,
+            "review_reason": review_reason,
+        },
+        rule_versions={
+            sid: ver for sid, ver in rule_versions.items()
+            if sid in {v.standard_id for v in final_violations}
+        },
+    ))
+
     result = CheckResult(
         content_type=detected_type,
         overall_verdict=overall,
@@ -404,6 +558,7 @@ def check(
             moment_weights_applied=len(moment_weights),
             moment_suppressed=moment_suppressed_count,
         ),
+        rationale_chain=chain,
     )
 
     return result, total_latency, total_tokens
@@ -422,11 +577,28 @@ def check_unfiltered(
     _validate_text_input(text)
 
     standards_data = load_standards()
+    rule_versions = _build_rule_version_map(standards_data)
+    chain: list[RationaleHop] = []
 
     # Deterministic preprocess
     preprocess_violations = run_preprocess(text)
+    _stamp_rule_versions(list(preprocess_violations), rule_versions)
     preprocess_ids = {v.standard_id for v in preprocess_violations}
     suppressed_ids = getattr(preprocess_violations, 'suppressed_ids', set())
+    chain.append(RationaleHop(
+        step=HOP_PREPROCESS,
+        inputs={"text_len": len(text), "content_type": "unfiltered"},
+        output={
+            "violations_count": len(list(preprocess_violations)),
+            "standards_fired": sorted(preprocess_ids),
+            "suppressed_count": len(suppressed_ids),
+        },
+        confidence=1.0,
+        rule_versions={
+            sid: ver for sid, ver in rule_versions.items()
+            if sid in preprocess_ids
+        },
+    ))
 
     # LLM scan with full standards, no content type
     scan_result, latency, tokens = _llm_scan(
@@ -435,6 +607,26 @@ def check_unfiltered(
 
     llm_violations = _parse_llm_violations(scan_result.get("violations", []))
     llm_passes = _parse_llm_passes(scan_result.get("passes", []))
+    _stamp_rule_versions(llm_violations, rule_versions)
+    llm_scan_ids = sorted({v.standard_id for v in llm_violations})
+    chain.append(RationaleHop(
+        step=HOP_SCAN,
+        inputs={
+            "filtered_count": standards_data.get("total_standards", 47),
+            "content_type": "unfiltered",
+            "audience": "product_ui",
+            "moment": "",
+        },
+        output={
+            "llm_candidates": len(llm_violations),
+            "llm_passes": len(llm_passes),
+            "standards_flagged": llm_scan_ids,
+        },
+        rule_versions={
+            sid: ver for sid, ver in rule_versions.items()
+            if sid in set(llm_scan_ids)
+        },
+    ))
 
     # Merge (no validation, no moment, no audience)
     # Post-processing suppression: exclude both preprocess violation IDs
@@ -450,6 +642,25 @@ def check_unfiltered(
         overall_verdict=overall, violations=final_violations,
     )
 
+    chain.append(RationaleHop(
+        step=HOP_MERGE,
+        inputs={
+            "preprocess_active": len(list(preprocess_violations)),
+            "confirmed_active": len(llm_only),
+        },
+        output={
+            "final_violations": len(final_violations),
+            "final_passes": len(final_passes),
+            "overall_verdict": overall,
+            "verdict": verdict,
+            "review_reason": review_reason,
+        },
+        rule_versions={
+            sid: ver for sid, ver in rule_versions.items()
+            if sid in flagged_ids
+        },
+    ))
+
     result = CheckResult(
         content_type="unfiltered",
         overall_verdict=overall,
@@ -464,6 +675,7 @@ def check_unfiltered(
             preprocess_violations=len(preprocess_violations),
             llm_candidates=len(llm_only),
         ),
+        rationale_chain=chain,
     )
 
     return result, latency, tokens

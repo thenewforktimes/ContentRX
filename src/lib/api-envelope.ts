@@ -19,7 +19,13 @@
  *   consistency with the BUILD_PLAN_v2 envelope spec.
  */
 
-export const SCHEMA_VERSION = "1.1.0" as const;
+// 1.0.0 — initial envelope (v2 Session 9)
+// 1.1.0 — add `verdict`, per-Violation `confidence`, `review_reason`
+//         on CheckResult (v2 Session 10). Additive.
+// 1.2.0 — add `related_standards`, `ambiguity_flag`, `rule_version` on
+//         Violation; add `rationale_chain` on CheckResult
+//         (human-eval build plan Session 1). Additive.
+export const SCHEMA_VERSION = "1.2.0" as const;
 
 /**
  * Adds `schema_version` and `warnings` to a response payload. Existing

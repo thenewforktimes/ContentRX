@@ -24,9 +24,11 @@ from content_checker.models import (
 
 
 class TestSchemaVersionBump:
-    def test_schema_version_is_1_1_0(self):
-        # v2 Session 10 bump — additive (verdict + confidence + review_reason)
-        assert SCHEMA_VERSION == "1.1.0"
+    def test_schema_version_is_1_2_0(self):
+        # Human-eval build plan Session 1 bump — additive (Violation
+        # gained related_standards + ambiguity_flag + rule_version;
+        # CheckResult gained rationale_chain).
+        assert SCHEMA_VERSION == "1.2.0"
 
 
 class TestVerdictConstants:

@@ -65,6 +65,33 @@ into errors.
 
 ## Changelog
 
+### 1.2.0 (human-eval build plan Session 1)
+
+**Additive bump** — old clients keep working.
+
+- **`Violation.related_standards`** (list of string, default `[]`):
+  standard IDs the LLM considered as adjacent candidates and either
+  rejected or applied. Gives reviewers context on overlapping rules.
+- **`Violation.ambiguity_flag`** (string, optional): typed reason for
+  uncertainty on this specific violation. One of
+  `voice_mismatch_with_moment`, `standards_conflict`,
+  `insufficient_context`, `situation_uncertain`, or null.
+- **`Violation.rule_version`** (string, optional): per-standard version
+  of the standard in effect when this violation was emitted. Sourced
+  from the new per-standard `version` field in
+  `standards_library.json` (also added in Session 1).
+- **`CheckResult.rationale_chain`** (list of hop objects, default
+  `[]`): ordered list of the hops the pipeline executed (classify,
+  detect_moment, filter, preprocess, scan, validate, merge). Each hop
+  carries `step`, `inputs`, `output`, `confidence` (optional),
+  `rule_versions` (standard_id → version map for rules consulted at
+  this hop), and `ambiguity_flag` (optional). Lets reviewers pinpoint
+  which hop produced a bad verdict without re-running the pipeline.
+
+Clients that weren't reading any of these fields keep working. Clients
+that want the new capabilities should read them and tolerate absence
+(for pre-1.2.0 responses).
+
 ### 1.1.0 (v2 Session 10)
 
 **Additive bump** — old clients keep working.
