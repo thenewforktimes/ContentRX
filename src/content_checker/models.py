@@ -22,7 +22,29 @@ from typing import Any
 # 1.1.0 — add `verdict` ("pass"|"violation"|"review_recommended"|"error"),
 #         `confidence` per Violation, `review_reason` on CheckResult
 #         (v2 Session 10). Additive — old clients keep working.
-SCHEMA_VERSION = "1.1.0"
+# 1.2.0 — add `related_standards`, `ambiguity_flag`, `rule_version` on
+#         Violation; add `rationale_chain` on CheckResult
+#         (human-eval build plan Session 1). Additive only.
+SCHEMA_VERSION = "1.2.0"
+
+
+# Ambiguity-flag vocabulary (human-eval build plan Session 1).
+#
+# An ambiguity_flag attaches to a specific Violation (or a specific hop,
+# via rationale_chain) when the pipeline was uncertain in a typed way.
+# This is distinct from CheckResult.review_reason — that field is
+# one-per-evaluation; this one can attach per-hop.
+AMBIGUITY_VOICE_MISMATCH_WITH_MOMENT = "voice_mismatch_with_moment"
+AMBIGUITY_STANDARDS_CONFLICT = "standards_conflict"
+AMBIGUITY_INSUFFICIENT_CONTEXT = "insufficient_context"
+AMBIGUITY_SITUATION_UNCERTAIN = "situation_uncertain"
+
+VALID_AMBIGUITY_FLAGS = frozenset({
+    AMBIGUITY_VOICE_MISMATCH_WITH_MOMENT,
+    AMBIGUITY_STANDARDS_CONFLICT,
+    AMBIGUITY_INSUFFICIENT_CONTEXT,
+    AMBIGUITY_SITUATION_UNCERTAIN,
+})
 
 
 # Three-state verdict (BUILD_PLAN_v2 Session 10).
@@ -101,6 +123,22 @@ class Violation:
     includes its own confidence per violation, that value overrides the
     default. Violations with confidence < CONFIDENCE_THRESHOLD flip the
     overall CheckResult.verdict to "review_recommended".
+
+    v1.2.0 additions (human-eval build plan Session 1):
+
+    `related_standards` — standard IDs the LLM considered as adjacent
+    candidates and either rejected or applied. Gives reviewers context
+    on overlapping rules (e.g., CLR-01 overlapping with PRF-11 on
+    dismissive language). Empty list when no adjacents were considered
+    or when the source is deterministic preprocessing.
+
+    `ambiguity_flag` — typed reason for uncertainty on this specific
+    violation. One of VALID_AMBIGUITY_FLAGS or None.
+
+    `rule_version` — the per-standard version of the standard that was
+    in effect when this violation was emitted (see `version` field in
+    standards_library.json). Makes every violation reproducible as of a
+    specific rule revision.
     """
 
     standard_id: str
@@ -110,6 +148,11 @@ class Violation:
     source: str = "llm"  # "deterministic" or "llm"
     confidence: float = DEFAULT_CONFIDENCE_LLM
 
+    # v1.2.0 additions. See class docstring above.
+    related_standards: list[str] = field(default_factory=list)
+    ambiguity_flag: str | None = None
+    rule_version: str | None = None
+
     def to_dict(self) -> dict:
         return {
             "standard_id": self.standard_id,
@@ -118,6 +161,9 @@ class Violation:
             "suggestion": self.suggestion,
             "source": self.source,
             "confidence": self.confidence,
+            "related_standards": list(self.related_standards),
+            "ambiguity_flag": self.ambiguity_flag,
+            "rule_version": self.rule_version,
         }
 
 
@@ -182,6 +228,72 @@ class TokenUsage:
         return {"input": self.input, "output": self.output}
 
 
+# ---------------------------------------------------------------------------
+# Rationale chain (v1.2.0 — human-eval build plan Session 1)
+# ---------------------------------------------------------------------------
+
+
+# Canonical pipeline hop names. Kept as string constants so test and tool
+# code can compare against them without depending on an Enum import.
+HOP_CLASSIFY = "classify"
+HOP_DETECT_MOMENT = "detect_moment"
+HOP_FILTER = "filter"
+HOP_PREPROCESS = "preprocess"
+HOP_SCAN = "scan"
+HOP_VALIDATE = "validate"
+HOP_MERGE = "merge"
+
+VALID_HOPS = frozenset({
+    HOP_CLASSIFY,
+    HOP_DETECT_MOMENT,
+    HOP_FILTER,
+    HOP_PREPROCESS,
+    HOP_SCAN,
+    HOP_VALIDATE,
+    HOP_MERGE,
+})
+
+
+@dataclass
+class RationaleHop:
+    """One hop in the pipeline's reasoning chain.
+
+    When Robo (or any reviewer) sees a wrong verdict, the rationale chain
+    lets them pinpoint which hop went sideways without re-running the
+    pipeline. Every hop captures a compact summary of its inputs, output,
+    and the rule versions it consulted.
+
+    `confidence` is populated when the hop has a meaningful confidence
+    signal (LLM classifier, LLM scan, LLM validate) and left None for
+    deterministic hops (heuristic classify, filter, preprocess, merge).
+
+    `rule_versions` maps standard_id → version for the per-standard
+    versions (from standards_library.json) that this hop consulted.
+    Empty for hops that don't touch standards (classify, detect_moment).
+
+    `ambiguity_flag` is set when this hop was specifically uncertain in
+    a typed way — see VALID_AMBIGUITY_FLAGS. Null when the hop was
+    confident or uncertainty is captured elsewhere.
+    """
+
+    step: str
+    inputs: dict = field(default_factory=dict)
+    output: dict = field(default_factory=dict)
+    confidence: float | None = None
+    rule_versions: dict[str, str] = field(default_factory=dict)
+    ambiguity_flag: str | None = None
+
+    def to_dict(self) -> dict:
+        return {
+            "step": self.step,
+            "inputs": dict(self.inputs),
+            "output": dict(self.output),
+            "confidence": self.confidence,
+            "rule_versions": dict(self.rule_versions),
+            "ambiguity_flag": self.ambiguity_flag,
+        }
+
+
 @dataclass
 class CheckResult:
     """The complete result of checking a piece of content.
@@ -208,6 +320,12 @@ class CheckResult:
     verdict: Verdict = VERDICT_PASS
     review_reason: str | None = None
 
+    # v1.2.0 addition — rationale chain.
+    # Ordered list of hops the pipeline executed, each with inputs,
+    # outputs, confidence, and consulted rule versions. Empty when the
+    # caller bypasses the pipeline (direct CheckResult construction).
+    rationale_chain: list[RationaleHop] = field(default_factory=list)
+
     def to_dict(self) -> dict:
         return {
             "content_type": self.content_type,
@@ -220,6 +338,7 @@ class CheckResult:
             "moment": self.moment,
             "review_reason": self.review_reason,
             "pipeline": self.pipeline.to_dict(),
+            "rationale_chain": [h.to_dict() for h in self.rationale_chain],
         }
 
 

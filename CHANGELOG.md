@@ -10,6 +10,22 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
+### Unreleased — 2026-04-23 (human-eval build plan Session 1)
+
+- Per-standard versioning on `standards_library.json`: every standard
+  now carries a `version` and `version_history`, so eval records can
+  pin against a specific rule revision. The library-level top-level
+  `version` remains the engine's package version.
+- `Violation` gains `related_standards`, `ambiguity_flag`, and
+  `rule_version` fields. `rule_version` is stamped from the loaded
+  standards library at evaluation time.
+- `CheckResult` gains `rationale_chain` — an ordered list of
+  `RationaleHop` entries, one per pipeline stage (classify,
+  detect_moment, filter, preprocess, scan, validate, merge). Each hop
+  captures inputs, output, confidence (when applicable),
+  `rule_versions` consulted, and an optional typed `ambiguity_flag`.
+- API schema_version bumped 1.1.0 → 1.2.0 (minor, additive).
+
 ### 4.6.1 — 2026-04-22
 
 - Added per-violation `confidence` field (0–1) on LLM-flagged

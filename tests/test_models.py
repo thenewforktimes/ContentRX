@@ -1,10 +1,17 @@
 """Tests for data models."""
 
 from content_checker.models import (
+    AMBIGUITY_STANDARDS_CONFLICT,
     CheckResult,
+    HOP_CLASSIFY,
+    HOP_MERGE,
+    HOP_PREPROCESS,
     PassedStandard,
     PipelineMeta,
+    RationaleHop,
     TokenUsage,
+    VALID_AMBIGUITY_FLAGS,
+    VALID_HOPS,
     Violation,
 )
 
@@ -21,6 +28,80 @@ class TestViolation:
         d = v.to_dict()
         assert d["standard_id"] == "GRM-01"
         assert d["source"] == "deterministic"
+
+    def test_v120_fields_default_empty(self):
+        v = Violation(standard_id="CLR-01", rule="r", issue="i", suggestion="s")
+        d = v.to_dict()
+        assert d["related_standards"] == []
+        assert d["ambiguity_flag"] is None
+        assert d["rule_version"] is None
+
+    def test_v120_fields_populated(self):
+        v = Violation(
+            standard_id="CLR-01", rule="r", issue="i", suggestion="s",
+            related_standards=["PRF-11", "VT-02"],
+            ambiguity_flag=AMBIGUITY_STANDARDS_CONFLICT,
+            rule_version="4.6.1",
+        )
+        d = v.to_dict()
+        assert d["related_standards"] == ["PRF-11", "VT-02"]
+        assert d["ambiguity_flag"] == "standards_conflict"
+        assert d["rule_version"] == "4.6.1"
+
+    def test_related_standards_default_not_shared(self):
+        """default_factory must produce an independent list per instance."""
+        a = Violation(standard_id="A", rule="", issue="", suggestion="")
+        b = Violation(standard_id="B", rule="", issue="", suggestion="")
+        a.related_standards.append("PRF-11")
+        assert b.related_standards == []
+
+    def test_all_ambiguity_flag_constants_in_frozenset(self):
+        """Each named constant must be in VALID_AMBIGUITY_FLAGS."""
+        assert AMBIGUITY_STANDARDS_CONFLICT in VALID_AMBIGUITY_FLAGS
+        # The frozenset should have exactly four members.
+        assert len(VALID_AMBIGUITY_FLAGS) == 4
+
+
+class TestRationaleHop:
+    def test_minimal_hop(self):
+        hop = RationaleHop(step=HOP_CLASSIFY)
+        d = hop.to_dict()
+        assert d["step"] == "classify"
+        assert d["inputs"] == {}
+        assert d["output"] == {}
+        assert d["confidence"] is None
+        assert d["rule_versions"] == {}
+        assert d["ambiguity_flag"] is None
+
+    def test_populated_hop(self):
+        hop = RationaleHop(
+            step=HOP_PREPROCESS,
+            inputs={"text_len": 42, "content_type": "error_message"},
+            output={"violations_count": 1, "standards_fired": ["GRM-04"]},
+            confidence=1.0,
+            rule_versions={"GRM-04": "4.6.1"},
+        )
+        d = hop.to_dict()
+        assert d["step"] == "preprocess"
+        assert d["confidence"] == 1.0
+        assert d["rule_versions"] == {"GRM-04": "4.6.1"}
+
+    def test_valid_hops_covers_canonical_steps(self):
+        assert VALID_HOPS == {
+            "classify", "detect_moment", "filter",
+            "preprocess", "scan", "validate", "merge",
+        }
+
+    def test_dict_fields_are_independent_per_instance(self):
+        """default_factory for inputs/output/rule_versions must not share."""
+        a = RationaleHop(step=HOP_CLASSIFY)
+        b = RationaleHop(step=HOP_CLASSIFY)
+        a.inputs["k"] = "v"
+        a.output["x"] = 1
+        a.rule_versions["CLR-01"] = "4.6.1"
+        assert b.inputs == {}
+        assert b.output == {}
+        assert b.rule_versions == {}
 
 
 class TestTokenUsage:
@@ -52,3 +133,26 @@ class TestCheckResult:
         assert len(d["violations"]) == 1
         assert d["violations"][0]["standard_id"] == "GRM-04"
         assert d["pipeline"]["standards_checked"] == 6
+
+    def test_rationale_chain_default_empty(self):
+        result = CheckResult(content_type="x", overall_verdict="pass")
+        d = result.to_dict()
+        assert d["rationale_chain"] == []
+
+    def test_rationale_chain_roundtrip(self):
+        hops = [
+            RationaleHop(step=HOP_CLASSIFY, output={"detected_type": "button_cta"}),
+            RationaleHop(
+                step=HOP_MERGE,
+                output={"final_violations": 0, "final_passes": 3},
+            ),
+        ]
+        result = CheckResult(
+            content_type="button_cta",
+            overall_verdict="pass",
+            rationale_chain=hops,
+        )
+        d = result.to_dict()
+        assert len(d["rationale_chain"]) == 2
+        assert d["rationale_chain"][0]["step"] == "classify"
+        assert d["rationale_chain"][1]["step"] == "merge"

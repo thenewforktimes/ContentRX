@@ -103,11 +103,23 @@ Never use bare imports like `from preprocess import ...` or `from checker import
   "relevant_content_types": ["error_message", "tooltip_microcopy", "short_ui_copy", "long_form_copy"],
   "content_type_notes": {
     "confirmation": "Passive voice is acceptable for confirmations."
-  }
+  },
+  "version": "4.6.1",
+  "version_history": [
+    {"version": "4.6.1", "date": "2026-04-23", "change_note": "..."}
+  ]
 }
 ```
 
 **If you update the standards library, never replace the whole file.** Use surgical patches that update only `rule`, `correct`, or `incorrect` fields. Replacing the file strips `relevant_content_types`, `content_type_notes`, and the top-level `content_types` array, which breaks the filter and causes 24 test failures.
+
+### Per-standard versioning
+
+Every standard carries `version` and `version_history` (added in the human-eval build plan Session 1). Bumping the rule text, the `correct`/`incorrect` examples, or any `content_type_notes` entry is a per-standard version bump — append an entry to `version_history` with the date and a one-line change note. The library-level top-level `version` remains the authoritative package version for the engine as a whole; per-standard versions are additive metadata so eval records can reproduce against a specific rule revision.
+
+The pipeline stamps `rule_version` on every emitted Violation from the per-standard `version` field at evaluation time (see `_build_rule_version_map` and `_stamp_rule_versions` in `pipeline.py`). The same snapshot populates `rule_versions` on each hop of `CheckResult.rationale_chain`.
+
+When a change is semantic (rule now fires on different conditions, or the decision boundary shifts), the Session 10 graduation ladder resets counterpart credit — classification of semantic-vs-wording changes is owned by the taxonomy refinement log. When a change is wording-only (rephrase, clarity edit, example update), prior counterparts carry at 50% weight. Additive carve-outs (new exception clauses) carry counterparts outside the new exception at full weight.
 
 ### The preprocessor returns Violation objects via run_preprocess()
 
@@ -161,6 +173,12 @@ Input text + audience (product_ui | general)
           - preprocessor-passed violations (preprocessor said PASS)
           = final result (with audience + moment fields for triage tracking)
 ```
+
+### Rationale chain (v1.2.0, human-eval build plan Session 1)
+
+Every hop in the pipeline above appends a `RationaleHop` entry to `CheckResult.rationale_chain`. Each hop carries `step`, `inputs` (compact summary of what the stage saw), `output` (compact summary of what it produced), `confidence` (for LLM stages; `None` for deterministic ones), `rule_versions` (standard_id → per-standard version for the rules this hop consulted), and an optional typed `ambiguity_flag`.
+
+When Robo (or any reviewer) sees a wrong verdict, the chain lets them pinpoint which hop went sideways without re-running the pipeline. The chain is also the substrate for Session 21's "Why this verdict" UI on the product surface.
 
 ## Two entry points, two use cases
 
