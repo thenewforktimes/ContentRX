@@ -449,6 +449,29 @@
     color: var(--figma-color-text-brand, #4a7cff);
   }
 
+  /* Reason picker — shown inline after a Disagree or Ship-anyway click
+   * so the user can tell us WHY in our 5-code vocabulary. Agree clicks
+   * submit immediately without a reason step. */
+  .reason-picker {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .reason-picker[hidden] { display: none; }
+  .reason-picker label {
+    font-size: 10px;
+    color: var(--figma-color-text-secondary, #888);
+  }
+  .reason-picker select {
+    font-size: 10px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--figma-color-border, #ddd);
+    background: var(--figma-color-bg, #fff);
+    color: var(--figma-color-text, #333);
+  }
+
   /* ------------------------------------------------------------------ */
   /* Progress / scanning screen                                          */
   /* ------------------------------------------------------------------ */
@@ -2762,6 +2785,18 @@ async function runWorker(queue, processFn) {
 // ====================================================================
 let currentResults = null;  // Array of node results from the last scan
 let currentFilter = "all";  // "all", "fail", "pass"
+// Human-eval build plan Session 4 — per-scan session_id. Regenerated
+// each time results render so the backend can aggregate three+
+// same-standard overrides from one scan into a standard_pushback
+// review-queue entry.
+let currentSessionId = "";
+
+function generateSessionId() {
+  // Figma's plugin sandbox doesn't guarantee crypto.randomUUID, but
+  // Math.random + timestamp is fine for a client-supplied grouping
+  // key — it's not a security boundary.
+  return `fig-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 
 // ====================================================================
@@ -2779,6 +2814,7 @@ function showScreen(id) {
 function renderBatchResults(results) {
   currentResults = results;
   currentFilter = "all";
+  currentSessionId = generateSessionId();
   const area = document.getElementById("results-area");
 
   const failCount = results.filter(r => r.overallVerdict === "fail").length;
@@ -2894,78 +2930,139 @@ function renderBatchResults(results) {
     });
   });
 
-  // Stance buttons — Agree / Disagree / Ship anyway. First click on
-  // any stance button submits the override; subsequent clicks are
-  // ignored (the card locks). Maps stance → override_type so
-  // pre-Session-3 analytics keeps working:
-  //   agree               → dismiss
-  //   disagree            → mark_false_positive
-  //   agree_but_overriding → accept_as_review
+  // Stance buttons — Agree / Disagree / Ship anyway.
+  //
+  // Session 3: one-click submit per card.
+  // Session 4: Disagree and Ship-anyway now prompt for a reason code
+  //   via an inline <select> before submitting. Agree still submits
+  //   immediately (users don't need to justify "I accept the finding").
   const STANCE_TO_TYPE = {
     agree: "dismiss",
     disagree: "mark_false_positive",
     agree_but_overriding: "accept_as_review",
   };
+
+  async function submitOverride(card, btn, stance, reasonCode) {
+    const row = card.querySelector(".stance-row");
+    if (row) row.dataset.locked = "true";
+
+    const overrideType = STANCE_TO_TYPE[stance];
+    if (!overrideType) {
+      if (row) row.dataset.locked = "false";
+      return;
+    }
+
+    const surfacedAt = Number(card.dataset.surfacedAt) || Date.now();
+    const timeToActionMs = Math.max(0, Date.now() - surfacedAt);
+    const rationaleExpanded = card.dataset.rationaleExpanded === "true";
+
+    // Lock UI state on all stance buttons; highlight the chosen one.
+    card.querySelectorAll(".btn-stance").forEach(other => {
+      other.disabled = true;
+    });
+    btn.classList.add("active");
+    const picker = card.querySelector(".reason-picker");
+    if (picker) {
+      const select = picker.querySelector(".reason-select");
+      if (select) select.disabled = true;
+    }
+
+    const body = {
+      standard_id: card.dataset.standardId,
+      text: card.dataset.text || "",
+      moment: card.dataset.moment || undefined,
+      override_type: overrideType,
+      override_stance: stance,
+      rationale_expanded: rationaleExpanded,
+      time_to_action_ms: timeToActionMs,
+      actor_role: "designer",  // plugin default; see src/lib/actor-role.ts
+      source: "plugin",
+      session_id: currentSessionId || undefined,
+    };
+    if (reasonCode) body.override_reason_code = reasonCode;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/violations/override`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${cxToken}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+    } catch (err) {
+      // Silent failure — this is an opt-in telemetry signal, not
+      // a user-blocking operation. Unlock so the user can retry.
+      console.warn("stance submit failed:", err);
+      if (row) row.dataset.locked = "false";
+      card.querySelectorAll(".btn-stance").forEach(other => {
+        other.disabled = false;
+      });
+      btn.classList.remove("active");
+      if (picker) {
+        const select = picker.querySelector(".reason-select");
+        if (select) select.disabled = false;
+      }
+    }
+  }
+
   area.querySelectorAll(".btn-stance").forEach(btn => {
-    btn.addEventListener("click", async (e) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const card = btn.closest(".violation-card");
       if (!card) return;
       const row = card.querySelector(".stance-row");
-      // Lock the whole row after the first stance click — one verdict
-      // per card. Re-clicks are ignored (no edit-stance path today).
       if (row && row.dataset.locked === "true") return;
-      if (row) row.dataset.locked = "true";
 
       const stance = btn.dataset.stance;
-      const overrideType = STANCE_TO_TYPE[stance];
-      if (!overrideType) {
-        if (row) row.dataset.locked = "false";
+
+      // Agree → submit immediately; no reason picker.
+      if (stance === "agree") {
+        submitOverride(card, btn, stance, null);
         return;
       }
 
-      const surfacedAt = Number(card.dataset.surfacedAt) || Date.now();
-      const timeToActionMs = Math.max(0, Date.now() - surfacedAt);
-      const rationaleExpanded = card.dataset.rationaleExpanded === "true";
-
-      // Lock UI state on all stance buttons; highlight the chosen one.
-      card.querySelectorAll(".btn-stance").forEach(other => {
-        other.disabled = true;
-      });
+      // Disagree or Ship-anyway → reveal the reason picker. Defer
+      // submit until the user makes a selection. Mark stance-in-
+      // progress on the card so a second stance click is ignored.
+      if (row) row.dataset.pendingStance = stance;
       btn.classList.add("active");
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/violations/override`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${cxToken}`,
-          },
-          body: JSON.stringify({
-            standard_id: card.dataset.standardId,
-            text: card.dataset.text || "",
-            moment: card.dataset.moment || undefined,
-            override_type: overrideType,
-            override_stance: stance,
-            rationale_expanded: rationaleExpanded,
-            time_to_action_ms: timeToActionMs,
-            actor_role: "designer",  // plugin default; see src/lib/actor-role.ts
-            source: "plugin",
-          }),
-        });
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-      } catch (err) {
-        // Silent failure — this is an opt-in telemetry signal, not
-        // a user-blocking operation. Unlock so the user can retry.
-        console.warn("stance submit failed:", err);
-        if (row) row.dataset.locked = "false";
-        card.querySelectorAll(".btn-stance").forEach(other => {
-          other.disabled = false;
-        });
-        btn.classList.remove("active");
+      card.querySelectorAll(".btn-stance").forEach(other => {
+        if (other !== btn) other.disabled = true;
+      });
+      const picker = card.querySelector(".reason-picker");
+      if (picker) {
+        picker.hidden = false;
+        const select = picker.querySelector(".reason-select");
+        if (select) select.focus();
+      } else {
+        // No picker present (no suggestion to show) — submit without
+        // a reason code. Preserves the Session 3 contract.
+        submitOverride(card, btn, stance, null);
       }
+    });
+  });
+
+  // Reason-select handler — fires submitOverride once the user picks
+  // a code. Ignored if no pending stance is recorded (shouldn't happen
+  // in practice; defensive).
+  area.querySelectorAll(".reason-select").forEach(select => {
+    select.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const card = select.closest(".violation-card");
+      if (!card) return;
+      const row = card.querySelector(".stance-row");
+      const stance = row && row.dataset.pendingStance;
+      const reasonCode = select.value;
+      if (!stance || !reasonCode) return;
+      const btn = card.querySelector(
+        `.btn-stance[data-stance="${stance}"]`,
+      );
+      if (!btn) return;
+      submitOverride(card, btn, stance, reasonCode);
     });
   });
 
@@ -3183,6 +3280,17 @@ function renderNodeCard(result) {
                 aria-label="Disagree — mark this as a false positive">Disagree</button>
         <button class="btn-stance" type="button" data-stance="agree_but_overriding"
                 aria-label="Agree but shipping anyway">Ship anyway</button>
+      </div>
+      <div class="reason-picker" hidden>
+        <label for="reason-${escapeHtml(v.standard_id)}">Why?</label>
+        <select id="reason-${escapeHtml(v.standard_id)}" class="reason-select">
+          <option value="">Pick a reason…</option>
+          <option value="not_applicable_here">Not applicable here</option>
+          <option value="standard_too_strict">Too strict for this case</option>
+          <option value="fix_is_worse">Suggested fix is worse</option>
+          <option value="shipping_anyway">I agree — shipping anyway</option>
+          <option value="confusing_need_more_context">Confusing, need more context</option>
+        </select>
       </div>
     </div>`;
   }

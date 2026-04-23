@@ -65,6 +65,28 @@ into errors.
 
 ## Changelog
 
+### 1.5.0 (human-eval build plan Session 4)
+
+**Additive bump** — pre-Session-4 clients keep working without
+supplying any of the new fields.
+
+`POST /api/violations/override` gains two optional fields:
+
+- **`override_reason_code`** (one of `"not_applicable_here"` /
+  `"standard_too_strict"` / `"fix_is_worse"` / `"shipping_anyway"` /
+  `"confusing_need_more_context"`) — the user-facing five-item
+  vocabulary. Distinct from Robo's `triage_category` vocabulary
+  (from `EVAL_PROTOCOL.md`). The mapping between the two is a
+  judgment call captured during review, not a mechanical translation.
+  Typical mappings are documented in `src/lib/override-reasons.ts`.
+- **`session_id`** (free-form string up to 64 chars) — client-supplied
+  grouping key. Figma plugin uses one per scan (`fig-<ts>-<rand>`);
+  CLI/CI can use the run ID; dashboard can use a per-tab UUID. Three+
+  overrides on the same standard inside one session collapse into a
+  single `standard_pushback` row in the review queue (see
+  `src/lib/session-aggregation.ts`). Rows without a `session_id`
+  fall back to a `(user_id, 10-minute-window)` pseudo-session.
+
 ### 1.4.0 (human-eval build plan Session 3)
 
 **Additive bump** — pre-Session-3 clients keep working without

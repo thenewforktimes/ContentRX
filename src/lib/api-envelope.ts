@@ -35,7 +35,12 @@
 //         time_to_action_ms, suggested_text, applied_text (human-eval
 //         build plan Session 3). Additive — pre-Session-3 clients
 //         keep working without supplying any of the new fields.
-export const SCHEMA_VERSION = "1.4.0" as const;
+// 1.5.0 — structured override-reason vocabulary + session grouping on
+//         POST /api/violations/override: override_reason_code (5-item
+//         enum), session_id (free-form grouping key for three+
+//         same-standard overrides to collapse into a pushback)
+//         (human-eval build plan Session 4). Additive only.
+export const SCHEMA_VERSION = "1.5.0" as const;
 
 /**
  * Adds `schema_version` and `warnings` to a response payload. Existing

@@ -76,6 +76,24 @@ const RequestSchema = z.object({
   // hashed client-side (same sha256 contract as `text`).
   suggested_text: z.string().min(1).max(100_000).optional(),
   applied_text: z.string().min(1).max(100_000).optional(),
+  // Human-eval build plan Session 4 — structured reason vocabulary +
+  // session grouping. Reason code is independent of override_stance:
+  // a user who picks "disagree" usually supplies a reason code; one
+  // who picks "agree" typically doesn't. Enforced client-side, not
+  // gated server-side — we always accept whatever is sent.
+  override_reason_code: z
+    .enum([
+      "not_applicable_here",
+      "standard_too_strict",
+      "fix_is_worse",
+      "shipping_anyway",
+      "confusing_need_more_context",
+    ])
+    .optional(),
+  // Free-form session ID from the client. Figma plugin uses one per
+  // scan; CLI/CI could use the run ID; dashboard could use a per-tab
+  // UUID. Session 4 aggregates by this on read.
+  session_id: z.string().min(1).max(64).optional(),
 });
 
 export async function POST(req: Request) {
@@ -133,6 +151,8 @@ export async function POST(req: Request) {
     time_to_action_ms,
     suggested_text,
     applied_text,
+    override_reason_code,
+    session_id,
   } = parsed.data;
 
   // Team scope mirrors violations: free/pro users have team_id=null;
@@ -163,6 +183,8 @@ export async function POST(req: Request) {
         timeToActionMs: time_to_action_ms ?? null,
         suggestedTextHash: suggested_text ? hashText(suggested_text) : null,
         appliedTextHash: applied_text ? hashText(applied_text) : null,
+        overrideReasonCode: override_reason_code ?? null,
+        sessionId: session_id ?? null,
       })
       .returning();
     return withCors(

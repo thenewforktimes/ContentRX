@@ -37,7 +37,10 @@ from typing import Any
 #         (human-eval build plan Session 3). Web-side only — the
 #         Python engine does not expose the override endpoint. Mirrored
 #         here so the Python envelope doesn't drift.
-SCHEMA_VERSION = "1.4.0"
+# 1.5.0 — structured override-reason vocabulary + session grouping on
+#         POST /api/violations/override: override_reason_code,
+#         session_id (human-eval build plan Session 4). Web-side only.
+SCHEMA_VERSION = "1.5.0"
 
 
 # Ambiguity-flag vocabulary (human-eval build plan Session 1).

@@ -31,13 +31,12 @@ from content_checker.models import (
 
 
 class TestSchemaVersionBump:
-    def test_schema_version_is_1_4_0(self):
-        # Human-eval build plan Session 3 bump — additive (richer
-        # override signal on POST /api/violations/override: stance,
-        # actor_role, rationale_expanded, time_to_action_ms,
-        # counterfactual triple). Web-side change; Python engine
-        # mirrors the version to keep envelope in lock-step.
-        assert SCHEMA_VERSION == "1.4.0"
+    def test_schema_version_is_1_5_0(self):
+        # Human-eval build plan Session 4 bump — additive
+        # (override_reason_code + session_id on the override endpoint).
+        # Web-side change; Python engine mirrors the version to keep
+        # envelope in lock-step.
+        assert SCHEMA_VERSION == "1.5.0"
 
 
 class TestVerdictConstants:
