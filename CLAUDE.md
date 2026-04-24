@@ -60,8 +60,10 @@ in `pyproject.toml` keeps pytest scoped to the Python side.
 
 ## Database schema
 
-Source of truth: `src/db/schema.ts`. Seven tables: `users`, `usage`,
-`subscriptions`, `team_members`, `team_rules`, `violations`, `ditto_syncs`.
+Source of truth: `src/db/schema.ts`. Core tables: `users`, `usage`,
+`subscriptions`, `team_members`, `team_rules`, `violations`, `ditto_syncs`,
+`violation_overrides`, `graduation_status`, `rationale_feedback`,
+`team_custom_examples`.
 Always use Drizzle — never raw SQL. Schema pushes run via `npm run db:push`
 (wraps `drizzle-kit push` with `.env.local` loaded via `dotenv-cli`,
 because `drizzle-kit` does not auto-load `.env.local` the way Next.js does).
@@ -88,13 +90,20 @@ pitfall that silently breaks auth adapters.
 2. Load team rules (only matters when user is on Team plan)
 3. Check monthly quota — 402 if exhausted
 4. Rate limit check — 429 if exceeded (60/min per user, sliding window)
-5. Call `/api/evaluate` (Python) with validated `text`, `content_type`,
-   `audience`, `moment`
-6. Apply team's disabled-rule filter (post-processing; full merge ships
-   in Session 16)
-7. Log each violation into `violations` table with `sha256(text)`
-8. Increment `usage` counter for the current month
-9. Return result + usage metadata
+5. **Custom-example short-circuit** (Team plan only — human-eval
+   Session 30): if `normalizeText(text)` matches a
+   `team_custom_examples` row scoped to the team and its optional
+   moment/content_type context, skip the LLM entirely and use the
+   stored verdict. Quota still decrements; LLM token cost goes to
+   zero for the match.
+6. Otherwise call `/api/evaluate` (Python) with validated `text`,
+   `content_type`, `audience`, `moment`.
+7. Apply team's disabled-rule filter + overrides + added rules
+   (runs in both paths — admins can still strip standards from a
+   custom-example violation-verdict row).
+8. Log each violation into `violations` table with `sha256(text)`.
+9. Increment `usage` counter for the current month.
+10. Return result + usage metadata.
 
 ## Python engine in the Vercel deployment
 

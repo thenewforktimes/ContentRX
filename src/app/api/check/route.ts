@@ -17,9 +17,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { envelope } from "@/lib/api-envelope";
 import { resolveAuth } from "@/lib/auth";
+import {
+  findMatchingExample,
+  shortCircuitFromExample,
+} from "@/lib/custom-examples";
 import { appUrl as emailAppUrl, sendEmail } from "@/lib/email";
 import { AUDIENCES, CONTENT_TYPES, MOMENTS } from "@/lib/engine-taxonomy";
-import { evaluate } from "@/lib/evaluate";
+import { evaluate, type EvaluateResponse } from "@/lib/evaluate";
 import { hashText, logViolations } from "@/lib/log-violations";
 import { currentMonth, monthlyQuota } from "@/lib/quotas";
 import { checkRateLimit } from "@/lib/ratelimit";
@@ -147,23 +151,79 @@ export async function POST(req: Request) {
 
   const teamRules = await loadTeamRules(auth.teamOwnerUserId);
 
-  let evalResponse;
-  try {
-    evalResponse = await evaluate({ text, content_type, audience, moment });
-  } catch (err) {
-    // Log detail to stderr (Sentry ingests via Vercel). Return an opaque
-    // message to the caller — the Python-side error can include file paths,
-    // model names, Anthropic error bodies, or a truncated LLM response.
-    console.error("evaluate() failed:", err);
-    return json(
-      { error: "Evaluation service unavailable" },
-      { status: 502 },
-    );
+  // Human-eval build plan Session 30 — custom examples short-circuit.
+  //
+  // When the request belongs to a Team-plan user AND the normalized
+  // text matches a team-authored custom example, skip the LLM entirely
+  // and return the stored verdict. Quota still decrements (one request
+  // = one slot, regardless of whether we called the LLM) but token
+  // cost drops to zero for the matched case.
+  //
+  // Non-team requests (Free / Pro) skip this block — custom examples
+  // are a Team-plan feature, and the `teamOwnerUserId` resolver
+  // returns null for non-team users so the query would never match
+  // anyway; we short-circuit the short-circuit for clarity.
+  const teamOwnerForExamples =
+    auth.plan === "team" ? (auth.teamOwnerUserId ?? auth.user.id) : null;
+  let customExampleResult: Awaited<ReturnType<typeof findMatchingExample>> = null;
+  if (teamOwnerForExamples) {
+    try {
+      customExampleResult = await findMatchingExample({
+        teamOwnerUserId: teamOwnerForExamples,
+        text,
+        moment: moment ?? null,
+        contentType: content_type ?? null,
+      });
+    } catch (err) {
+      // Matching failures must never break a scan. Fall through to
+      // the LLM path with a warning; Sentry catches it.
+      console.error("findMatchingExample failed; falling through:", err);
+    }
+  }
+
+  let evalResponse: EvaluateResponse;
+
+  if (customExampleResult) {
+    const sc = shortCircuitFromExample(customExampleResult);
+    evalResponse = {
+      result: {
+        content_type: content_type ?? "unknown",
+        overall_verdict: sc.overall_verdict,
+        verdict: sc.verdict,
+        review_reason: null,
+        violations: sc.violations,
+        passes: [],
+        summary:
+          sc.notes ?? "Matched a team custom example; LLM bypass.",
+        audience: audience ?? "product_ui",
+        moment: moment ?? customExampleResult.moment ?? "",
+        pipeline: {},
+        rationale_chain: [sc.rationale_hop],
+      },
+      latency_ms: 0,
+      tokens: { input: 0, output: 0 },
+    };
+  } else {
+    try {
+      evalResponse = await evaluate({ text, content_type, audience, moment });
+    } catch (err) {
+      // Log detail to stderr (Sentry ingests via Vercel). Return an opaque
+      // message to the caller — the Python-side error can include file paths,
+      // model names, Anthropic error bodies, or a truncated LLM response.
+      console.error("evaluate() failed:", err);
+      return json(
+        { error: "Evaluation service unavailable" },
+        { status: 502 },
+      );
+    }
   }
 
   // Team-rule pipeline: disable first (strip), then override display fields
   // on the survivors, then append custom team-added rule matches, then
   // recompute verdict from the final violations list.
+  // When a custom example fired, team rules still apply — an admin might
+  // want to strip a rule that appears on the violations array attached
+  // to a short-circuited violation-verdict entry.
   const disabled = applyDisabledFilter(evalResponse.result, teamRules.disabledStandardIds);
   const overridden = applyOverrides(disabled, teamRules.overridesByStandardId);
   const withAdds = applyAddedRules(overridden, text, teamRules.adds);

@@ -386,6 +386,20 @@ Batches are size-3 clusters matching `triage.py`'s agree/override/skip UI. They 
 
 **Deferred:** web review-queue surface (today CLI-only via `triage.py`); direct DB integration for the queue builder (today reads a JSON dump).
 
+### Custom examples — team-scoped short-circuit (human-eval build plan Session 30)
+
+Surgical carve-outs for team voice quirks. A team that ships `Let's go.` on confirmations can mark the string as a `pass` custom example — subsequent scans of that exact string short-circuit the LLM and return the stored verdict directly. No global rule is weakened; no violation needs dismissing on every run; the team's voice decision lives in one place.
+
+Table: `team_custom_examples` (schema.ts). Key columns: `teamOwnerUserId` (scope), `text` (plaintext), `normalizedText` (lowercase + whitespace-collapsed form for indexed lookup), `verdict` (`pass` | `violation`), optional `moment` / `contentType` / `standardId` scope filters, `notes`, `contributeUpstream` (opt-in attribution). Unique on `(teamOwnerUserId, normalizedText)` — one entry per team per normalized string.
+
+Match rule (`src/lib/custom-examples.ts`): `normalizeText(input)` equals `normalizedText`; when the entry carries a `moment` or `contentType`, those must also match the request's context; more-specific entries win over more-generic ones when both apply.
+
+Short-circuit behaviour: `/api/check` inserts the match lookup BEFORE the LLM call. Quota still decrements (one scan = one slot); token cost drops to zero on match. The rationale chain (Session 21) gets a one-hop `custom_example_match` entry at confidence 1.0 so users know the verdict is team-supplied, not LLM-derived.
+
+Admin API: `GET/POST /api/team-custom-examples` and `GET/PATCH/DELETE /api/team-custom-examples/[id]`. Team-plan only, team-owner only (mirrors `team_rules`). Text + verdict + context are immutable after creation; only `notes` and `contributeUpstream` are updatable — changing what an entry matches requires delete + re-create for an auditable trail. 500-entry cap per team, enforced at POST time.
+
+MCP + CLI surfaces land in the follow-up session. The admin API is positioned as the primary ingestion path; the web surface (`/dashboard/team/custom-examples`) is audit-only (list + delete; no create-from-form).
+
 ### Review cadence dashboards (human-eval build plan Session 9)
 
 Three web surfaces under `/dashboard/cadence/*` plus a weekly email digest. Team-plan gated, admin-only (mirrors `/dashboard/overrides`).

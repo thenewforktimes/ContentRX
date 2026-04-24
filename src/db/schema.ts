@@ -433,6 +433,99 @@ export const rationaleFeedback = pgTable(
   ],
 ).enableRLS();
 
+// Custom examples — human-eval build plan Session 30.
+//
+// Team-authored, team-scoped string-level decisions that short-circuit
+// evaluation. When /api/check sees an input whose normalized text
+// matches an entry for the team's scope, the LLM call is skipped and
+// the stored verdict is returned directly. This carves out surgical
+// exceptions for team voice quirks without weakening global rules —
+// a team that ships "Let's go." on confirmations can mark the string
+// as a pass without disabling PRF-03 everywhere else.
+//
+// Privacy: `text` is plaintext and team-owned (team admins authored
+// it; no user text ever lands here). Scoped by `teamOwnerUserId`
+// exactly like `team_rules`.
+//
+// Naming: "custom examples" throughout the product surface. The word
+// "example" matches how content designers already talk about specific
+// phrasings + is a count noun that scales cleanly across the CLI
+// (`contentrx example list`), MCP (`custom_example_add`), and web
+// audit UI.
+export const teamCustomExamples = pgTable(
+  "team_custom_examples",
+  {
+    id: cuid(),
+    // Team scope. Matches `team_rules.team_owner_user_id` — every
+    // member of the team gets the short-circuit; only the admin
+    // (team owner) can manage.
+    teamOwnerUserId: text("team_owner_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // Who added the entry. Set-null on delete so the entry survives
+    // an admin's account deletion — the team keeps its custom
+    // examples even when a specific admin leaves.
+    createdByUserId: text("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    // The string to short-circuit on. Plaintext; bounded at 100k to
+    // match /api/check's input cap.
+    text: text("text").notNull(),
+    // Case + whitespace normalized form used for deterministic
+    // matching. Computed in code (src/lib/custom-examples.ts)
+    // on create and update so the logic stays changeable without
+    // a migration.
+    normalizedText: text("normalized_text").notNull(),
+    // Only `pass` and `violation` — `review_recommended` doesn't
+    // make sense for a team-decided verdict.
+    verdict: text("verdict", { enum: ["pass", "violation"] }).notNull(),
+    // Optional context filters. When set, the match only fires when
+    // the request's moment / content_type matches. When unset, the
+    // entry matches any context.
+    moment: text("moment"),
+    contentType: text("content_type"),
+    // For verdict=violation, the standard the team asserts fires.
+    // Shows up in the rationale chain as the one-hop short-circuit
+    // citation. Nullable for verdict=pass entries.
+    standardId: text("standard_id"),
+    // Admin-authored prose explaining why this entry exists. Surfaced
+    // to team members when the short-circuit fires so newcomers see
+    // the team's reasoning.
+    notes: text("notes"),
+    // Opt-in to anonymised contribution to the core content model
+    // when Robo reviews. Defaults to false — zero assumptions about
+    // whether the team wants their voice decisions to flow upstream.
+    contributeUpstream: boolean("contribute_upstream").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // Hot path: /api/check looks up (team, normalized_text) for every
+    // scan. Without this index every eval does a table scan of
+    // everyone's custom examples — catastrophic at any scale.
+    index("team_custom_examples_team_text_idx").on(
+      t.teamOwnerUserId,
+      t.normalizedText,
+    ),
+    // Admin list view sorts by recency.
+    index("team_custom_examples_team_created_idx").on(
+      t.teamOwnerUserId,
+      t.createdAt,
+    ),
+    // No duplicate (team, normalized_text) entries. Uniqueness is on
+    // the normalized form so "Let's go." and "Let's Go." can't both
+    // exist as competing entries for the same team.
+    uniqueIndex("team_custom_examples_team_text_unique").on(
+      t.teamOwnerUserId,
+      t.normalizedText,
+    ),
+  ],
+).enableRLS();
+
 export type User = InferSelectModel<typeof users>;
 export type Usage = InferSelectModel<typeof usage>;
 export type Subscription = InferSelectModel<typeof subscriptions>;
@@ -443,3 +536,4 @@ export type DittoSync = InferSelectModel<typeof dittoSyncs>;
 export type ViolationOverride = InferSelectModel<typeof violationOverrides>;
 export type GraduationStatus = InferSelectModel<typeof graduationStatus>;
 export type RationaleFeedback = InferSelectModel<typeof rationaleFeedback>;
+export type TeamCustomExample = InferSelectModel<typeof teamCustomExamples>;
