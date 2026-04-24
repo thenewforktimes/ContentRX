@@ -1,0 +1,27 @@
+name: No-dup-files gate
+
+# Defence-in-depth check: most Finder / iCloud / Dropbox duplicate
+# files (e.g. `page 2.tsx`, `staging 10`) aren't tracked in git, so
+# CI clones a clean tree and won't usually see them. BUT: if
+# someone `git add`s one by accident, it'll land in the PR — and
+# then every future fetch + build on every dev machine inherits it.
+# This gate catches that rare-but-bad case. Fast (<5s), no deps.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: no-dup-files-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: no-dup-files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run guard
+        run: bash scripts/check_no_dup_files.sh
