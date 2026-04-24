@@ -40,7 +40,13 @@ from typing import Any
 # 1.5.0 — structured override-reason vocabulary + session grouping on
 #         POST /api/violations/override: override_reason_code,
 #         session_id (human-eval build plan Session 4). Web-side only.
-SCHEMA_VERSION = "1.5.0"
+# 1.6.0 — ensemble_disagreement review_reason subtype +
+#         `validate_rejection_reason` on Violation (human-eval build
+#         plan Session 13). Scan/validate disagreement is now its own
+#         subtype (previously conflated with standards_conflict);
+#         rejected scan candidates carry validate's reasoning for the
+#         review-queue surface. Additive — old clients keep working.
+SCHEMA_VERSION = "1.6.0"
 
 
 # Ambiguity-flag vocabulary (human-eval build plan Session 1).
@@ -81,6 +87,7 @@ VALID_AMBIGUITY_FLAGS = frozenset({
 # resolve themselves once the taxonomic question is settled.
 REVIEW_LOW_CONFIDENCE = "low_confidence"
 REVIEW_STANDARDS_CONFLICT = "standards_conflict"
+REVIEW_ENSEMBLE_DISAGREEMENT = "ensemble_disagreement"
 REVIEW_SITUATION_AMBIGUITY = "situation_ambiguity"
 REVIEW_OUT_OF_DISTRIBUTION = "out_of_distribution"
 REVIEW_NOVEL_PATTERN = "novel_pattern"
@@ -88,6 +95,7 @@ REVIEW_NOVEL_PATTERN = "novel_pattern"
 VALID_REVIEW_REASONS = frozenset({
     REVIEW_LOW_CONFIDENCE,
     REVIEW_STANDARDS_CONFLICT,
+    REVIEW_ENSEMBLE_DISAGREEMENT,
     REVIEW_SITUATION_AMBIGUITY,
     REVIEW_OUT_OF_DISTRIBUTION,
     REVIEW_NOVEL_PATTERN,
@@ -95,8 +103,16 @@ VALID_REVIEW_REASONS = frozenset({
 
 # Precedence list — index 0 wins over index 1, etc. `derive_verdict`
 # consults this ordering when multiple signals fire simultaneously.
+#
+# Human-eval build plan Session 13: ensemble_disagreement slots between
+# standards_conflict (multi-standard taxonomy drift) and
+# situation_ambiguity (upstream moment routing). The two LLM passes —
+# scan and validate — are the first-pass ensemble; disagreement between
+# them signals either a prompt-layer issue or a content_type_notes gap,
+# both worth Robo's attention before lower-signal review reasons fire.
 REVIEW_REASON_PRECEDENCE: tuple[str, ...] = (
     REVIEW_STANDARDS_CONFLICT,
+    REVIEW_ENSEMBLE_DISAGREEMENT,
     REVIEW_SITUATION_AMBIGUITY,
     REVIEW_OUT_OF_DISTRIBUTION,
     REVIEW_NOVEL_PATTERN,
@@ -210,6 +226,15 @@ class Violation:
     ambiguity_flag: str | None = None
     rule_version: str | None = None
 
+    # v1.6.0 addition (human-eval build plan Session 13): when this
+    # Violation was proposed by scan but REJECTED by validate, the
+    # rejection reasoning from validate lands here. Survives to the
+    # review queue so Robo can see scan's + validate's reasoning
+    # side-by-side. None on confirmed violations (validate agreed,
+    # there's nothing to disagree about) and on preprocessor-source
+    # violations (no LLM second pass).
+    validate_rejection_reason: str | None = None
+
     def to_dict(self) -> dict:
         return {
             "standard_id": self.standard_id,
@@ -221,6 +246,7 @@ class Violation:
             "related_standards": list(self.related_standards),
             "ambiguity_flag": self.ambiguity_flag,
             "rule_version": self.rule_version,
+            "validate_rejection_reason": self.validate_rejection_reason,
         }
 
 
@@ -404,6 +430,7 @@ def derive_verdict(
     overall_verdict: str,
     violations: list[Violation],
     scan_validate_disagreement: bool = False,
+    standards_conflict: bool = False,
     moment_ambiguous: bool = False,
     out_of_distribution: bool = False,
     novel_pattern: bool = False,
@@ -414,44 +441,49 @@ def derive_verdict(
     verdict == "review_recommended", and carries a specific subtype from
     VALID_REVIEW_REASONS — never a generic fallback.
 
-    Logic:
-      - overall_verdict == "error"            → ("error", None)
-      - no violations                         → ("pass", None)
-      - any review-signal fires               → ("review_recommended",
-                                                 typed subtype)
-      - else                                   → ("violation", None)
+    Logic (in order):
+      - overall_verdict == "error"      → ("error", None)
+      - any review-signal fires         → ("review_recommended",
+                                           typed subtype per precedence)
+      - no violations                   → ("pass", None)
+      - else                            → ("violation", None)
+
+    Note: review signals can flip the verdict to `review_recommended`
+    even when `violations` is empty. Session 13 specifically: a
+    validate-rejection with nothing surviving is still the ensemble
+    disagreeing with itself — Robo reviews regardless.
 
     When multiple review signals fire, the subtype with the highest
     precedence (REVIEW_REASON_PRECEDENCE[0]) wins. Precedence order is
     documented on the constants above.
 
-    Signal sources (human-eval build plan Session 2):
-      - `scan_validate_disagreement` — validate rejected ≥1 scan
-        candidate. Richest signal for taxonomy refinement. Fires
-        `standards_conflict`.
-      - `moment_ambiguous` — moment classifier confidence < 0.6
-        (see moments.MOMENT_CONFIDENCE_THRESHOLD). Routes to moment
-        classifier backlog. Fires `situation_ambiguity`.
-      - `out_of_distribution` — input doesn't resemble training data.
-        Emission logic pending full classifier-confidence plumbing;
-        accepted as an explicit signal here so callers can wire it
-        when upstream infrastructure lands.
-      - `novel_pattern` — classifier confident but override rate on
-        similar strings is climbing. Emission pending override-rate
-        history from later sessions.
+    Signal sources:
+      - `scan_validate_disagreement` (Session 13) — validate rejected
+        ≥1 scan candidate. First-pass ensemble disagreeing with
+        itself. Fires `ensemble_disagreement`.
+      - `standards_conflict` (Session 13, future) — two or more
+        standards applied to the same moment returned conflicting
+        verdicts. Reserved kwarg; today's pipeline doesn't emit
+        multi-standard conflict signals yet. Fires `standards_conflict`.
+      - `moment_ambiguous` (Session 2) — moment classifier confidence
+        < MOMENT_CONFIDENCE_THRESHOLD (0.6). Fires
+        `situation_ambiguity`.
+      - `out_of_distribution` — reserved; pending classifier
+        confidence plumbing.
+      - `novel_pattern` — reserved; pending override-rate history.
       - any Violation.confidence < CONFIDENCE_THRESHOLD — fires
-        `low_confidence` (the baseline signal from v1.1.0).
+        `low_confidence` (baseline from v1.1.0).
     """
     if overall_verdict == "error":
         return VERDICT_ERROR, None
-    if not violations:
-        return VERDICT_PASS, None
 
     low_confidence = any(v.confidence < CONFIDENCE_THRESHOLD for v in violations)
 
     fired: set[str] = set()
-    if scan_validate_disagreement:
+    if standards_conflict:
         fired.add(REVIEW_STANDARDS_CONFLICT)
+    if scan_validate_disagreement:
+        fired.add(REVIEW_ENSEMBLE_DISAGREEMENT)
     if moment_ambiguous:
         fired.add(REVIEW_SITUATION_AMBIGUITY)
     if out_of_distribution:
@@ -461,15 +493,16 @@ def derive_verdict(
     if low_confidence:
         fired.add(REVIEW_LOW_CONFIDENCE)
 
-    if not fired:
-        return VERDICT_VIOLATION, None
+    if fired:
+        for reason in REVIEW_REASON_PRECEDENCE:
+            if reason in fired:
+                return VERDICT_REVIEW_RECOMMENDED, reason
+        # Unreachable — `fired` is always a subset of REVIEW_REASON_PRECEDENCE.
+        return VERDICT_REVIEW_RECOMMENDED, REVIEW_LOW_CONFIDENCE
 
-    for reason in REVIEW_REASON_PRECEDENCE:
-        if reason in fired:
-            return VERDICT_REVIEW_RECOMMENDED, reason
-
-    # Unreachable — `fired` is always a subset of REVIEW_REASON_PRECEDENCE.
-    return VERDICT_REVIEW_RECOMMENDED, REVIEW_LOW_CONFIDENCE
+    if not violations:
+        return VERDICT_PASS, None
+    return VERDICT_VIOLATION, None
 
 
 # ---------------------------------------------------------------------------

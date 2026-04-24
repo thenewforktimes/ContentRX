@@ -476,6 +476,55 @@ def _weighted_override_rate(
     return weight / total_verdicts
 
 
+def compute_ensemble_disagreement_rate(
+    events: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Per-standard scan/validate disagreement rate (Session 13).
+
+    Tracked alongside the six graduation criteria but NOT a hard gate
+    — the spec is explicit: "tracked as an additional graduation-
+    readiness signal." A high rate flags a standard whose
+    content_type_notes or examples may need work.
+
+    Input: a list of pipeline-event records, each of shape
+        {standard_id: str, scan_proposed: bool, validate_rejected: bool}
+
+    Output: standard_id → {
+        "scan_proposals": int,
+        "validate_rejections": int,
+        "disagreement_rate": float | None,  # rejections / proposals
+    }
+
+    When events is empty or no standard has proposals in the window,
+    returns an empty dict — consumers display "n/a" rather than a
+    misleading 0.
+    """
+    by_standard: dict[str, dict[str, int]] = collections.defaultdict(
+        lambda: {"scan_proposals": 0, "validate_rejections": 0}
+    )
+    for ev in events:
+        sid = ev.get("standard_id")
+        if not sid:
+            continue
+        if ev.get("scan_proposed"):
+            by_standard[sid]["scan_proposals"] += 1
+        if ev.get("validate_rejected"):
+            by_standard[sid]["validate_rejections"] += 1
+
+    out: dict[str, dict[str, Any]] = {}
+    for sid, counts in by_standard.items():
+        proposals = counts["scan_proposals"]
+        rate: float | None = None
+        if proposals > 0:
+            rate = counts["validate_rejections"] / proposals
+        out[sid] = {
+            "scan_proposals": proposals,
+            "validate_rejections": counts["validate_rejections"],
+            "disagreement_rate": rate,
+        }
+    return out
+
+
 def assess_standard(
     standard_id: str,
     *,
@@ -492,6 +541,7 @@ def assess_standard(
     primary_content_type: str | None = None,
     rule_version_change: str | None = None,
     rule_version_change_affects: set[str] | None = None,
+    ensemble_disagreement: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compute all 6 criteria for one standard and emit a readiness
     record.
@@ -665,6 +715,10 @@ def assess_standard(
         "prevalence": prevalence,
         "structurally_complex": structurally_complex,
         "rule_version_change": rule_version_change,
+        # Session 13: tracked-but-not-gated signal. A high disagreement
+        # rate on a graduation-eligible standard is a flag for
+        # content_type_notes or prompt review, not an auto-block.
+        "ensemble_disagreement": ensemble_disagreement,
         "autonomous": auto_result,
         "batch_approval": batch_result,
     }
@@ -756,6 +810,10 @@ def main(argv: list[str] | None = None) -> int:
                    help="JSON: {case_id: verdict} for counterpart pass rate.")
     c.add_argument("--drift-report", type=Path, default=None,
                    help="Latest drift report (for measured ceiling).")
+    c.add_argument("--pipeline-events", type=Path, default=None,
+                   help="JSON: list of pipeline events for per-standard "
+                        "ensemble-disagreement rate (Session 13). Each event: "
+                        "{standard_id, scan_proposed, validate_rejected}.")
     c.add_argument("--out", type=Path, default=Path("evals/graduation/readiness.json"))
 
     e = sub.add_parser("explain", help="Show breakdown for one standard.")
@@ -791,6 +849,19 @@ def _cmd_compute(args) -> int:
     engine_verdicts: dict[str, str] = {}
     if args.engine_verdicts and args.engine_verdicts.exists():
         engine_verdicts = _load_json(args.engine_verdicts)
+
+    # Session 13: optional ensemble-disagreement events. Per-standard
+    # rate gets attached to each assessment when data is available.
+    ensemble_by_standard: dict[str, dict[str, Any]] = {}
+    if args.pipeline_events and args.pipeline_events.exists():
+        events_raw = _load_json(args.pipeline_events)
+        events = (
+            events_raw.get("events", events_raw)
+            if isinstance(events_raw, dict)
+            else events_raw
+        )
+        if isinstance(events, list):
+            ensemble_by_standard = compute_ensemble_disagreement_rate(events)
 
     # Group reviews + overrides by standard.
     reviews_by_std: dict[str, list[dict]] = collections.defaultdict(list)
@@ -830,6 +901,7 @@ def _cmd_compute(args) -> int:
             measured_ceiling=measured_ceiling,
             primary_moment=primary_moment,
             primary_content_type=primary_ct,
+            ensemble_disagreement=ensemble_by_standard.get(std),
         )
         assessments.append(assessment)
 

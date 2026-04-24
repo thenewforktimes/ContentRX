@@ -438,3 +438,83 @@ class TestAssessStandard:
             gm.LEVEL_BATCH_APPROVAL,
             gm.LEVEL_AUTONOMOUS,
         )
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Session 13 — ensemble disagreement rate (tracked, not gated)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class TestComputeEnsembleDisagreementRate:
+    def test_empty_input_returns_empty_dict(self):
+        assert gm.compute_ensemble_disagreement_rate([]) == {}
+
+    def test_counts_proposals_and_rejections_per_standard(self):
+        events = [
+            {"standard_id": "CLR-01", "scan_proposed": True, "validate_rejected": True},
+            {"standard_id": "CLR-01", "scan_proposed": True, "validate_rejected": False},
+            {"standard_id": "CLR-01", "scan_proposed": True, "validate_rejected": True},
+            {"standard_id": "VT-02", "scan_proposed": True, "validate_rejected": False},
+        ]
+        r = gm.compute_ensemble_disagreement_rate(events)
+        assert r["CLR-01"]["scan_proposals"] == 3
+        assert r["CLR-01"]["validate_rejections"] == 2
+        assert r["CLR-01"]["disagreement_rate"] == pytest.approx(2 / 3)
+        assert r["VT-02"]["scan_proposals"] == 1
+        assert r["VT-02"]["validate_rejections"] == 0
+        assert r["VT-02"]["disagreement_rate"] == pytest.approx(0.0)
+
+    def test_skips_events_without_standard_id(self):
+        events = [
+            {"scan_proposed": True, "validate_rejected": True},
+            {"standard_id": "", "scan_proposed": True},
+            {"standard_id": "CLR-01", "scan_proposed": True, "validate_rejected": True},
+        ]
+        r = gm.compute_ensemble_disagreement_rate(events)
+        assert list(r.keys()) == ["CLR-01"]
+
+    def test_standard_with_no_proposals_has_null_rate(self):
+        # A standard that only shows up with `scan_proposed=False`
+        # shouldn't divide by zero.
+        events = [
+            {"standard_id": "CLR-01", "scan_proposed": False, "validate_rejected": False},
+        ]
+        r = gm.compute_ensemble_disagreement_rate(events)
+        # The logic: no proposals → standard never enters the dict because
+        # both counters are 0. This is intentional — downstream should
+        # render "n/a".
+        assert r == {}
+
+    def test_rate_attaches_to_assess_standard_output(self):
+        reviews = [_review("CLR-01", "fail", "fail") for _ in range(20)]
+        r = gm.assess_standard(
+            "CLR-01",
+            reviews=reviews,
+            overrides=[],
+            total_verdicts=20,
+            novel_counterparts=[],
+            counterpart_engine_verdicts={},
+            prevalence=0.3,
+            end_date=_dt.date(2026, 4, 23),
+            ensemble_disagreement={
+                "scan_proposals": 50,
+                "validate_rejections": 8,
+                "disagreement_rate": 0.16,
+            },
+        )
+        assert r["ensemble_disagreement"]["disagreement_rate"] == pytest.approx(0.16)
+
+    def test_rate_is_none_by_default(self):
+        reviews = [_review("CLR-01", "fail", "fail") for _ in range(20)]
+        r = gm.assess_standard(
+            "CLR-01",
+            reviews=reviews,
+            overrides=[],
+            total_verdicts=20,
+            novel_counterparts=[],
+            counterpart_engine_verdicts={},
+            prevalence=0.3,
+            end_date=_dt.date(2026, 4, 23),
+        )
+        # No events supplied → the field is None, not a fake rate.
+        assert r["ensemble_disagreement"] is None

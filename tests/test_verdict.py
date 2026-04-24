@@ -12,6 +12,7 @@ from content_checker.models import (
     CONFIDENCE_THRESHOLD,
     DEFAULT_CONFIDENCE_LLM,
     DEFAULT_CONFIDENCE_PREPROCESSOR,
+    REVIEW_ENSEMBLE_DISAGREEMENT,
     REVIEW_LOW_CONFIDENCE,
     REVIEW_NOVEL_PATTERN,
     REVIEW_OUT_OF_DISTRIBUTION,
@@ -31,12 +32,11 @@ from content_checker.models import (
 
 
 class TestSchemaVersionBump:
-    def test_schema_version_is_1_5_0(self):
-        # Human-eval build plan Session 4 bump — additive
-        # (override_reason_code + session_id on the override endpoint).
-        # Web-side change; Python engine mirrors the version to keep
-        # envelope in lock-step.
-        assert SCHEMA_VERSION == "1.5.0"
+    def test_schema_version_is_1_6_0(self):
+        # Human-eval build plan Session 13 bump — additive
+        # (ensemble_disagreement subtype + validate_rejection_reason
+        # on Violation).
+        assert SCHEMA_VERSION == "1.6.0"
 
 
 class TestVerdictConstants:
@@ -151,17 +151,19 @@ def _high_conf_violation() -> Violation:
 
 
 class TestReviewReasonVocabulary:
-    """Human-eval build plan Session 2 — typed subtypes."""
+    """Human-eval build plan Sessions 2 + 13 — typed subtypes."""
 
     def test_every_constant_is_in_frozenset(self):
         assert REVIEW_LOW_CONFIDENCE in VALID_REVIEW_REASONS
         assert REVIEW_STANDARDS_CONFLICT in VALID_REVIEW_REASONS
+        assert REVIEW_ENSEMBLE_DISAGREEMENT in VALID_REVIEW_REASONS
         assert REVIEW_SITUATION_AMBIGUITY in VALID_REVIEW_REASONS
         assert REVIEW_OUT_OF_DISTRIBUTION in VALID_REVIEW_REASONS
         assert REVIEW_NOVEL_PATTERN in VALID_REVIEW_REASONS
 
-    def test_frozenset_has_exactly_five(self):
-        assert len(VALID_REVIEW_REASONS) == 5
+    def test_frozenset_has_exactly_six(self):
+        # Session 13 added ensemble_disagreement → 6 total.
+        assert len(VALID_REVIEW_REASONS) == 6
 
     def test_precedence_tuple_covers_every_reason(self):
         assert set(REVIEW_REASON_PRECEDENCE) == VALID_REVIEW_REASONS
@@ -170,6 +172,11 @@ class TestReviewReasonVocabulary:
         # standards_conflict is the richest taxonomic signal — it
         # should win over any co-firing subtype.
         assert REVIEW_REASON_PRECEDENCE[0] == REVIEW_STANDARDS_CONFLICT
+
+    def test_precedence_puts_ensemble_disagreement_second(self):
+        # Session 13 slot: ensemble_disagreement between
+        # standards_conflict and situation_ambiguity.
+        assert REVIEW_REASON_PRECEDENCE[1] == REVIEW_ENSEMBLE_DISAGREEMENT
 
     def test_precedence_puts_low_confidence_last(self):
         # low_confidence is the baseline; a more specific signal
@@ -180,11 +187,25 @@ class TestReviewReasonVocabulary:
 class TestDeriveVerdictSubtypes:
     """derive_verdict emits the right typed subtype per signal."""
 
-    def test_standards_conflict_emits_when_validate_rejected(self):
+    def test_ensemble_disagreement_emits_when_validate_rejected(self):
+        # Session 13: scan_validate_disagreement routes to
+        # ensemble_disagreement (not standards_conflict — those are
+        # two different things).
         verdict, reason = derive_verdict(
             overall_verdict="fail",
             violations=[_high_conf_violation()],
             scan_validate_disagreement=True,
+        )
+        assert verdict == VERDICT_REVIEW_RECOMMENDED
+        assert reason == REVIEW_ENSEMBLE_DISAGREEMENT
+
+    def test_standards_conflict_emits_on_multi_standard_signal(self):
+        # Reserved kwarg: multi-standard taxonomy conflict. Distinct
+        # from ensemble disagreement.
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[_high_conf_violation()],
+            standards_conflict=True,
         )
         assert verdict == VERDICT_REVIEW_RECOMMENDED
         assert reason == REVIEW_STANDARDS_CONFLICT
@@ -232,16 +253,25 @@ class TestDeriveVerdictSubtypes:
 class TestDeriveVerdictPrecedence:
     """Multiple signals firing at once — precedence decides the subtype."""
 
-    def test_standards_conflict_beats_situation_ambiguity(self):
+    def test_standards_conflict_beats_ensemble_disagreement(self):
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[_high_conf_violation()],
+            standards_conflict=True,
+            scan_validate_disagreement=True,
+        )
+        assert reason == REVIEW_STANDARDS_CONFLICT
+
+    def test_ensemble_disagreement_beats_situation_ambiguity(self):
         verdict, reason = derive_verdict(
             overall_verdict="fail",
             violations=[_high_conf_violation()],
             scan_validate_disagreement=True,
             moment_ambiguous=True,
         )
-        assert reason == REVIEW_STANDARDS_CONFLICT
+        assert reason == REVIEW_ENSEMBLE_DISAGREEMENT
 
-    def test_standards_conflict_beats_low_confidence(self):
+    def test_ensemble_disagreement_beats_low_confidence(self):
         low = Violation(
             standard_id="X", rule="", issue="", suggestion="",
             source="llm", confidence=0.4,
@@ -251,7 +281,7 @@ class TestDeriveVerdictPrecedence:
             violations=[low],
             scan_validate_disagreement=True,
         )
-        assert reason == REVIEW_STANDARDS_CONFLICT
+        assert reason == REVIEW_ENSEMBLE_DISAGREEMENT
 
     def test_situation_ambiguity_beats_low_confidence(self):
         low = Violation(
@@ -273,6 +303,7 @@ class TestDeriveVerdictPrecedence:
         verdict, reason = derive_verdict(
             overall_verdict="fail",
             violations=[low],
+            standards_conflict=True,
             scan_validate_disagreement=True,
             moment_ambiguous=True,
             out_of_distribution=True,
@@ -290,13 +321,25 @@ class TestDeriveVerdictPrecedence:
         assert verdict == VERDICT_VIOLATION
         assert reason is None
 
-    def test_signals_ignored_when_no_violations(self):
-        """Review signals only matter when there are violations to review."""
+    def test_ensemble_disagreement_flips_to_review_even_with_no_violations(self):
+        """Session 13: validate-rejection-with-nothing-surviving is
+        still an ensemble disagreement worth Robo's review.
+
+        Overrides the Session 2 behavior that required at least one
+        violation to flip to review_recommended.
+        """
         verdict, reason = derive_verdict(
             overall_verdict="pass",
             violations=[],
             scan_validate_disagreement=True,
-            moment_ambiguous=True,
+        )
+        assert verdict == VERDICT_REVIEW_RECOMMENDED
+        assert reason == REVIEW_ENSEMBLE_DISAGREEMENT
+
+    def test_no_violations_no_signals_still_pass(self):
+        verdict, reason = derive_verdict(
+            overall_verdict="pass",
+            violations=[],
         )
         assert verdict == VERDICT_PASS
         assert reason is None

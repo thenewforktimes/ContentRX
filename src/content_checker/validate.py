@@ -103,16 +103,31 @@ def validate_candidates(
         # Fail-closed: treat all candidates as confirmed when we can't parse
         return candidates, [], latency, tokens
 
-    validation_map = {}
+    # Map by standard_id → (verdict, reason). Validate's `reason` is
+    # preserved so rejected candidates can carry it to the review
+    # queue as `Violation.validate_rejection_reason` (Session 13).
+    validation_map: dict[str, tuple[str, str]] = {}
     for v in result.get("validations", []):
-        validation_map[v.get("standard_id")] = v.get("verdict", "confirm")
+        sid = v.get("standard_id")
+        if not sid:
+            continue
+        validation_map[sid] = (
+            v.get("verdict", "confirm"),
+            v.get("reason", ""),
+        )
 
     confirmed = []
     rejected = []
 
     for candidate in candidates:
-        verdict = validation_map.get(candidate.standard_id, "confirm")
+        verdict, reason = validation_map.get(
+            candidate.standard_id, ("confirm", ""),
+        )
         if verdict == "reject":
+            # Attach validate's rejection reasoning so scan's + validate's
+            # sides of the ensemble disagreement are both visible when the
+            # review queue surfaces this event.
+            candidate.validate_rejection_reason = reason or None
             rejected.append(candidate)
         else:
             confirmed.append(candidate)

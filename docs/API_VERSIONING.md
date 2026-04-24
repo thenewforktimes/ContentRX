@@ -65,6 +65,30 @@ into errors.
 
 ## Changelog
 
+### 1.6.0 (human-eval build plan Session 13)
+
+**Additive bump** — old clients reading `review_reason` as an opaque
+string keep working. Clients that switch on the value should add
+an arm for `ensemble_disagreement`.
+
+- **`CheckResult.review_reason`** gains a new enum variant:
+  `ensemble_disagreement` — scan/validate disagreement (first-pass
+  ensemble disagreeing with itself). Previously conflated with
+  `standards_conflict`; Session 13 disentangles them and establishes
+  precedence (`standards_conflict` > `ensemble_disagreement` >
+  `situation_ambiguity` > `out_of_distribution` > `novel_pattern` >
+  `low_confidence`).
+- **`Violation.validate_rejection_reason`** (string, optional) —
+  when a scan-proposed violation was rejected by validate, this field
+  preserves validate's reasoning so the review queue can show both
+  sides of the ensemble disagreement. Null on confirmed violations
+  and on preprocessor-source violations.
+- **Semantic change to `verdict`:** `ensemble_disagreement` flips the
+  verdict to `review_recommended` even when `violations` is empty —
+  a validate-rejection with nothing surviving is still worth Robo's
+  review. Previously the verdict stayed `pass` when the violations
+  list was empty.
+
 ### 1.5.0 (human-eval build plan Session 4)
 
 **Additive bump** — pre-Session-4 clients keep working without

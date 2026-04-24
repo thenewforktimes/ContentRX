@@ -10,6 +10,36 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
+### Unreleased — 2026-04-23 (human-eval build plan Sessions 1–13)
+
+Session 13 — scan/validate disagreement as ensemble signal:
+
+- Fixes a Session 2 routing error: `scan_validate_disagreement` was
+  flipping verdicts to `standards_conflict`. Those are two different
+  signals. Session 13 splits them into `ensemble_disagreement` (the
+  first-pass ensemble — scan vs validate LLM calls — disagreeing with
+  itself) and `standards_conflict` (multi-standard taxonomic
+  conflict, reserved for a future pipeline hook).
+- New `REVIEW_ENSEMBLE_DISAGREEMENT` review_reason subtype. Slots in
+  precedence between standards_conflict and situation_ambiguity.
+- `Violation.validate_rejection_reason` — when scan proposed a
+  violation and validate rejected it, validate's reason carries
+  through so the review queue surfaces both sides.
+- `derive_verdict` now flips the verdict to review_recommended even
+  when `violations` is empty if scan/validate disagreed — "every
+  validate-rejection produces a review_recommended event" per spec.
+- `pipeline.py` HOP_VALIDATE rationale hop preserves rejected_details
+  (standard_id + scan_issue + scan_suggestion + validate reason) so
+  the full disagreement survives to any review surface without
+  re-running the pipeline.
+- `tools/graduation_metrics.py` adds
+  `compute_ensemble_disagreement_rate` — per-standard tracked signal
+  (not a hard gate). When pipeline events are supplied via the new
+  `--pipeline-events` flag, the readiness report carries
+  `ensemble_disagreement: {scan_proposals, validate_rejections,
+  disagreement_rate}` per standard.
+- API schema bumped 1.5.0 → 1.6.0 (additive).
+
 ### Unreleased — 2026-04-23 (human-eval build plan Sessions 1–12)
 
 Session 12 — rollback + auto-demotion:

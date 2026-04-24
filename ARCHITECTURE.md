@@ -194,7 +194,15 @@ When `CheckResult.verdict == "review_recommended"`, `review_reason` carries one 
 
 **Precedence when multiple signals fire:** `standards_conflict` > `situation_ambiguity` > `out_of_distribution` > `novel_pattern` > `low_confidence`. A taxonomy fix often cascades and resolves the downstream signals, so it's worth triaging first. `low_confidence` is the fallback — more specific signals always shadow it.
 
-Signals are passed as kwargs to `derive_verdict` in `models.py`; the pipeline wires two today (`scan_validate_disagreement` from validate's rejected count; `moment_ambiguous` from `detect_moment_with_confidence`). The remaining two kwargs are reserved for future sessions to populate without a schema change.
+Signals are passed as kwargs to `derive_verdict` in `models.py`; the pipeline wires two today (`scan_validate_disagreement` from validate's rejected count → emits `ensemble_disagreement`; `moment_ambiguous` from `detect_moment_with_confidence` → emits `situation_ambiguity`). The remaining kwargs — `standards_conflict`, `out_of_distribution`, `novel_pattern` — are reserved for future sessions to populate without a schema change.
+
+**First-pass ensemble: scan + validate (Session 13).** The pipeline runs two LLM passes — scan (proposes candidate violations) and validate (confirms or rejects each with `content_type_notes` injected). Disagreement between the two IS ensemble disagreement, already tracked in `PipelineMeta.validated_rejected`. Session 13 surfaces it as a first-class `ensemble_disagreement` review_reason subtype (distinct from `standards_conflict`, which is a multi-standard taxonomy conflict on the same moment). When validate rejects a scan candidate, the verdict flips to `review_recommended` — even when no violations survive — so Robo sees the disagreement rather than silently trusting one pass.
+
+Rejected candidates carry validate's reasoning through `Violation.validate_rejection_reason`. The rationale-chain's HOP_VALIDATE entry preserves `rejected_details` — scan's issue + suggestion paired with validate's rejection reason — so any review surface sees both sides without re-running the pipeline.
+
+A third independent classifier (distilled smaller model, rule-based baseline) is **deferred** until scan/validate disagreement data shows structural blind spots a third voice would resolve. Starting simple matches "add complexity only when data justifies it"; scan/validate disagreement is the data we need to decide whether the third voice is warranted.
+
+Per-standard disagreement rate rides through `tools/graduation_metrics.py` (Session 10 + 13) as a *tracked, not gated* signal on the readiness report. A high rate on a graduation-eligible standard flags content_type_notes or prompt review; it does not auto-block promotion.
 
 ### In-product signal instrumentation (v1.4.0, human-eval build plan Session 3)
 
