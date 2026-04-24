@@ -327,6 +327,25 @@ Three-step cadence (one per quarter, all in `tools/drift_check.py`):
 
 The panel, blind, and report files all live in `evals/drift/`. The README there is the canonical workflow doc for Robo's quarterly cycle.
 
+### Review cadence orchestration (human-eval build plan Session 33)
+
+Four cadences, instrumented. Weekly + monthly use Session 9 surfaces; quarterly + annual get their own orchestration pages, all linked from the new `/dashboard/cadence/overview` hub.
+
+| Cadence | Interval | Grace | Surface | Source artifact | Load-bearing? |
+|---|---|---|---|---|---|
+| Weekly | 7d | 3d | `/dashboard/cadence` | latest override timestamp per team | no |
+| Monthly | 28d | 14d | `/dashboard/cadence/calibration` | latest file in `evals/drift/reports/` | no |
+| Quarterly | 91d | 21d | `/dashboard/cadence/quarterly` | latest file in `evals/drift/reports/` | **yes** (graduation thresholds) |
+| Annual | 365d | 60d | `/dashboard/cadence/annual` | latest file in `evals/annual_audit/reports/` | no |
+
+Pure logic in `src/lib/review-cadence-timing.ts` (`evaluateCadence`, `evaluateAllCadences`, `statusMessage`) decides `on_track` / `eligible` / `overdue` from `(lastCompletedAt, now)`. Disk I/O lives in `src/lib/review-cadence-disk.ts` (filesystem-only) so the helpers stay cheap and unit-testable.
+
+Templates at `evals/cadence_templates/{weekly,monthly,quarterly,annual}.md`. Cycle outputs land in `evals/cadence_runs/<kind>/<date>.md`; the hub picks up the newest file per kind as the "last completed" signal. First-cycle kickoff markers ship with this session so the overview hub isn't empty on first load — real cycles overwrite them once live traffic produces meaningful data.
+
+Command-line counterpart: `tools/cadence_status.py` returns the same shape as the hub (human-readable + `--json`), so a human reviewer can check status without opening the dashboard. The Python file's cadence constants mirror the TS source of truth.
+
+Quarterly is the one that matters most: graduation thresholds (Session 10) depend on the measured self-drift ceiling recomputed here. A missed quarter leaves thresholds mis-calibrated — the overdue signal in the hub flags this explicitly, and the quarterly card carries a `load-bearing` badge. Annual complements rather than replaces — different question (overfitting over a year vs threshold correctness today).
+
 ### Annual taxonomy audit (human-eval build plan Session 36)
 
 Runs alongside the quarterly drift check, not instead of it. The two cadences answer different questions:

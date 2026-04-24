@@ -238,6 +238,40 @@ export default async function CadenceDailyPage() {
           </p>
         </Link>
       </section>
+
+      <section className="grid grid-cols-2 gap-4 text-sm">
+        <Link
+          href="/dashboard/cadence/quarterly"
+          className="rounded-lg border border-neutral-200 p-4 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+        >
+          <p className="text-xs uppercase tracking-wider text-neutral-500">
+            Quarterly · load-bearing
+          </p>
+          <p className="mt-1 font-mono text-sm">drift + recalibration</p>
+          <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+            13-week cycle. Recalibrates graduation thresholds.
+          </p>
+        </Link>
+        <Link
+          href="/dashboard/cadence/annual"
+          className="rounded-lg border border-neutral-200 p-4 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+        >
+          <p className="text-xs uppercase tracking-wider text-neutral-500">
+            Annual · full corpus audit
+          </p>
+          <p className="mt-1 font-mono text-sm">schema re-label</p>
+          <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+            Once a year. Surfaces long-term drift the quarterly check misses.
+          </p>
+        </Link>
+      </section>
+
+      <Link
+        href="/dashboard/cadence/overview"
+        className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900 w-max"
+      >
+        Open cadence overview →
+      </Link>
     </div>
   );
 }
