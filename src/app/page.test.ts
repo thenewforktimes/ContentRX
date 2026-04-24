@@ -61,6 +61,27 @@ describe("landing page (src/app/page.tsx)", () => {
     expect(visible).not.toMatch(/real marketing copy ships in Session/i);
   });
 
+  it("leads with generation-layer surfaces per Session 29", () => {
+    // The Surfaces list must list MCP before Figma — the whole
+    // point of Session 29 is that the Figma plugin is no longer the
+    // flagship. This test is the structural gate.
+    const mcpIdx = visible.indexOf("<strong>MCP server</strong>");
+    const figmaIdx = visible.indexOf("<strong>Figma plugin</strong>");
+    expect(mcpIdx).toBeGreaterThan(-1);
+    expect(figmaIdx).toBeGreaterThan(-1);
+    expect(mcpIdx).toBeLessThan(figmaIdx);
+  });
+
+  it("hero CTA points to /install, not straight to the Figma community page", () => {
+    // Before Session 29 the hero button was a direct
+    // figma.com/community link. Post-Session-29 it funnels through
+    // /install so first-time visitors see MCP/CLI/Action first.
+    expect(visible).toContain('href="/install"');
+    expect(visible).not.toMatch(
+      /href=["']https?:\/\/(www\.)?figma\.com\/community[^"']*["']\s+className=[^>]*bg-black/,
+    );
+  });
+
   it("contains no unresolved bracket placeholders", () => {
     // Unescaped `{…}` pairs that carry TODO-ish notes.
     const matches = visible.match(/\{[^}]*\b(TBD|TODO|placeholder|fill in|bio)[^}]*\}/gi);
