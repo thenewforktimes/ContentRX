@@ -57,6 +57,8 @@ export type EvaluationResult = {
     rule_version?: string;
     /** Other standard IDs emitted together (API v1.2.0+). */
     related_standards?: string[];
+    /** Canonical docs URL for the standard on docs.contentrx.io (API v1.7.0+). */
+    docs_url?: string;
   }>;
   passes: Array<{ standard_id: string; rule: string }>;
   summary?: string;

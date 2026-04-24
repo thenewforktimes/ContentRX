@@ -6,8 +6,22 @@ Every function in the package uses these instead of raw dicts.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from typing import Any
+
+
+def standard_docs_url(standard_id: str) -> str:
+    """Return the canonical docs URL for a standard.
+
+    `CONTENTRX_DOCS_URL` env var overrides the base (staging, self-
+    hosted, or a local docs site during dev). Trailing slashes are
+    trimmed so callers always get `…/model/standards/<id>`.
+    """
+    base = os.environ.get("CONTENTRX_DOCS_URL", "").strip()
+    if not base:
+        base = DEFAULT_DOCS_BASE_URL
+    return f"{base.rstrip('/')}/model/standards/{standard_id}"
 
 
 # ---------------------------------------------------------------------------
@@ -46,7 +60,15 @@ from typing import Any
 #         subtype (previously conflated with standards_conflict);
 #         rejected scan candidates carry validate's reasoning for the
 #         review-queue surface. Additive — old clients keep working.
-SCHEMA_VERSION = "1.6.0"
+# 1.7.0 — every Violation carries a `docs_url` pointing at the
+#         standard's page on docs.contentrx.io (BUILD_PLAN_v2
+#         Appendix A non-negotiable). Derived at serialization time
+#         from `standard_id` — no call site has to populate it, no
+#         schema migration, and the base URL is overridable via the
+#         `CONTENTRX_DOCS_URL` env var for staging/self-hosting.
+SCHEMA_VERSION = "1.7.0"
+
+DEFAULT_DOCS_BASE_URL = "https://docs.contentrx.io"
 
 
 # Ambiguity-flag vocabulary (human-eval build plan Session 1).
@@ -247,6 +269,10 @@ class Violation:
             "ambiguity_flag": self.ambiguity_flag,
             "rule_version": self.rule_version,
             "validate_rejection_reason": self.validate_rejection_reason,
+            # BUILD_PLAN_v2 Appendix A non-negotiable (API v1.7.0).
+            # Derived at serialize time so every Violation gets a
+            # URL without every call site having to remember to set it.
+            "docs_url": standard_docs_url(self.standard_id),
         }
 
 
