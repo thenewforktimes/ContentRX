@@ -74,16 +74,16 @@ async def check(
 ) -> CheckResult:
     """POST /api/check for a single string.
 
-    `source="lsp"` tells the server to record any violations with
-    source=lsp in the violations table once that surface is allowed
-    (today `source` is a restricted enum — new values land with a
-    schema change). For now the server may reject unknown sources;
-    the LSP client falls back to "plugin" if that happens.
+    `source="lsp"` records violations under the lsp source bucket so
+    team-analytics + override-rate reports can distinguish inline-
+    editor overrides from plugin / CLI / CI overrides. Added as an
+    enum value on `violations.source` + `violation_overrides.source`
+    in the same PR as this change.
     """
     api_key = get_api_key()
     base_url = get_api_base_url()
 
-    payload: dict[str, Any] = {"text": text}
+    payload: dict[str, Any] = {"text": text, "source": source}
     if content_type:
         payload["content_type"] = content_type
     if moment:
@@ -229,12 +229,7 @@ async def mark_false_positive(
         "text": text,
         "standard_id": standard_id,
         "override_type": "mark_false_positive",
-        # `source` here is the violation_overrides column's enum. LSP
-        # isn't in the current enum list — the public route will widen
-        # it in the next schema push. For now we use "dashboard" (a
-        # catch-all for non-plugin/non-CI UIs). The semantics are
-        # identical at review-queue aggregation time.
-        "source": "dashboard",
+        "source": "lsp",
     }
 
     headers = {
