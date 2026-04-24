@@ -56,6 +56,93 @@ export function canApproveGraduation(clerkUserId: string | null | undefined): bo
   return ids.includes(clerkUserId);
 }
 
+// ---------------------------------------------------------------------------
+// Session 12 — demotion + auto-rollback
+// ---------------------------------------------------------------------------
+
+/**
+ * Rolling override-rate thresholds per level. A graduated standard
+ * whose 2-week rate meets or exceeds its level's threshold auto-demotes
+ * one step. Thresholds mirror Session 10's graduation cutoffs exactly
+ * — the same ratio that permits graduation is the one that triggers
+ * rollback when it reverses.
+ */
+export const AUTO_DEMOTION_THRESHOLD: Record<GraduationLevel, number> = {
+  robo_labels: Infinity,       // floor — can't demote further via auto path
+  batch_approval: 0.10,        // ≥ 10% overrides → drop to robo_labels
+  autonomous: 0.05,            // ≥ 5% overrides → drop to batch_approval
+};
+
+/**
+ * Rolling window for the auto-demotion monitor. 14 days per the plan
+ * spec. Shorter windows catch regressions faster but amplify noise;
+ * 14 days is the floor for statistical stability on low-traffic
+ * standards.
+ */
+export const AUTO_DEMOTION_WINDOW_DAYS = 14;
+
+/**
+ * Minimum denominator to trust the rate. Low-traffic standards with
+ * a handful of violations + overrides can produce wild percentages
+ * that don't reflect real drift. 10 violations over 14 days is the
+ * floor — below that, the monitor flags for review instead of demoting.
+ */
+export const AUTO_DEMOTION_MIN_VIOLATIONS = 10;
+
+/**
+ * Actor-role weights — mirror `ACTOR_ROLE_WEIGHTS` in the Python
+ * `tools/graduation_metrics.py`. Designer overrides weigh more than
+ * engineer overrides; missing/unknown → 1.0.
+ */
+export const ACTOR_ROLE_WEIGHT: Record<string, number> = {
+  designer: 1.5,
+  pm: 1.0,
+  engineer: 0.75,
+  other: 1.0,
+};
+
+/**
+ * Return the level a graduated standard lands at when auto-demoted
+ * one step. Returns the input unchanged for `robo_labels` (already at
+ * the floor — auto-monitor should skip these).
+ */
+export function demoteOneStep(level: GraduationLevel): GraduationLevel {
+  const i = levelRank(level);
+  if (i <= 0) return level;
+  return GRADUATION_LEVELS[i - 1]!;
+}
+
+/**
+ * Given a graduated standard's 2-week override rate + denominator,
+ * decide whether the auto-monitor should demote. Respects the
+ * min-denominator floor to keep the monitor from firing on noise.
+ */
+export function shouldAutoDemote(
+  level: GraduationLevel,
+  rate: number,
+  violationsInWindow: number,
+): boolean {
+  if (level === "robo_labels") return false;
+  if (violationsInWindow < AUTO_DEMOTION_MIN_VIOLATIONS) return false;
+  return rate >= AUTO_DEMOTION_THRESHOLD[level];
+}
+
+/**
+ * Compute the actor-weighted override count given a set of override
+ * records. Pure function — side-effect-free so it's trivially
+ * testable.
+ */
+export function weightedOverrideCount(
+  overrides: Array<{ actorRole?: string | null }>,
+): number {
+  let total = 0;
+  for (const o of overrides) {
+    const role = o.actorRole ?? "other";
+    total += ACTOR_ROLE_WEIGHT[role] ?? 1.0;
+  }
+  return total;
+}
+
 export type GraduationStatus = InferSelectModel<typeof schema.graduationStatus>;
 
 export interface GraduationHistoryEntry {
