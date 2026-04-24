@@ -21,10 +21,12 @@ import path from "node:path";
 import {
   LEVEL_CONSEQUENCES,
   canApproveGraduation,
+  demoteOneStep,
   listGraduationStatuses,
   type GraduationLevel,
 } from "@/lib/graduation";
 import { ApproveButton } from "./approve-button";
+import { DemoteButton } from "./demote-button";
 
 interface CriteriaBlock {
   eligible?: boolean;
@@ -218,7 +220,11 @@ export default async function GraduationPage() {
       <section>
         <h2 className="mb-3 text-sm font-semibold">All standards by level</h2>
         {readiness ? (
-          <LevelBreakdown readiness={readiness} dbByStandard={dbByStandard} />
+          <LevelBreakdown
+            readiness={readiness}
+            dbByStandard={dbByStandard}
+            canApprove={canApprove}
+          />
         ) : (
           <p className="text-xs text-neutral-500">(no readiness loaded)</p>
         )}
@@ -257,9 +263,11 @@ function CriterionPill({
 function LevelBreakdown({
   readiness,
   dbByStandard,
+  canApprove,
 }: {
   readiness: Readiness;
   dbByStandard: Map<string, { level: GraduationLevel | string }>;
+  canApprove: boolean;
 }) {
   const byLevel: Record<GraduationLevel, string[]> = {
     robo_labels: [],
@@ -288,9 +296,27 @@ function LevelBreakdown({
           <p className="mt-2 text-xs">
             <strong>{byLevel[lvl].length}</strong> standards
           </p>
-          <p className="mt-1 font-mono text-[10px] text-neutral-500">
-            {byLevel[lvl].length === 0 ? "(none)" : byLevel[lvl].join(", ")}
-          </p>
+          {byLevel[lvl].length === 0 ? (
+            <p className="mt-1 font-mono text-[10px] text-neutral-500">(none)</p>
+          ) : (
+            <ul className="mt-2 flex flex-col gap-1">
+              {byLevel[lvl].map((standardId) => (
+                <li
+                  key={standardId}
+                  className="flex items-center justify-between gap-2 rounded-md border border-neutral-100 bg-white px-2 py-1 font-mono text-[11px] dark:border-neutral-900 dark:bg-neutral-950"
+                >
+                  <span>{standardId}</span>
+                  {canApprove && lvl !== "robo_labels" && (
+                    <DemoteButton
+                      standardId={standardId}
+                      currentLevel={lvl}
+                      targetLevel={demoteOneStep(lvl)}
+                    />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       ))}
     </div>

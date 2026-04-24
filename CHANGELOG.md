@@ -10,6 +10,45 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
+### Unreleased — 2026-04-23 (human-eval build plan Sessions 1–12)
+
+Session 12 — rollback + auto-demotion:
+
+- New `/api/cron/rollback-monitor` — nightly auto-demotion monitor.
+  For every graduated standard, computes the rolling 14-day
+  actor-weighted override rate against the violations denominator
+  and auto-demotes one step when it meets/exceeds the level's
+  threshold (5% autonomous → batch_approval, 10% batch → robo_labels).
+  Min-denominator floor of 10 violations suppresses noise on
+  low-traffic standards. Auth via `CRON_SECRET` (shared with the
+  weekly digest). Writes to `graduation_status.history` with
+  `source: "auto_demotion"` so the audit trail captures the rate
+  + reason.
+- New `/api/graduation/demote` — manual demotion. Admin-gated via
+  the same `CONTENTRX_ADMIN_CLERK_IDS` allow-list as approve.
+  Validates target is a strict step down.
+- New `demote-button.tsx` client island wired into the level
+  breakdown on `/dashboard/graduation`. Each graduated standard
+  shows a compact demote button next to its row.
+- `src/lib/graduation.ts` extended with `AUTO_DEMOTION_THRESHOLD`
+  (mirrors Session 10 cutoffs), `AUTO_DEMOTION_WINDOW_DAYS` (14),
+  `AUTO_DEMOTION_MIN_VIOLATIONS` (10), `demoteOneStep`,
+  `shouldAutoDemote`, `weightedOverrideCount`, `ACTOR_ROLE_WEIGHT`.
+- 18 new vitest tests: demoteOneStep (all 3 levels), threshold table
+  integrity, shouldAutoDemote (fires / doesn't fire at boundary,
+  suppressed by min-denominator, never on robo_labels), weighted
+  count math.
+
+Deferred per scope:
+  - Suspend (pull standard out of engine evaluation entirely) —
+    requires engine integration; soft-suspend via demote-to-robo
+    is available today
+  - Email notifications on auto-demotion — reuse the Resend pipeline
+    in a follow-up; for now the audit trail in `graduation_status.history`
+    captures it
+  - Vercel Cron activation — same `CRON_SECRET` + `vercel.json`
+    snippet as the weekly digest
+
 ### Unreleased — 2026-04-23 (human-eval build plan Sessions 1–11)
 
 Session 11 — graduation UI + approval workflow:

@@ -420,7 +420,32 @@ One-screen approval surface for eligible promotions. Admin-gated via `CONTENTRX_
 
 **Approval UX:** the approve button prompts for a short reason before posting. The reason + the full readiness snapshot land on the history entry for the audit trail.
 
-**Deferred:** auto-demotion (Session 12 watches the 2-week override rate and steps standards down when it breaches). Manual demotion UI lands in the same session.
+### Rollback + auto-demotion (human-eval build plan Session 12)
+
+Two complementary paths bring a graduated standard back down the ladder:
+
+**Auto-demotion** — `/api/cron/rollback-monitor`. Runs nightly; computes the rolling 14-day **actor-weighted** override rate (numerator) against the `violations` table (denominator) for every standard above `robo_labels`. When the rate meets/exceeds the level's threshold for the full window AND the denominator clears the 10-violation floor, writes a level change with `source: "auto_demotion"` and the rate in the reason.
+
+| Current level | Auto-demotion threshold | New level |
+|---|---|---|
+| `autonomous` | ≥ 5% | `batch_approval` |
+| `batch_approval` | ≥ 10% | `robo_labels` |
+
+The thresholds mirror Session 10's graduation cutoffs exactly — the same line that permits graduation is the one that triggers rollback when it reverses. Re-graduation requires re-earning all six criteria; **no fast-path**.
+
+**Manual demotion** — `/api/graduation/demote`. Admin-gated the same way approval is. Allows any strict step down; requires a reason that lands in the audit log.
+
+**UI surface:** the demote button sits on each graduated standard's row in the `/dashboard/graduation` level breakdown, alongside its current level. Hidden for non-admin users.
+
+**Deferred for a later session:** suspending a standard entirely (pulling it out of engine evaluation). Today's soft-suspend = demote to `robo_labels` with a reason; the standard still evaluates but every verdict routes through Robo. Full suspend requires engine-side gating.
+
+**Cron enablement:** same `CRON_SECRET` the weekly digest uses. Add to `vercel.json`:
+```json
+{"crons": [
+  {"path": "/api/cron/weekly-digest", "schedule": "0 14 * * 1"},
+  {"path": "/api/cron/rollback-monitor", "schedule": "0 3 * * *"}
+]}
+```
 
 ## Two entry points, two use cases
 
