@@ -228,6 +228,40 @@
     margin-left: 4px;
   }
 
+  /* Human-eval build plan Session 30 PR B — "Team custom example"
+   * display-only tag. Shown when a short-circuit fires. No CTA;
+   * this is reference-only — the team already decided.
+   */
+  .custom-example-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    padding: 3px 8px;
+    border: 1px solid var(--figma-color-border, #e6e6e6);
+    border-radius: 4px;
+    background: var(--figma-color-bg-secondary, #f7f7fa);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--figma-color-text-secondary, #666);
+    max-width: 100%;
+  }
+  .custom-example-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--figma-color-icon-success, #1a7f37);
+  }
+  .custom-example-notes {
+    color: var(--figma-color-text-tertiary, #888);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 320px;
+  }
+
   /* Human-eval build plan Session 22 — "Moment detected" banner.
    * Sits above the violation list so the user sees the detected
    * moment before the flags. Replaces the small moment-badge for
@@ -2859,6 +2893,10 @@ async function runBatchScan(nodes, onProgress) {
       // feedback button so the POST to /api/feedback/rationale can
       // reference the evaluation without shipping plaintext.
       textHash: "",
+      // Human-eval build plan Session 30 PR B — populated when the
+      // server short-circuited via a team custom example. Display-
+      // only tag on the card; no new CTA.
+      customExampleMatch: null,
     };
 
     const apiResult = item.apiData && item.apiData.result;
@@ -2906,6 +2944,23 @@ async function runBatchScan(nodes, onProgress) {
       // fields on RationaleHop flow through without a plugin bump.
       if (Array.isArray(apiResult.rationale_chain)) {
         nodeResult.rationaleChain = apiResult.rationale_chain;
+      }
+
+      // Human-eval build plan Session 30 PR B — detect a
+      // custom-example short-circuit. When `/api/check` matches a
+      // team's custom example, the rationale_chain has a single hop
+      // with step="custom_example_match"; we surface that as a
+      // small display-only tag on the card. No new CTA per the
+      // "4 CTAs is crazy-making" conversation — the stance triad
+      // is the only review action.
+      nodeResult.customExampleMatch = null;
+      if (nodeResult.rationaleChain.length === 1 &&
+          nodeResult.rationaleChain[0].step === "custom_example_match") {
+        const hop = nodeResult.rationaleChain[0];
+        nodeResult.customExampleMatch = {
+          example_id: (hop.output && hop.output.matched_example_id) || "",
+          notes: (hop.output && hop.output.notes) || null,
+        };
       }
     }
 
@@ -3630,6 +3685,21 @@ function renderNodeCard(result) {
   } else if (result.moment) {
     const momentLabel = result.moment.replace(/_/g, " ");
     html += `<span class="moment-badge">${escapeHtml(momentLabel)}</span>`;
+  }
+
+  // Human-eval build plan Session 30 PR B — "Team custom example"
+  // display-only tag. Shown when the verdict came from a
+  // team-authored short-circuit (LLM was bypassed). Display-only:
+  // no new CTA here — the team already decided about this string,
+  // there's nothing for the reviewer to do. Note surfaces the
+  // admin's rationale if one was recorded.
+  if (result.customExampleMatch) {
+    const notes = result.customExampleMatch.notes || "";
+    html += `<div class="custom-example-tag" title="${escapeHtml(notes)}">
+      <span class="custom-example-dot" aria-hidden="true"></span>
+      <span>Team custom example</span>
+      ${notes ? `<span class="custom-example-notes">— ${escapeHtml(notes)}</span>` : ""}
+    </div>`;
   }
 
   if (result.error) {
