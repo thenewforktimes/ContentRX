@@ -428,6 +428,18 @@ One-screen approval surface for eligible promotions. Admin-gated via `CONTENTRX_
 
 **Approval UX:** the approve button prompts for a short reason before posting. The reason + the full readiness snapshot land on the history entry for the audit trail.
 
+### External signal pipeline (human-eval build plan Session 15)
+
+Mines `(old_string, new_string)` copy-change pairs from a curated OSS allow-list as external training signal. **Strictly separated from production evaluations** — lives in its own directory at `external_signal/`, writes JSON output to a gitignored folder, never joins with `violations` / `violation_overrides` / `graduation_status` tables.
+
+**Filter cascade:** allow-list → file-type whitelist (`.jsx/.tsx/.vue/.svelte/.mdx` + translation `.json` + markdown under `/docs` or `/content` + `.po`/`.xlf`) → commit-message soft-tag (`"fix typo"`, `"clarify"`, `"improve error message"`, …) → diff-pattern extraction (quoted-string changes, noise-filtered).
+
+**Rate-limit discipline:** sequential requests, 1-second per-commit delay, exponential backoff on 429/403 (≤3 retries), file cache at `external_signal/cache/` so re-runs are mostly cache hits.
+
+**Ethics binding:** the miner identifies as `contentrx-research-bot` with a contact URL pointing at `/ethics`. Opt-outs land via `hello@contentrx.io` with `[OPTOUT] <source name>` subject; removal procedure in `external_signal/README.md`.
+
+**What Session 15 does NOT do:** DB ingest (the JSON output is the reviewer's workbench until the review workflow crystallizes), classifier routing for agreement/disagreement separation, intent tagging (Session 18). Running the crawler requires `GITHUB_TOKEN` configured; today's PR ships the pipeline, the first real crawl happens when Robo flips it on.
+
 ### Rollback + auto-demotion (human-eval build plan Session 12)
 
 Two complementary paths bring a graduated standard back down the ladder:
