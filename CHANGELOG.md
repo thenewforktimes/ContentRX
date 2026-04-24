@@ -10,6 +10,38 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
+### Unreleased — 2026-04-23 (human-eval build plan Sessions 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8)
+
+Session 8 — production override review queue:
+
+- New `tools/review_queue.py` — turns a stream of production override
+  events into an ordered, batched queue for Robo's 50-items-in-60-
+  minutes review cadence. Stage-aware: phase auto-detects from the
+  annotated corpus (`<500` high-confidence tuples → early/exploration,
+  `≥500` → late/exploitation). Outer dimension is audience
+  (provisional). Subtypes cascade: novel combinations, standards_conflict,
+  ensemble_disagreement, standard_pushback aggregates (Session 4),
+  calibration sample (5% early → 10% late).
+- New `tools/batch_summary.py` — after a batch is reviewed, tallies
+  actions (agree/override/skip), detects `recurring_standard_override`
+  patterns (3+ overrides on the same standard inside one batch), and
+  can draft a candidate entry in `taxonomy_refinement_log.md` under
+  "Open refinements" with the existing format.
+- New `tools/audience_retest.py` — the 50-general-audience trigger.
+  Computes `P(general | FP)`; emits `keep_audience_first` /
+  `drop_audience_first` / `pending` / `inconclusive` so the queue
+  builder can flip its outer dimension when the data is in.
+- New `evals/review_queue/README.md` — workflow, queue-order table per
+  phase, schemas for queue output + completed batch + pattern/draft,
+  deferred items (web surface, direct DB integration).
+- 41 new pytest tests covering phase detection, novel-combination
+  marking, stage-aware ordering (early vs late; audience-first on/off),
+  batching (size-3 clusters, audience-boundary splits), deterministic
+  calibration sampling (5% vs 10%; high-confidence-only), batch
+  summary pattern detection, refinement-log append under
+  "Open refinements" (preserving order), and audience-retest decision
+  logic across the four outcome branches.
+
 ### Unreleased — 2026-04-23 (human-eval build plan Sessions 1 + 2 + 3 + 4 + 5 + 6 + 7)
 
 Session 7 — quarterly self-drift check:
