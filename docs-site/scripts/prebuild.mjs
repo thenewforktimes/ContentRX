@@ -13,6 +13,7 @@
  * examples corpus pairs.json to the set of files copied.
  */
 
+import { execSync } from "node:child_process";
 import { cpSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,6 +21,21 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..");
 const libDir = join(here, "..", "lib");
+
+// Guard against Finder / iCloud space-suffixed duplicate files
+// (shared with parent app's prebuild). See scripts/check_no_dup_files.sh.
+// Runs before the copies so a dup under docs-site/lib/ doesn't get
+// silently overwritten (or alongside), creating worse state.
+try {
+  execSync("bash scripts/check_no_dup_files.sh", {
+    cwd: repoRoot,
+    stdio: "inherit",
+  });
+} catch (err) {
+  // The guard already printed its own error + fix. Re-exit with
+  // its code so `next build` never runs.
+  process.exit(err.status ?? 1);
+}
 
 const copies = [
   {
