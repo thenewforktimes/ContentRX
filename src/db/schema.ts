@@ -323,6 +323,43 @@ export const violationOverrides = pgTable(
   ],
 ).enableRLS();
 
+// Graduation status per standard — human-eval build plan Session 10.
+//
+// Stores the current graduation level per standard (robo_labels →
+// batch_approval → autonomous) plus the last readiness snapshot and
+// audit metadata. Session 11's graduation UI reads + writes via the
+// helpers in src/lib/graduation.ts; the metrics tool
+// (`tools/graduation_metrics.py`) is the primary writer.
+//
+// Kept append-only via `history` JSONB: every promotion / demotion
+// adds a snapshot entry so the ladder's audit trail survives
+// recalibrations.
+export const graduationStatus = pgTable(
+  "graduation_status",
+  {
+    id: cuid(),
+    standardId: text("standard_id").notNull().unique(),
+    level: text("level", {
+      enum: ["robo_labels", "batch_approval", "autonomous"],
+    })
+      .notNull()
+      .default("robo_labels"),
+    // Last computed readiness snapshot — the full per-criterion dict
+    // from `tools/graduation_metrics.py`. Stored so the dashboard can
+    // show breakdowns without re-running the tool.
+    lastReadiness: jsonb("last_readiness"),
+    lastReadinessAt: timestamp("last_readiness_at", { withTimezone: true }),
+    // Append-only audit trail. Each entry: {level, reason, at, approver}.
+    history: jsonb("history").notNull().default([]),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("graduation_status_level_idx").on(t.level),
+  ],
+).enableRLS();
+
 export type User = InferSelectModel<typeof users>;
 export type Usage = InferSelectModel<typeof usage>;
 export type Subscription = InferSelectModel<typeof subscriptions>;
@@ -331,3 +368,4 @@ export type TeamRule = InferSelectModel<typeof teamRules>;
 export type Violation = InferSelectModel<typeof violations>;
 export type DittoSync = InferSelectModel<typeof dittoSyncs>;
 export type ViolationOverride = InferSelectModel<typeof violationOverrides>;
+export type GraduationStatus = InferSelectModel<typeof graduationStatus>;

@@ -373,6 +373,41 @@ Pure logic lives in `src/lib/cadence.ts`: `momentForWeek`, `detectUrgentFlags`, 
 
 **Deferred:** MCP surfacing of the cadence data (separate future session); pending-refinement count in the digest (Session 34's auto-detector populates this).
 
+### Graduation ladder (human-eval build plan Session 10)
+
+Three levels per standard: `robo_labels` → `batch_approval` → `autonomous`. All promotions require **all six hard-gate criteria** to pass — AND-ed, not averaged. Full policy in `evals/graduation/README.md`; implementation in `tools/graduation_metrics.py`.
+
+| # | Criterion | Autonomous | Batch-approval |
+|---|---|---|---|
+| 1 | Sample size (4-week agreements) | ≥ 500 | ≥ 200 |
+| 2 | Cohen's κ vs Robo | ≥ `0.94 × ceiling` | ≥ `0.83 × ceiling` |
+| 3 | Raw agreement (McHugh floor) | ≥ 80% | ≥ 70% |
+| 4 | MCC (when prevalence < 15%) | ≥ 0.70 | ≥ 0.60 |
+| 5 | Production override rate (actor-weighted) | < 5% | < 10% |
+| 6 | Counterpart tier + variation + ≥80% pass rate | required | required |
+
+**Stability window:** 4 weeks. Every weekly κ bucket must meet the threshold — not just the average. A standard that just crossed doesn't graduate; the ladder waits for stability.
+
+**Sample tightening:** 100–200 agreements → κ threshold +0.02 (wider SE). <100 → graduation blocked regardless of κ.
+
+**Counterpart tier** by observed prevalence: <15% → 5 counterparts, 15–40% → 8, >40% → 12. Structurally complex rules add +3. **Structural variation** requires ≥2 of 3 axes with within-moment mandatory (≥60% within-moment-within-type, ≥25% cross-content-type, ≥15% cross-moment).
+
+**MCC supplementation** for low-prevalence standards addresses the Cohen's-κ prevalence paradox (Chicco et al. 2021). κ stays default; MCC is additive, not replacement.
+
+**Actor-weighted override rate** multipliers: designer 1.5, PM 1.0, engineer 0.75, other/unknown 1.0.
+
+**Rule-version counterpart credit** (per-standard versioning from Session 1):
+
+| Change kind | Counterpart credit |
+|---|---|
+| Semantic (rule fires differently) | Full reset |
+| Wording-only (rephrase / examples) | 50% weight |
+| Additive carve-out | Outside carve-out full; inside needs re-verification |
+
+**DB state.** `graduation_status` table keyed by `standard_id` stores current level + last readiness snapshot + append-only history. `src/lib/graduation.ts` exposes read/write helpers. Session 11 wires the approval UI on top; Session 12 wires the auto-demotion monitor.
+
+**Today's baseline:** 43 standards evaluated, all at `robo_labels` (no production reviews yet). The committed `evals/graduation/readiness.json` gives downstream sessions a real input to develop against.
+
 ## Two entry points, two use cases
 
 `check(text, content_type, audience)` — full 5-stage pipeline. Used in production, the CLI, and the Figma plugin. Content-type-aware filtering and audience-aware gating reduce false positives. Audience defaults to `product_ui`.
