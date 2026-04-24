@@ -421,6 +421,20 @@ Privacy: the pair texts are curated by Robo (not user-submitted). Responses stor
 
 **Deferred:** a second "opt back in" UI button for users who previously opted out (today they'd hit the API directly from the dashboard). Also deferred: admin UI for authoring new `preference_pairs` entries — the JSON file + seeder is the current authoring path.
 
+### Preference-informed suggestion ranking (human-eval build plan Session 32)
+
+Extends Session 31's preference signal to counterfactual-suggestion ranking. When the generator proposes multiple rewrites for a flagged violation, `rank_suggestions` (Python: `src/content_checker/suggestion_ranking.py`, TS mirror: `src/lib/suggestion-ranking.ts`) sorts them by alignment with accumulated pairwise preferences. Scope is deliberately narrow — preference data informs suggestion ordering and counterfactual quality, not the verdict classifier itself.
+
+Scoring:
+- For each candidate, compare its Jaccard similarity (unigrams + bigrams over lowercased tokens) against both sides of every preference pair matching the violation's `(standard_id, moment)` context. The delta `sim(preferred) - sim(non_preferred)`, weighted by log-sample-size and context-relevance, contributes to the alignment score.
+- `sim(standard + moment)` carries full weight; `sim(standard only)` carries half; unrelated signals contribute zero. Keeps the ranker pessimistic — a pair from a different moment shouldn't drive ordering as hard as one from the exact context.
+- A minimum delta threshold (0.05) rejects signals where the candidate is roughly equidistant from both sides. Noise out.
+- Ties break on the generator's original order, so the ranker never makes arbitrary changes.
+
+Scope note: the current `Violation.suggestion` is a single string. The ranker sits at the boundary — any surface that hands it a list of candidates gets a ranked list back. Engine-level expansion to emit multiple suggestions per violation is deferred; the ranker is ready for that day.
+
+Measurement: `tools/suggestion_preference_report.py` runs a held-out eval set through the ranker and reports per-moment agreement-rate delta (ranked top pick vs generator's first candidate vs the annotator's gold pick). Signal-coverage tells us what fraction of candidates had any matching preference signal at all — a leading indicator of when the pool is dense enough to expect a measurable quality lift.
+
 ### Review cadence dashboards (human-eval build plan Session 9)
 
 Three web surfaces under `/dashboard/cadence/*` plus a weekly email digest. Team-plan gated, admin-only (mirrors `/dashboard/overrides`).
