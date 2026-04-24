@@ -1,0 +1,7 @@
+# Mined output stays local — never committed. External signal is
+# strictly separated from production evals (human-eval build plan
+# Session 15) and the mined pairs carry third-party content that
+# needs review before it touches any shared surface.
+output/
+cache/
+*.log

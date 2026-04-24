@@ -10,6 +10,39 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
+### Unreleased — 2026-04-23 (human-eval build plan Sessions 1–15)
+
+Session 15 — GitHub mining pipeline:
+
+- New `external_signal/` directory. Strictly separated from
+  production evaluation data (gitignored output dir, no DB ingest
+  in this session).
+- New `external_signal/allow_list.json` — 20 curated OSS repos
+  (Radix, shadcn/ui, Headless UI, Next.js, Supabase, Cal.com,
+  Raycast, Sentry, PostHog, Linear, Remix, Stripe, MUI, Astro,
+  GraphQL Platform, Ghost, MDN, Zendesk Garden, Primer, React Email).
+- New `external_signal/github_miner.py` — GraphQL + REST crawler
+  with cascading filters (allow-list → file-type → commit-message
+  soft-tag → diff-pattern). Rate-limit discipline: sequential
+  requests, 1-second per-commit delay, exponential backoff on
+  429/403 up to 3 retries, file-based response cache.
+- New `external_signal/README.md` — workflow + opt-out process
+  (ties to `/ethics`). README is the canonical contract for how
+  the miner behaves.
+- 33 new pytest tests covering the filter cascade (7 file-type + 4
+  commit-message + 10 diff-pattern including noise-rejection
+  edges), allow-list loading, incremental crawl (last_crawled_sha),
+  end-to-end mine_repo with mocked client, and GitHub client
+  auth/retry behavior. Network-free — tests mock urllib entirely.
+
+Deferred per scope:
+  - DB ingest path — today the miner writes JSON; Robo reviews the
+    JSON. A future session wires ingest into the `external_signal`
+    namespace once the review workflow is defined.
+  - Classifier routing (push mined pairs through ContentRX's
+    classifiers to separate agreement from disagreement) — follow-up
+  - Intent tagger — Session 18's scope
+
 ### Unreleased — 2026-04-23 (human-eval build plan Sessions 1–14)
 
 Session 14 — ethical framework + /ethics page:
