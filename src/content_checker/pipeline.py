@@ -468,12 +468,26 @@ def check(
         total_tokens += val_tokens
     else:
         confirmed, rejected = [], []
+    # Session 13: preserve both sides of every scan/validate
+    # disagreement in the rationale chain. Reviewers see scan's
+    # `issue` + `suggestion` alongside validate's rejection reason
+    # without needing to re-run the pipeline.
+    rejected_details = [
+        {
+            "standard_id": v.standard_id,
+            "scan_issue": v.issue,
+            "scan_suggestion": v.suggestion,
+            "validate_rejection_reason": v.validate_rejection_reason,
+        }
+        for v in rejected
+    ]
     chain.append(RationaleHop(
         step=HOP_VALIDATE,
         inputs={"candidate_count": len(llm_candidates)},
         output={
             "confirmed": len(confirmed),
             "rejected": len(rejected),
+            "rejected_details": rejected_details,
         },
         rule_versions={
             sid: ver for sid, ver in rule_versions.items()

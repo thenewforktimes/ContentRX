@@ -48,6 +48,21 @@ class TestViolation:
         assert d["ambiguity_flag"] == "standards_conflict"
         assert d["rule_version"] == "4.6.1"
 
+    def test_v160_validate_rejection_reason_defaults_none(self):
+        # Session 13: validate_rejection_reason defaults to None
+        # (preprocessor violations + confirmed LLM violations both
+        # land here without a rejection reason).
+        v = Violation(standard_id="CLR-01", rule="r", issue="i", suggestion="s")
+        assert v.to_dict()["validate_rejection_reason"] is None
+
+    def test_v160_validate_rejection_reason_populated(self):
+        v = Violation(
+            standard_id="CLR-01", rule="r", issue="i", suggestion="s",
+            validate_rejection_reason="content_type_notes say this is acceptable for error_message",
+        )
+        d = v.to_dict()
+        assert d["validate_rejection_reason"].startswith("content_type_notes")
+
     def test_related_standards_default_not_shared(self):
         """default_factory must produce an independent list per instance."""
         a = Violation(standard_id="A", rule="", issue="", suggestion="")

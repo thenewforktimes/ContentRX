@@ -40,7 +40,13 @@
 //         enum), session_id (free-form grouping key for three+
 //         same-standard overrides to collapse into a pushback)
 //         (human-eval build plan Session 4). Additive only.
-export const SCHEMA_VERSION = "1.5.0" as const;
+// 1.6.0 — `ensemble_disagreement` review_reason subtype +
+//         `validate_rejection_reason` on Violation (human-eval build
+//         plan Session 13). Scan/validate disagreement now has its
+//         own subtype (previously conflated with standards_conflict).
+//         Additive — old clients reading review_reason as a string
+//         keep working; switch-on-value clients should add an arm.
+export const SCHEMA_VERSION = "1.6.0" as const;
 
 /**
  * Adds `schema_version` and `warnings` to a response payload. Existing
