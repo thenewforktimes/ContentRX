@@ -10,6 +10,46 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
+### Unreleased — 2026-04-23 (human-eval build plan Sessions 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10)
+
+Session 10 — graduation criteria + metric instrumentation:
+
+- New `tools/graduation_metrics.py` implementing all six hard-gate
+  criteria per standard: sample size (with tightening modifier +
+  absolute floor), Cohen's κ (ratio against Session 7's measured
+  ceiling, stable over a 4-week window), McHugh raw-agreement floor,
+  MCC supplementation for low-prevalence standards, actor-weighted
+  override rate, novel-counterpart tier + structural variation +
+  ≥80% pass rate. All AND-ed — no averaging.
+- Rule-version credit policy codified: semantic change → full reset,
+  wording change → 50% weight, additive carve-out → outside-only
+  carries at full weight.
+- New `evals/graduation/readiness.json` — baseline computed across
+  all 43 standards from the industry corpus. All at `robo_labels`
+  today (zero reviews + zero production overrides).
+- New `evals/graduation/README.md` — policy documentation, schema
+  reference, run instructions.
+- New `graduation_status` DB table (schema.ts) + `src/lib/graduation.ts`
+  helper (`getGraduationStatus`, `writeReadinessSnapshot`,
+  `recordLevelChange`). Level enum: `robo_labels` / `batch_approval`
+  / `autonomous`. History is append-only JSONB. `npm run db:push` to
+  apply.
+- 43 new pytest tests covering κ / MCC / raw-agreement math, prevalence
+  banding, counterpart tiers and variation axes, pass-rate edge
+  cases, rule-version credit (semantic / wording / additive /
+  unknown), stability-window bucketing, and end-to-end
+  `assess_standard` composition (hard-gate behavior: high-κ-zero-
+  counterparts still blocked, actor-weighted override rate,
+  tightening kicks in at 150 agreements, thresholds scale with
+  measured ceiling).
+
+Deferred per dependencies:
+  - Approval UI (Session 11 — one-click graduation based on these
+    readiness rows)
+  - Auto-demotion monitor (Session 12 — 2-week override-rate breach
+    triggers automatic step-down)
+  - Direct DB review-event ingestion (today reads a JSON dump)
+
 ### Unreleased — 2026-04-23 (human-eval build plan Sessions 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9)
 
 Session 9 — review cadence dashboards + weekly digest:

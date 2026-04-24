@@ -1,0 +1,6095 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-04-24T00:53:40Z",
+  "measured_ceiling": 0.9,
+  "autonomous_kappa_threshold": 0.846,
+  "batch_approval_kappa_threshold": 0.747,
+  "standards_evaluated": 43,
+  "by_level": {
+    "robo_labels": 43
+  },
+  "standards": [
+    {
+      "standard_id": "ACC-01",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.6296296296296297,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "ACC-02",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "ACC-05",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.6666666666666666,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "ACC-07",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "ACT-01",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.5068493150684932,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 1,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.5,
+                "cross_content_type": 0.5,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 2,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "within-moment share 50% < target 60%"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 1,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.5,
+                "cross_content_type": 0.5,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 2,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "within-moment share 50% < target 60%"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "ACT-02",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.25,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "ACT-03",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.3333333333333333,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "ACT-04",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.2,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "CLR-01",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.2962962962962963,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 2,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 2,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "CLR-02",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.16666666666666666,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "CLR-03",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.5555555555555556,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "CLR-04",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "CLR-05",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": null,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "CON-01",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.6666666666666666,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "CON-02",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.35526315789473684,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 2,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 2,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "CON-03",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "CON-04",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.5,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "GRM-01",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.14285714285714285,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 2,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 2,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "GRM-02",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.2727272727272727,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "GRM-03",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.5,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "GRM-04",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.0625,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "GRM-05",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.0967741935483871,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "GRM-06",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.5,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "PRF-01",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 1.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "PRF-03",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.024390243902439025,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "PRF-04",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 1.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "PRF-07",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 1.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "PRF-09",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.75,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "PRF-10",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 1.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "PRF-11",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.125,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "STR-01",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 1.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "STR-03",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "STR-04",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.5,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "TRN-01",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 1.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "TRN-02",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.5,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "TRN-04",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.5454545454545454,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 1,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 1.0,
+                "cross_content_type": 0.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": true,
+              "passes": false,
+              "violations": [
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "TRN-06",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "TRN-07",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.0,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "VT-01",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.5714285714285714,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 2,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 2,
+            "count_raw": 2,
+            "tier_minimum": 12,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 2,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "VT-02",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.09090909090909091,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 0,
+            "count_raw": 0,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 0,
+                "cross_moment": 0
+              },
+              "percentages": {},
+              "axes_represented": 0,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "no counterparts provided"
+              ]
+            },
+            "pass_rate": null,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "VT-03",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.2,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 1,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 1,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "VT-04",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.09090909090909091,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 1,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": true,
+            "value": null,
+            "threshold": 0.6,
+            "pass": false
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 5,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 1,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    },
+    {
+      "standard_id": "VT-05",
+      "recommended_level": "robo_labels",
+      "measured_ceiling": 0.9,
+      "prevalence": 0.3,
+      "structurally_complex": false,
+      "rule_version_change": null,
+      "autonomous": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 500,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.846,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.8,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.05,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 1,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      },
+      "batch_approval": {
+        "eligible": false,
+        "criteria": {
+          "sample_size": {
+            "value": 0,
+            "threshold": 200,
+            "pass": false,
+            "floor_pass": false,
+            "tighten_applied": false
+          },
+          "kappa": {
+            "value": null,
+            "threshold": 0.747,
+            "weekly": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "stable_above": false,
+            "pass": false
+          },
+          "raw_agreement": {
+            "value": null,
+            "threshold": 0.7,
+            "pass": false
+          },
+          "mcc": {
+            "needed": false,
+            "value": null,
+            "threshold": null,
+            "pass": true
+          },
+          "override_rate": {
+            "value": null,
+            "threshold": 0.1,
+            "pass": false
+          },
+          "counterparts": {
+            "count_effective": 1,
+            "count_raw": 1,
+            "tier_minimum": 8,
+            "count_pass": false,
+            "variation": {
+              "counts": {
+                "within_moment_within_type": 0,
+                "cross_content_type": 1,
+                "cross_moment": 0
+              },
+              "percentages": {
+                "within_moment_within_type": 0.0,
+                "cross_content_type": 1.0,
+                "cross_moment": 0.0
+              },
+              "axes_represented": 1,
+              "within_moment_mandatory": false,
+              "passes": false,
+              "violations": [
+                "within-moment axis empty (mandatory)",
+                "within-moment share 0% < target 60%",
+                "only 1 variation axes represented (need ≥2)"
+              ]
+            },
+            "pass_rate": 0.0,
+            "pass_rate_threshold": 0.8,
+            "pass_rate_pass": false,
+            "rule_version_weight": 1.0,
+            "pass": false
+          }
+        }
+      }
+    }
+  ]
+}
