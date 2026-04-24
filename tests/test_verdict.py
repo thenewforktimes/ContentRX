@@ -32,11 +32,10 @@ from content_checker.models import (
 
 
 class TestSchemaVersionBump:
-    def test_schema_version_is_1_6_0(self):
-        # Human-eval build plan Session 13 bump — additive
-        # (ensemble_disagreement subtype + validate_rejection_reason
-        # on Violation).
-        assert SCHEMA_VERSION == "1.6.0"
+    def test_schema_version_is_1_7_0(self):
+        # BUILD_PLAN_v2 Appendix A non-negotiable: every Violation
+        # carries a `docs_url`. Bumped from 1.6.0; still additive.
+        assert SCHEMA_VERSION == "1.7.0"
 
 
 class TestVerdictConstants:
