@@ -42,15 +42,17 @@ export default function Home() {
           decoration and starts being the product — error states, empty
           states, permissions flows, destructive confirmations, compliance
           disclosures. A senior content designer&apos;s pattern recognition,
-          running where you write: Figma, your CLI, and every pull request.
+          running where product copy is increasingly written:{" "}
+          <strong>Claude Code, Cursor, your CLI, and every pull request</strong>
+          {" "}— with the Figma plugin alongside for design-time checks.
         </p>
         <div className="mt-8 flex flex-wrap gap-3 text-sm">
-          <a
-            href="https://www.figma.com/community/plugin/"
+          <Link
+            href="/install"
             className="rounded-md bg-black px-4 py-2 text-white hover:opacity-90 dark:bg-white dark:text-black"
           >
-            Install for Figma
-          </a>
+            Install → MCP · CLI · GitHub Action · Figma
+          </Link>
           <Link
             href="/model"
             className="rounded-md border border-neutral-300 px-4 py-2 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
@@ -179,32 +181,60 @@ export default function Home() {
 
       <Section
         eyebrow="Surfaces"
-        title="Runs where you write"
+        title="Runs at the generation layer"
         body={
           <>
-            <ul className="ml-5 list-disc space-y-2">
+            <p>
+              Content-standards enforcement is moving upstream.
+              Engineers write product copy in the IDE now; PRs carry
+              more strings than design files; LLMs draft the first pass
+              before a content designer sees it. ContentRX meets that
+              reality by leading with the surfaces where copy is
+              actually written today, with the Figma plugin alongside
+              for design-time checks.
+            </p>
+            <ul className="mt-4 ml-5 list-disc space-y-2">
               <li>
-                <strong>Figma plugin</strong> — scan a frame,
-                per-string verdicts with moment banners and rationale
-                chains. Three-button stance per finding (Agree /
-                Disagree / Ship anyway).
+                <strong>MCP server</strong> — Claude Code, Cursor, and
+                any MCP client call <code>evaluate_copy</code>,{" "}
+                <code>classify_moment</code>, and the standards catalog
+                directly. Inline content review during generation, not
+                after.{" "}
+                <Link href="/install#mcp" className="underline underline-offset-2">
+                  Install
+                </Link>
+                .
               </li>
               <li>
                 <strong>CLI</strong> —{" "}
                 <code>contentrx &quot;Click here&quot;</code> or{" "}
                 <code>--batch strings.txt</code>. <code>--explain</code>{" "}
-                prints the full rationale chain. Stdlib-only install.
+                prints the full rationale chain. Stdlib-only install.{" "}
+                <Link href="/install#cli" className="underline underline-offset-2">
+                  Install
+                </Link>
+                .
               </li>
               <li>
                 <strong>GitHub Action</strong> — evaluates strings touched
-                in a PR. <code>fail-on: review</code> gates the merge
-                on review-recommended verdicts.
+                in a pull request. <code>fail-on: review</code> gates
+                the merge on review-recommended verdicts. Drops into
+                any repo with a YAML snippet.{" "}
+                <Link href="/install#action" className="underline underline-offset-2">
+                  Install
+                </Link>
+                .
               </li>
               <li>
-                <strong>MCP server</strong> — Claude Code, Cursor, and any
-                MCP client call <code>evaluate_copy</code>,{" "}
-                <code>classify_moment</code>, and the standards catalog
-                directly.
+                <strong>Figma plugin</strong> — design-time check.
+                Scan a frame, per-string verdicts with moment banners
+                and rationale chains. Three-button stance per finding
+                (Agree / Disagree / Ship anyway). Best for the copy
+                that comes in through design, not code.{" "}
+                <Link href="/install#figma" className="underline underline-offset-2">
+                  Install
+                </Link>
+                .
               </li>
             </ul>
           </>
