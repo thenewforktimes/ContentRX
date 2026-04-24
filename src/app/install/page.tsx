@@ -22,7 +22,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Install — ContentRX",
   description:
-    "Install ContentRX for Claude Code, Cursor, your CLI, GitHub Actions, or Figma. Generation-layer surfaces lead; the Figma plugin sits alongside for design-time checks.",
+    "Install ContentRX for Claude Code, Cursor, any LSP editor, your CLI, GitHub Actions, or Figma. Generation-layer surfaces lead; the Figma plugin sits alongside for design-time checks.",
 };
 
 export default function InstallPage() {
@@ -33,7 +33,7 @@ export default function InstallPage() {
           Install
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-          Four surfaces, one content model.
+          Five surfaces, one content model.
         </h1>
         <p className="mt-4 text-lg text-neutral-700 dark:text-neutral-300">
           Content-standards enforcement is moving upstream into the
@@ -43,7 +43,7 @@ export default function InstallPage() {
           strings that arrive through design.
         </p>
         <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
-          All four surfaces hit the same public API. One{" "}
+          All five surfaces hit the same public API. One{" "}
           <Link href="/dashboard" className="underline underline-offset-2">
             API key
           </Link>
@@ -51,6 +51,7 @@ export default function InstallPage() {
         </p>
         <nav className="mt-6 flex flex-wrap gap-2 text-sm">
           <SurfaceChip href="#mcp" label="MCP" tagline="Claude Code · Cursor" />
+          <SurfaceChip href="#lsp" label="LSP" tagline="VS Code · Cursor · Zed" />
           <SurfaceChip href="#cli" label="CLI" tagline="contentrx" />
           <SurfaceChip href="#action" label="GitHub Action" tagline="PR gate" />
           <SurfaceChip href="#figma" label="Figma plugin" tagline="design-time" />
@@ -98,8 +99,57 @@ uvx contentrx-mcp`}
       />
 
       <Section
-        id="cli"
+        id="lsp"
         eyebrow="Surface 2"
+        title="LSP server — inline diagnostics in any LSP editor"
+        body={
+          <>
+            <p>
+              Diagnostics appear as you type, the same way TypeScript
+              errors do. Yellow squiggles for violations; blue
+              squiggles for review-recommended strings. Right-click a
+              diagnostic to rewrite in place (Claude via{" "}
+              <code>/api/suggest-fix</code>), open the standard&apos;s
+              rationale page, or mark as false positive.
+            </p>
+            <p className="mt-3">
+              VS Code / Cursor (one-click — the extension launches
+              the server for you):
+            </p>
+            <Code>
+              {`# Install the ContentRX extension from the Marketplace
+# Then: command palette → "ContentRX: Set API key"`}
+            </Code>
+            <p className="mt-3">
+              Any LSP editor (Zed, Neovim, JetBrains, emacs lsp-mode):
+            </p>
+            <Code>
+              {`uv tool install contentrx-lsp        # or: pipx install contentrx-lsp
+export CONTENTRX_API_KEY=cx_...
+# Point your editor's LSP client at \`contentrx-lsp\` (stdio)`}
+            </Code>
+            <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
+              Scope: JSX / TSX text children + copy attributes
+              (<code>alt</code>, <code>aria-label</code>,{" "}
+              <code>placeholder</code>, <code>title</code>,{" "}
+              <code>tooltip</code>, <code>label</code>). Random string
+              literals aren&apos;t extracted — false-positive risk is
+              too high. Source:{" "}
+              <a
+                href="https://github.com/thenewforktimes/contentRX/tree/main/lsp-server"
+                className="underline underline-offset-2"
+              >
+                lsp-server
+              </a>
+              .
+            </p>
+          </>
+        }
+      />
+
+      <Section
+        id="cli"
+        eyebrow="Surface 3"
         title="CLI — contentrx on PyPI"
         body={
           <>
@@ -135,7 +185,7 @@ contentrx --explain "Are you sure?"`}
 
       <Section
         id="action"
-        eyebrow="Surface 3"
+        eyebrow="Surface 4"
         title="GitHub Action — PR gate"
         body={
           <>
@@ -177,7 +227,7 @@ jobs:
 
       <Section
         id="figma"
-        eyebrow="Surface 4 · alongside"
+        eyebrow="Surface 5 · alongside"
         title="Figma plugin — design-time check"
         body={
           <>
