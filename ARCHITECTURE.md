@@ -319,6 +319,37 @@ Three-step cadence (one per quarter, all in `tools/drift_check.py`):
 
 The panel, blind, and report files all live in `evals/drift/`. The README there is the canonical workflow doc for Robo's quarterly cycle.
 
+### Production override review queue (human-eval build plan Session 8)
+
+Turns real-user override events (`violation_overrides`) into an ordered, batched queue that Robo reviews via the existing Phase 2 CLI (`tools/triage.py`). Target: 50 items in 60 minutes.
+
+**Stage-aware ordering (phase auto-detects from precedent-index size):**
+
+| Phase | Trigger | Focus |
+|---|---|---|
+| `early` | `<500` high-confidence `(standard, content_type, verdict)` tuples | **Exploration.** Novel combinations first — each labeled case fills a new cell in the precedent index. |
+| `late` | `≥500` high-confidence tuples | **Exploitation.** `standards_conflict` first — taxonomy bugs are the highest-remaining-value failure mode once the index is populated. |
+
+Outer dimension: `audience` (provisional). The ditto_roadmap eval suggested general-audience content concentrates false positives on a 12-case sample. Session 8 formalizes a re-test at 50 annotated general-audience cases (`tools/audience_retest.py`): keep audience-first if `P(general | FP) ≥ 40%`; otherwise drop and let subtypes drive batching directly.
+
+**Within-phase ordering:**
+
+```
+Early:   audience → novel_combinations → standards_conflict →
+         ensemble_disagreement → standard_pushback → calibration(5%)
+
+Late:    audience → standards_conflict → ensemble_disagreement →
+         novel_combinations → standard_pushback → calibration(10%)
+```
+
+Batches are size-3 clusters matching `triage.py`'s agree/override/skip UI. They never cross audience boundaries — when the outer bucket flips, the current batch closes even if it's under-sized.
+
+**Pattern detection + refinement-log draft.** After each batch, `tools/batch_summary.py analyze` counts actions and flags `recurring_standard_override` when 3+ overrides land on the same standard. `batch_summary.py draft-refinement` appends a candidate entry to `taxonomy_refinement_log.md` under "Open refinements" in the existing format, marked pending auto-detected — Robo triages during the weekly cadence and promotes to approved only after the two-source rule.
+
+**Calibration sample.** A random sample of high-confidence annotated cases mixes into each queue (5% early, 10% late). Seeded, so re-builds over the same pool are reproducible.
+
+**Deferred:** web review-queue surface (today CLI-only via `triage.py`); direct DB integration for the queue builder (today reads a JSON dump).
+
 ## Two entry points, two use cases
 
 `check(text, content_type, audience)` — full 5-stage pipeline. Used in production, the CLI, and the Figma plugin. Content-type-aware filtering and audience-aware gating reduce false positives. Audience defaults to `product_ui`.
