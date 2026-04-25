@@ -12,14 +12,21 @@
  *     retry, no users row ever got created, dashboard dead-ended).
  *   - Webhook delivery has latency. A user can hit /dashboard before
  *     the POST lands.
+ *   - Clerk's Backend API has eventual consistency. Immediately after
+ *     sign-up, `clerkClient.users.getUser(id)` may 404 for a moment
+ *     before the new user is visible to the admin API.
  *   - In dev, webhooks aren't wired at all unless you tunnel with
  *     `svix listen` / ngrok.
  *
- * `getOrProvisionUser` mirrors the lazy-provision pattern already in
+ * `getOrProvisionUser` mirrors the lazy-provision pattern in
  * /auth/figma-callback (`ensureApiKey`): look up by clerkId, and if
- * missing, materialize a minimal row from Clerk's user record. The
- * insert is `onConflictDoNothing` so concurrent provisions from a
- * webhook + a dashboard load can race safely.
+ * missing, materialize a minimal row from Clerk's user record. Any
+ * failure in the provisioning path (Clerk API hiccup, transient DB
+ * error) is logged and returns `null` rather than throwing — the
+ * caller is expected to render a "we're finishing setting up your
+ * account, refresh in a moment" placeholder, which gives the webhook
+ * (and Clerk's Backend API) a beat to catch up. This avoids the
+ * global-error-boundary crash from the post-PR-#108 rollout.
  */
 
 import { clerkClient } from "@clerk/nextjs/server";
@@ -28,59 +35,87 @@ import { getDb, schema } from "@/db";
 
 export type ProvisionedUser = typeof schema.users.$inferSelect;
 
-async function primaryEmailFromClerk(clerkId: string): Promise<string> {
-  const client = await clerkClient();
-  const user = await client.users.getUser(clerkId);
-  const primaryId = user.primaryEmailAddressId;
-  const primary = user.emailAddresses.find((e) => e.id === primaryId);
-  const email = (primary ?? user.emailAddresses[0])?.emailAddress;
-  // The webhook handler returns 400 when there's no email. Match that
-  // behavior by synthesizing a placeholder so the row at least exists;
-  // the user can complete their email in Clerk and a future
-  // `user.updated` webhook will reconcile.
-  return email ?? `${clerkId}@unknown.local`;
+async function primaryEmailFromClerk(clerkId: string): Promise<string | null> {
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(clerkId);
+    const primaryId = user.primaryEmailAddressId;
+    const primary = user.emailAddresses.find((e) => e.id === primaryId);
+    return (primary ?? user.emailAddresses[0])?.emailAddress ?? null;
+  } catch (err) {
+    console.error(
+      `getOrProvisionUser: clerkClient.users.getUser failed for ${clerkId}`,
+      err,
+    );
+    return null;
+  }
 }
 
 /**
- * Resolve a Clerk ID to its `users` row, creating the row if the
- * webhook hasn't materialized it yet. Safe to call from any Server
- * Component or Route Handler that holds a Clerk session.
+ * Resolve a Clerk ID to its `users` row. If the row is missing, try to
+ * materialize one from Clerk's user record. Returns `null` on any
+ * provisioning failure so the caller can render a graceful placeholder
+ * instead of crashing into the global error boundary.
  *
- * Throws only if the Clerk lookup itself fails (network error talking
- * to Clerk's API). Concurrent provisions from competing callers are
- * safe via `onConflictDoNothing` on `users.clerk_id`.
+ * Concurrent provisions from a webhook + a dashboard load race safely
+ * via `onConflictDoNothing` on `users.clerk_id`.
  */
 export async function getOrProvisionUser(
   clerkId: string,
-): Promise<ProvisionedUser> {
+): Promise<ProvisionedUser | null> {
   const db = getDb();
 
-  let [row] = await db
-    .select()
-    .from(schema.users)
-    .where(eq(schema.users.clerkId, clerkId))
-    .limit(1);
-
-  if (row) return row;
-
-  const email = await primaryEmailFromClerk(clerkId);
-  await db
-    .insert(schema.users)
-    .values({ clerkId, email, plan: "free" })
-    .onConflictDoNothing({ target: schema.users.clerkId });
-
-  [row] = await db
-    .select()
-    .from(schema.users)
-    .where(eq(schema.users.clerkId, clerkId))
-    .limit(1);
-
-  if (!row) {
-    // Should be unreachable: the insert is idempotent and we just
-    // selected after it. If it does happen, surface a typed error
-    // instead of pretending we have a row.
-    throw new Error(`Failed to provision user for clerk_id ${clerkId}`);
+  try {
+    const [existing] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.clerkId, clerkId))
+      .limit(1);
+    if (existing) return existing;
+  } catch (err) {
+    console.error(
+      `getOrProvisionUser: initial select failed for ${clerkId}`,
+      err,
+    );
+    return null;
   }
 
-  return row;
+  const email = await primaryEmailFromClerk(clerkId);
+  if (!email) {
+    // Clerk admin API didn't give us an email (eventual consistency,
+    // network blip, or user record genuinely has none). Don't insert
+    // a placeholder address — the email column has a UNIQUE constraint
+    // and the synthetic value would block a legitimate later insert
+    // for the real address. Fall through to the placeholder UI.
+    return null;
+  }
+
+  try {
+    // No target on the conflict clause — `users` has unique constraints
+    // on both `clerk_id` and `email`. Targeting only clerk_id (as the
+    // earlier code did) caused PostgresError: users_email_unique to
+    // bubble up when (a) the webhook had already inserted the row and
+    // we lost a select-then-insert race, or (b) a stale row with this
+    // email existed under a different clerk_id (e.g., from a prior
+    // test signup). Bare onConflictDoNothing() lets either conflict
+    // pass; the re-select below tells us whether a row now exists for
+    // *our* clerk_id.
+    await db
+      .insert(schema.users)
+      .values({ clerkId, email, plan: "free" })
+      .onConflictDoNothing();
+
+    const [row] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.clerkId, clerkId))
+      .limit(1);
+    return row ?? null;
+  } catch (err) {
+    console.error(
+      `getOrProvisionUser: insert/re-select failed for ${clerkId}`,
+      err,
+    );
+    return null;
+  }
 }
