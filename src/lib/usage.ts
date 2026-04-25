@@ -77,3 +77,63 @@ export async function claimQuotaSlot(
   const current = await getCurrentUsage(userId);
   return { granted: false, count: current };
 }
+
+export type TokenIncrement = {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadInputTokens?: number;
+  cacheCreationInputTokens?: number;
+};
+
+/**
+ * Add the token counts from a single /api/check evaluation to the
+ * user's current-month usage row. Closes audit M-24 (token-cost
+ * telemetry per customer).
+ *
+ * Idempotency: this is intentionally NOT idempotent — every successful
+ * eval should add to the running total. /api/check's quota check
+ * (claimQuotaSlot) already gates the per-month call count at 1
+ * increment per request, so calling this once after a granted slot
+ * matches the same lifecycle.
+ *
+ * The row is guaranteed to exist by the time this is called: the
+ * caller's flow is (claimQuotaSlot which inserts/upserts) → engine
+ * call → recordTokenUsage. If the row somehow doesn't exist (manual
+ * delete?), the upsert here still creates it with count=0 + the new
+ * tokens, so we never lose telemetry.
+ */
+export async function recordTokenUsage(
+  userId: string,
+  tokens: TokenIncrement,
+): Promise<void> {
+  const db = getDb();
+  const month = currentMonth();
+  const inputT = Math.max(0, Math.floor(tokens.inputTokens));
+  const outputT = Math.max(0, Math.floor(tokens.outputTokens));
+  const cacheReadT = Math.max(0, Math.floor(tokens.cacheReadInputTokens ?? 0));
+  const cacheCreateT = Math.max(0, Math.floor(tokens.cacheCreationInputTokens ?? 0));
+
+  await db
+    .insert(schema.usage)
+    .values({
+      userId,
+      month,
+      // count stays at 0 here — claimQuotaSlot is the call counter.
+      // recordTokenUsage only adds to the token aggregates.
+      count: 0,
+      inputTokens: inputT,
+      outputTokens: outputT,
+      cacheReadInputTokens: cacheReadT,
+      cacheCreationInputTokens: cacheCreateT,
+    })
+    .onConflictDoUpdate({
+      target: [schema.usage.userId, schema.usage.month],
+      set: {
+        inputTokens: sql`${schema.usage.inputTokens} + ${inputT}`,
+        outputTokens: sql`${schema.usage.outputTokens} + ${outputT}`,
+        cacheReadInputTokens: sql`${schema.usage.cacheReadInputTokens} + ${cacheReadT}`,
+        cacheCreationInputTokens: sql`${schema.usage.cacheCreationInputTokens} + ${cacheCreateT}`,
+        updatedAt: sql`now()`,
+      },
+    });
+}

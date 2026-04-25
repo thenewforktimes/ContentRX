@@ -127,9 +127,34 @@ class TestTokenUsage:
         assert a.input == 300
         assert a.output == 150
 
+    def test_iadd_with_cache_fields(self):
+        # Cache fields (audit M-24, PR 9) accumulate via __iadd__.
+        a = TokenUsage(input=100, output=50, cache_creation_input=10, cache_read_input=20)
+        b = TokenUsage(input=200, output=100, cache_creation_input=5, cache_read_input=200)
+        a += b
+        assert a.input == 300
+        assert a.output == 150
+        assert a.cache_creation_input == 15
+        assert a.cache_read_input == 220
+
     def test_to_dict(self):
+        # to_dict reports all 4 fields after PR 9. cache_* default to 0.
         t = TokenUsage(input=10, output=5)
-        assert t.to_dict() == {"input": 10, "output": 5}
+        assert t.to_dict() == {
+            "input": 10,
+            "output": 5,
+            "cache_creation_input": 0,
+            "cache_read_input": 0,
+        }
+
+    def test_to_dict_with_cache_fields(self):
+        t = TokenUsage(input=10, output=5, cache_creation_input=100, cache_read_input=900)
+        assert t.to_dict() == {
+            "input": 10,
+            "output": 5,
+            "cache_creation_input": 100,
+            "cache_read_input": 900,
+        }
 
 
 class TestCheckResult:
