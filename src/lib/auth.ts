@@ -14,7 +14,23 @@ import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { hashApiKey, isWellFormedApiKey } from "./api-key";
-import type { Plan } from "./quotas";
+import { QUOTAS, type Plan } from "./quotas";
+
+/** Validate a plan value loaded from the DB against the Plan enum.
+ * Closes audit M-01: previously cast as Plan blindly; an invalid
+ * value (DB hand-edit, future migration bug) would propagate to
+ * monthlyQuota → undefined → NaN comparisons → quota always rejects.
+ * Default to "free" so the user can still load the dashboard, log
+ * the anomaly so we notice. */
+function coercePlan(raw: unknown, userId: string): Plan {
+  if (typeof raw === "string" && raw in QUOTAS) {
+    return raw as Plan;
+  }
+  console.warn(
+    `auth: user ${userId} has invalid plan ${JSON.stringify(raw)}, defaulting to "free"`,
+  );
+  return "free";
+}
 
 export type AuthResolved = {
   user: typeof schema.users.$inferSelect;
@@ -72,7 +88,7 @@ export async function resolveAuth(req: Request): Promise<AuthResolved | AuthErro
 async function enrichWithSeats(
   user: typeof schema.users.$inferSelect,
 ): Promise<AuthResolved> {
-  const plan = user.plan as Plan;
+  const plan = coercePlan(user.plan, user.id);
 
   if (plan !== "team") {
     return { user, plan, seats: 1, teamOwnerUserId: null };

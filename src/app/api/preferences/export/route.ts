@@ -19,16 +19,7 @@
 
 import { NextResponse } from "next/server";
 import { getDb, schema } from "@/db";
-import { requireEnv } from "@/lib/require-env";
-
-function requireCronAuth(req: Request): NextResponse | null {
-  const expected = requireEnv("CRON_SECRET");
-  const got = req.headers.get("authorization");
-  if (got !== `Bearer ${expected}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return null;
-}
+import { requireCronAuth } from "@/lib/cron-auth";
 
 export async function GET(req: Request) {
   const authFail = requireCronAuth(req);

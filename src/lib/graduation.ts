@@ -246,12 +246,17 @@ export interface LevelChangeInput {
 /**
  * Append a level-change entry to the history and update the current
  * level. The history is append-only — we never rewrite old entries.
+ *
+ * Closes audit H-04: previously read history into JS, concatenated, and
+ * upserted the full array — two concurrent calls (e.g. cron auto-demote
+ * racing a manual approve) could lose one entry. Now appends atomically
+ * via SQL `coalesce(history, '[]'::jsonb) || $entry` so concurrent
+ * writers can't clobber each other.
  */
 export async function recordLevelChange(
   input: LevelChangeInput,
 ): Promise<void> {
   const db = getDb();
-  const current = await getGraduationStatus(input.standardId);
   const entry: GraduationHistoryEntry = {
     level: input.newLevel,
     reason: input.reason,
@@ -259,22 +264,23 @@ export async function recordLevelChange(
     approver: input.approver,
     source: input.source,
   };
-  const history = [
-    ...((current?.history as GraduationHistoryEntry[] | null) ?? []),
-    entry,
-  ];
+  const entryJson = JSON.stringify(entry);
+
   await db
     .insert(schema.graduationStatus)
     .values({
       standardId: input.standardId,
       level: input.newLevel,
-      history,
+      // First-write case: row doesn't exist yet, history = [entry].
+      history: [entry],
     })
     .onConflictDoUpdate({
       target: schema.graduationStatus.standardId,
       set: {
         level: input.newLevel,
-        history,
+        // Append atomically at the SQL layer. coalesce handles the
+        // (impossible per schema default but defensive) null case.
+        history: sql`coalesce(${schema.graduationStatus.history}, '[]'::jsonb) || ${entryJson}::jsonb`,
         updatedAt: sql`now()`,
       },
     });

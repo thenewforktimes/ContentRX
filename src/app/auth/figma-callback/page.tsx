@@ -38,7 +38,14 @@ async function primaryEmail(clerkId: string): Promise<string | null> {
   return (primary ?? user.emailAddresses[0])?.emailAddress ?? null;
 }
 
-async function ensureApiKey(clerkId: string): Promise<string> {
+/** Sentinel returned by ensureApiKey when the user already has a key.
+ * Plugin sign-in shouldn't silently rotate other-session keys (audit H-02);
+ * the user has to rotate explicitly from /dashboard if they really want
+ * a new one. */
+const HAS_EXISTING_KEY = Symbol("has-existing-key");
+type EnsureKeyResult = string | typeof HAS_EXISTING_KEY;
+
+async function ensureApiKey(clerkId: string): Promise<EnsureKeyResult> {
   const db = getDb();
 
   // Usual path: Clerk webhook has already created the users row.
@@ -67,21 +74,12 @@ async function ensureApiKey(clerkId: string): Promise<string> {
     throw new Error("Failed to provision user row");
   }
 
-  // If the user already has a key, we can't show it to them again — the
-  // raw value isn't stored. Mint a fresh one and overwrite. Rotation is
-  // the user-visible path for this; here it's automatic because the
-  // alternative (returning nothing) would break the plugin's sign-in.
+  // If the user already has a key, refuse to rotate it implicitly.
+  // Closes audit H-02: silently rotating on every sign-in invalidated
+  // CLI / GitHub Action sessions with no warning. The user needs to
+  // explicitly rotate from /dashboard if they really want a new one.
   if (row.apiKeyHash) {
-    const existingKey = generateApiKey();
-    await db
-      .update(schema.users)
-      .set({
-        apiKeyHash: hashApiKey(existingKey),
-        apiKeyPrefix: apiKeyPrefix(existingKey),
-        apiKeyCreatedAt: new Date(),
-      })
-      .where(eq(schema.users.id, row.id));
-    return existingKey;
+    return HAS_EXISTING_KEY;
   }
 
   const newKey = generateApiKey();
@@ -118,9 +116,9 @@ export default async function FigmaCallbackPage({ searchParams }: PageProps) {
     redirect(`/sign-in?redirect_url=${encodeURIComponent(returnTo)}`);
   }
 
-  let token: string;
+  let result: EnsureKeyResult;
   try {
-    token = await ensureApiKey(clerkId);
+    result = await ensureApiKey(clerkId);
   } catch (err) {
     console.error("figma-callback: ensureApiKey failed", err);
     return (
@@ -132,6 +130,29 @@ export default async function FigmaCallbackPage({ searchParams }: PageProps) {
       </CallbackShell>
     );
   }
+
+  // User already has an API key. We can't show it to them again (only the
+  // hash is stored), and silently rotating it would break their CLI / GitHub
+  // Action sessions. Send them to /dashboard to rotate explicitly.
+  if (result === HAS_EXISTING_KEY) {
+    return (
+      <CallbackShell tone="error">
+        <h1 className="mb-3 text-2xl font-semibold">An API key already exists</h1>
+        <p className="mb-3">
+          You already have a ContentRX API key in use by your CLI, GitHub
+          Action, or other sessions. Signing in from the Figma plugin
+          can&apos;t recover it (we only store a hash).
+        </p>
+        <p>
+          To use the plugin, head to <a href="/dashboard" className="underline">your dashboard</a>{" "}
+          and click <strong>Rotate key</strong>. You&apos;ll see the new key
+          once — copy it into the plugin and any other sessions that need it.
+        </p>
+      </CallbackShell>
+    );
+  }
+
+  const token: string = result;
 
   try {
     const redis = getRedis();
