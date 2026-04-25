@@ -20,6 +20,7 @@ import {
   selectSessionPairs,
   shouldPrompt,
 } from "@/lib/preferences";
+import { getOrProvisionUser } from "@/lib/user-provisioning";
 import { CalibrateForm } from "./calibrate-form";
 
 export default async function CalibratePage() {
@@ -29,19 +30,7 @@ export default async function CalibratePage() {
   }
 
   const db = getDb();
-  const [user] = await db
-    .select()
-    .from(schema.users)
-    .where(eq(schema.users.clerkId, clerkId))
-    .limit(1);
-
-  if (!user) {
-    return (
-      <section className="rounded-lg border border-neutral-200 p-6 text-sm dark:border-neutral-800">
-        <p>We&apos;re finishing setting up your account. Refresh in a moment.</p>
-      </section>
-    );
-  }
+  const user = await getOrProvisionUser(clerkId);
 
   const [latest] = await db
     .select({ createdAt: schema.preferences.createdAt })

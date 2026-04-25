@@ -60,25 +60,32 @@ export async function POST(req: Request) {
   }
 
   // Svix verification validates signature + 5-minute timestamp window,
-  // but within that window the same event can replay. Dedupe by svix-id
-  // so retries don't re-apply the change (closes BE-M-03 / Known
-  // Limitation #3 from the 2026-04-22 audit). We do this AFTER signature
-  // verification so forged delivery attempts can't poison our dedupe
-  // cache with arbitrary keys.
-  try {
-    const redis = getRedis();
-    const setResult = await redis.set(DEDUPE_PREFIX + svixId, "1", {
-      nx: true,
-      ex: DEDUPE_TTL_SECONDS,
-    });
-    if (setResult === null) {
-      return Response.json({ ok: true, deduplicated: true });
+  // but within that window the same event can replay. Earlier we set the
+  // dedupe key BEFORE running any work, which silently dropped retries
+  // when the first attempt crashed mid-flight (incident on 2026-04-25:
+  // user.created retried after a timeout, dedupe short-circuited the
+  // retry, no users row created, dashboard dead-ended).
+  //
+  // The DB writes below are all idempotent (onConflictDoNothing on
+  // insert, by-id update on update, by-id delete on delete). They are
+  // safe to re-run on every retry. The dedupe key is now scoped to the
+  // *side effects* (welcome email, analytics) where re-firing actually
+  // matters, and is set only after they have been attempted.
+  async function shouldFireSideEffects(): Promise<boolean> {
+    try {
+      const redis = getRedis();
+      const setResult = await redis.set(DEDUPE_PREFIX + svixId, "1", {
+        nx: true,
+        ex: DEDUPE_TTL_SECONDS,
+      });
+      return setResult !== null;
+    } catch (err) {
+      // Redis outage shouldn't drop valid webhooks. Fire side effects;
+      // the worst case is a duplicate welcome email, which beats no
+      // welcome email at all.
+      console.error("Clerk webhook dedupe lookup failed, firing anyway", err);
+      return true;
     }
-  } catch (err) {
-    // Redis outage shouldn't drop valid webhooks — our handlers are
-    // idempotent (onConflictDoNothing on insert, by-id update on
-    // update). Log and proceed.
-    console.error("Clerk webhook dedupe lookup failed, proceeding", err);
   }
 
   const db = getDb();
@@ -97,26 +104,27 @@ export async function POST(req: Request) {
       })
       .onConflictDoNothing({ target: schema.users.clerkId });
 
-    // Side-effects: welcome email + signup analytics. Both are
-    // best-effort — a failure here doesn't fail the webhook (Clerk would
-    // retry the user.created event and re-send the welcome on every
-    // retry, which is worse than missing one).
-    const base = appUrl();
-    await Promise.allSettled([
-      sendEmail({
-        to: email,
-        subject: "Welcome to ContentRX",
-        react: WelcomeEmail({
-          appUrl: base,
-          pluginUrl: "https://www.figma.com/community/plugin/contentrx",
+    // Side-effects: welcome email + signup analytics. Gated by the
+    // dedupe key so a Clerk retry doesn't double-send the welcome.
+    // Both are best-effort — a failure here doesn't fail the webhook.
+    if (await shouldFireSideEffects()) {
+      const base = appUrl();
+      await Promise.allSettled([
+        sendEmail({
+          to: email,
+          subject: "Welcome to ContentRX",
+          react: WelcomeEmail({
+            appUrl: base,
+            pluginUrl: "https://www.figma.com/community/plugin/contentrx",
+          }),
         }),
-      }),
-      trackEvent("signup", {
-        userId: evt.data.id,
-        forwardedFor: hdrs.get("x-forwarded-for"),
-        props: { plan: "free" },
-      }),
-    ]);
+        trackEvent("signup", {
+          userId: evt.data.id,
+          forwardedFor: hdrs.get("x-forwarded-for"),
+          props: { plan: "free" },
+        }),
+      ]);
+    }
 
     return Response.json({ ok: true });
   }

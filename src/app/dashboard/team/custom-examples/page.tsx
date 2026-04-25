@@ -23,6 +23,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db";
 import { CUSTOM_EXAMPLES_CAP_PER_TEAM } from "@/lib/custom-examples";
+import { getOrProvisionUser } from "@/lib/user-provisioning";
 import { DeleteExampleButton } from "./delete-example-button";
 
 export const metadata = {
@@ -36,19 +37,7 @@ export default async function CustomExamplesPage() {
   }
 
   const db = getDb();
-  const [user] = await db
-    .select()
-    .from(schema.users)
-    .where(eq(schema.users.clerkId, clerkId))
-    .limit(1);
-
-  if (!user) {
-    return (
-      <section className="rounded-lg border border-neutral-200 p-6 text-sm dark:border-neutral-800">
-        <p>We&apos;re finishing setting up your account. Refresh in a moment.</p>
-      </section>
-    );
-  }
+  const user = await getOrProvisionUser(clerkId);
 
   if (user.plan !== "team") {
     return (
