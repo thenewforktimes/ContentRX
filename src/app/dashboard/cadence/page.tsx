@@ -16,6 +16,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db";
 import { detectUrgentFlags, momentForWeek } from "@/lib/cadence";
+import { getOrProvisionUser } from "@/lib/user-provisioning";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TOP_OF_QUEUE_LIMIT = 10;
@@ -27,19 +28,7 @@ export default async function CadenceDailyPage() {
   }
 
   const db = getDb();
-  const [user] = await db
-    .select()
-    .from(schema.users)
-    .where(eq(schema.users.clerkId, clerkId))
-    .limit(1);
-
-  if (!user) {
-    return (
-      <section className="rounded-lg border border-neutral-200 p-6 text-sm dark:border-neutral-800">
-        <p>We&apos;re finishing setting up your account. Refresh in a moment.</p>
-      </section>
-    );
-  }
+  const user = await getOrProvisionUser(clerkId);
 
   if (user.plan !== "team") {
     return <CadenceUpsellCard />;

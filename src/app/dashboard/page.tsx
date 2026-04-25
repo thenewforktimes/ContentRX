@@ -13,6 +13,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb, schema } from "@/db";
 import { currentMonth, monthlyQuota, type Plan } from "@/lib/quotas";
+import { getOrProvisionUser } from "@/lib/user-provisioning";
 import { ApiKeyPanel } from "./api-key-panel";
 import { SubscriptionPanel } from "./subscription-panel";
 
@@ -33,22 +34,10 @@ export default async function DashboardPage() {
     redirect("/sign-in?redirect_url=/dashboard");
   }
 
-  const db = getDb();
-  const [user] = await db
-    .select()
-    .from(schema.users)
-    .where(eq(schema.users.clerkId, clerkId))
-    .limit(1);
-
-  if (!user) {
-    // Clerk session exists but the webhook hasn't created the row yet.
-    // Bounce through a quick "getting your account ready" view.
-    return (
-      <section className="rounded-lg border border-neutral-200 p-6 text-sm dark:border-neutral-800">
-        <p>We&apos;re finishing setting up your account. Refresh in a moment.</p>
-      </section>
-    );
-  }
+  // Lazy-provision the users row if the Clerk webhook hasn't landed
+  // yet (or got dropped). Mirrors /auth/figma-callback's behavior so a
+  // first-load dashboard hit isn't gated on webhook delivery.
+  const user = await getOrProvisionUser(clerkId);
 
   const plan = user.plan as Plan;
   // Closes audit H-17: was 4 sequential awaits. seats / used /

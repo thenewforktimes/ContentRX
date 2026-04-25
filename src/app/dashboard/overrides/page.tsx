@@ -23,6 +23,7 @@ import {
   type BehaviorQuadrant,
 } from "@/lib/behavior-quadrant";
 import { aggregateOverrides } from "@/lib/session-aggregation";
+import { getOrProvisionUser } from "@/lib/user-provisioning";
 
 const RANGE_DAYS = 30;
 
@@ -33,19 +34,7 @@ export default async function OverridesPage() {
   }
 
   const db = getDb();
-  const [user] = await db
-    .select()
-    .from(schema.users)
-    .where(eq(schema.users.clerkId, clerkId))
-    .limit(1);
-
-  if (!user) {
-    return (
-      <section className="rounded-lg border border-neutral-200 p-6 text-sm dark:border-neutral-800">
-        <p>We&apos;re finishing setting up your account. Refresh in a moment.</p>
-      </section>
-    );
-  }
+  const user = await getOrProvisionUser(clerkId);
 
   if (user.plan !== "team") {
     return (
