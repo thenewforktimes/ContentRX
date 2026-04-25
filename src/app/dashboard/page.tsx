@@ -36,8 +36,18 @@ export default async function DashboardPage() {
 
   // Lazy-provision the users row if the Clerk webhook hasn't landed
   // yet (or got dropped). Mirrors /auth/figma-callback's behavior so a
-  // first-load dashboard hit isn't gated on webhook delivery.
+  // first-load dashboard hit isn't gated on webhook delivery. On the
+  // rare provisioning failure (Clerk API hiccup, transient DB error)
+  // fall back to the placeholder UI rather than crashing into the
+  // global error boundary.
   const user = await getOrProvisionUser(clerkId);
+  if (!user) {
+    return (
+      <section className="rounded-lg border border-neutral-200 p-6 text-sm dark:border-neutral-800">
+        <p>We&apos;re finishing setting up your account. Refresh in a moment.</p>
+      </section>
+    );
+  }
 
   const plan = user.plan as Plan;
   // Closes audit H-17: was 4 sequential awaits. seats / used /

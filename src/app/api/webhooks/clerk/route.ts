@@ -95,6 +95,15 @@ export async function POST(req: Request) {
     if (!email) {
       return Response.json({ error: "No email on user" }, { status: 400 });
     }
+    // No target on the conflict clause — `users` has unique constraints
+    // on both `clerk_id` and `email`. Targeting only clerk_id (as the
+    // earlier code did) caused PostgresError: users_email_unique to
+    // bubble up when a stale row with this email existed under a
+    // different clerk_id (e.g., from a prior test signup). Bare
+    // onConflictDoNothing() lets either conflict pass; in the email-
+    // conflict case the new clerk identity simply doesn't get a
+    // users row, and the user lands on the "finishing setting up"
+    // placeholder in the dashboard until the conflict is resolved.
     await db
       .insert(schema.users)
       .values({
@@ -102,7 +111,7 @@ export async function POST(req: Request) {
         email,
         plan: "free",
       })
-      .onConflictDoNothing({ target: schema.users.clerkId });
+      .onConflictDoNothing();
 
     // Side-effects: welcome email + signup analytics. Gated by the
     // dedupe key so a Clerk retry doesn't double-send the welcome.

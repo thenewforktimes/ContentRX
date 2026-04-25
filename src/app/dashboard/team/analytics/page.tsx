@@ -22,6 +22,13 @@ export default async function TeamAnalyticsPage() {
   }
 
   const user = await getOrProvisionUser(clerkId);
+  if (!user) {
+    return (
+      <section className="rounded-lg border border-neutral-200 p-6 text-sm dark:border-neutral-800">
+        <p>We&apos;re finishing setting up your account. Refresh in a moment.</p>
+      </section>
+    );
+  }
 
   if (user.plan !== "team") {
     return (
