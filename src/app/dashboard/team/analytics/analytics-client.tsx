@@ -10,18 +10,22 @@
  * serialize/deserialize Recharts data through RSC.
  */
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+
+// Recharts is heavy (~115kB minified after barrel-import optimization).
+// Dynamic-import the chart components so they're a separate webpack
+// chunk that only loads when the analytics page actually mounts —
+// not on every dashboard navigation. Closes audit H-16. ssr:false
+// because Recharts measures the container size and that requires DOM.
+const TopStandardsChart = dynamic(
+  () => import("./charts").then((m) => m.TopStandardsChart),
+  { ssr: false, loading: () => <ChartSkeleton height="h-64" /> },
+);
+const DailyChart = dynamic(
+  () => import("./charts").then((m) => m.DailyChart),
+  { ssr: false, loading: () => <ChartSkeleton height="h-56" /> },
+);
 
 type Range = 7 | 30 | 90;
 
@@ -221,44 +225,7 @@ function TopStandardsPanel({
       {items.length === 0 ? (
         <EmptyLine>No violations logged in this window.</EmptyLine>
       ) : (
-        <div className="h-64 w-full">
-          <ResponsiveContainer>
-            <BarChart
-              data={items}
-              layout="vertical"
-              margin={{ top: 4, right: 12, bottom: 4, left: 32 }}
-            >
-              <CartesianGrid
-                stroke="currentColor"
-                strokeOpacity={0.1}
-                horizontal={false}
-              />
-              <XAxis
-                type="number"
-                tick={{ fontSize: 11 }}
-                stroke="currentColor"
-                strokeOpacity={0.4}
-              />
-              <YAxis
-                type="category"
-                dataKey="standard_id"
-                tick={{ fontSize: 11 }}
-                stroke="currentColor"
-                strokeOpacity={0.4}
-                width={72}
-              />
-              <Tooltip
-                cursor={{ fillOpacity: 0.05 }}
-                contentStyle={{
-                  fontSize: 12,
-                  borderRadius: 6,
-                  border: "1px solid #e5e5e5",
-                }}
-              />
-              <Bar dataKey="count" fill="currentColor" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <TopStandardsChart items={items} />
       )}
     </section>
   );
@@ -278,42 +245,18 @@ function DailyPanel({
       {total === 0 ? (
         <EmptyLine>No violations logged in this window.</EmptyLine>
       ) : (
-        <div className="h-56 w-full">
-          <ResponsiveContainer>
-            <LineChart data={items} margin={{ top: 4, right: 12, bottom: 4, left: 0 }}>
-              <CartesianGrid stroke="currentColor" strokeOpacity={0.1} />
-              <XAxis
-                dataKey="day"
-                tick={{ fontSize: 10 }}
-                stroke="currentColor"
-                strokeOpacity={0.4}
-                tickFormatter={(d) => d.slice(5)}
-              />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                stroke="currentColor"
-                strokeOpacity={0.4}
-                allowDecimals={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  fontSize: 12,
-                  borderRadius: 6,
-                  border: "1px solid #e5e5e5",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="count"
-                stroke="currentColor"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <DailyChart items={items} />
       )}
     </section>
+  );
+}
+
+function ChartSkeleton({ height }: { height: string }) {
+  return (
+    <div
+      className={`${height} w-full animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-900`}
+      aria-label="Loading chart"
+    />
   );
 }
 
