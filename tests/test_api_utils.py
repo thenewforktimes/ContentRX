@@ -18,9 +18,22 @@ import pytest
 
 from content_checker.api_utils import (
     DEFAULT_MODEL,
+    DEFAULT_MAX_RETRIES,
     LLMResponse,
+    MODEL_CLASSIFY,
+    MODEL_CONSISTENCY,
+    MODEL_SCAN,
+    MODEL_VALIDATE,
     ParseError,
     PromptInjectionError,
+    RateLimitedError,
+    RequestTimeoutError,
+    TIMEOUT_CLASSIFY,
+    TIMEOUT_CONSISTENCY,
+    TIMEOUT_DEFAULT,
+    TIMEOUT_SCAN,
+    TIMEOUT_SUGGEST_FIX,
+    TIMEOUT_VALIDATE,
     USER_TEXT_SENTINEL_CLOSE,
     USER_TEXT_SENTINEL_OPEN,
     _strip_fences,
@@ -426,3 +439,74 @@ class TestEngineStagesRejectInjection:
         from content_checker.suggest_fix import _build_user_prompt
         with pytest.raises(PromptInjectionError):
             _build_user_prompt(text="benign <<<TEXT attacker", current_suggestion=None)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Stage-specific model + timeout constants — closes audit H-25, H-26
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestStageConstants:
+    """Verify the stage-specific model + timeout constants are wired."""
+
+    def test_scan_uses_sonnet(self):
+        # Scan does the nuanced reasoning — should stay on the default
+        # (Sonnet) model.
+        assert MODEL_SCAN == DEFAULT_MODEL
+        assert "sonnet" in MODEL_SCAN.lower()
+
+    def test_consistency_uses_sonnet(self):
+        # Multi-snippet reasoning also needs Sonnet's quality.
+        assert MODEL_CONSISTENCY == DEFAULT_MODEL
+
+    def test_validate_uses_haiku(self):
+        # Yes/no judgment is well-suited to cheaper Haiku.
+        assert "haiku" in MODEL_VALIDATE.lower()
+        assert MODEL_VALIDATE != DEFAULT_MODEL
+
+    def test_classify_uses_haiku(self):
+        # Content-type classification = simple Haiku task.
+        assert "haiku" in MODEL_CLASSIFY.lower()
+        assert MODEL_CLASSIFY != DEFAULT_MODEL
+
+    def test_timeouts_are_tighter_than_sdk_default(self):
+        # SDK default is 600s. Each stage cap should be much shorter
+        # to bound how long a stuck call can hold a function slot.
+        assert TIMEOUT_DEFAULT <= 60.0
+        assert TIMEOUT_CLASSIFY <= 30.0  # tightest — short response
+        assert TIMEOUT_VALIDATE <= 60.0
+        assert TIMEOUT_SCAN <= 120.0     # longest — full scan
+        assert TIMEOUT_CONSISTENCY <= 90.0
+        assert TIMEOUT_SUGGEST_FIX <= 60.0
+
+    def test_timeouts_are_proportional_to_workload(self):
+        # Classify (50 output tokens) should be tightest;
+        # scan (2000 tokens) should be loosest among per-call.
+        assert TIMEOUT_CLASSIFY < TIMEOUT_VALIDATE < TIMEOUT_SCAN
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Typed errors for Anthropic failure modes — closes audit H-27, M-23
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestTypedErrors:
+    """Verify the typed errors exist and inherit appropriately."""
+
+    def test_rate_limited_error_is_exception(self):
+        assert issubclass(RateLimitedError, Exception)
+
+    def test_request_timeout_error_is_exception(self):
+        assert issubclass(RequestTimeoutError, Exception)
+
+    def test_rate_limited_error_carries_message(self):
+        err = RateLimitedError("retry exhausted")
+        assert "retry exhausted" in str(err)
+
+    def test_request_timeout_error_carries_message(self):
+        err = RequestTimeoutError("exceeded 30s")
+        assert "exceeded 30s" in str(err)
+
+    def test_default_max_retries_is_set(self):
+        # SDK default is 0 — we want 2 to handle transient 5xx /429s.
+        assert DEFAULT_MAX_RETRIES == 2

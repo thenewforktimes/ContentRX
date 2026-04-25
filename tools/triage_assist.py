@@ -264,7 +264,15 @@ def llm_classify_batch(
     Returns a list of {suggested_category, suggested_confidence, suggested_notes}
     dicts, one per input case.
     """
-    import anthropic
+    # Route through the centralized api_utils boundary so retry config,
+    # per-stage timeout, and typed errors apply (closes audit H-24).
+    # parse_llm_json doesn't fit here because the response is a JSON
+    # array (not dict), so we keep the fence-stripping inline.
+    from content_checker.api_utils import (
+        TIMEOUT_SCAN,
+        _strip_fences,
+        create_message,
+    )
 
     few_shot = _build_few_shot_examples(calibration_cases)
     system = TRIAGE_ASSIST_PROMPT + few_shot
@@ -289,21 +297,28 @@ def llm_classify_batch(
         "one per case, in order.\n\n" + "\n\n".join(lines)
     )
 
-    client = anthropic.Anthropic()
-    response = client.messages.create(
-        model=model,
-        max_tokens=2000,
-        system=system,
-        messages=[{"role": "user", "content": user_message}],
-    )
+    try:
+        llm_response = create_message(
+            system=system,
+            user=user_message,
+            model=model,
+            max_tokens=2000,
+            timeout=TIMEOUT_SCAN,
+        )
+    except Exception:  # noqa: BLE001
+        # Centralized errors (RateLimitedError, RequestTimeoutError,
+        # APIError) all land here — fall through to low-confidence
+        # defaults rather than crashing the batch.
+        return [
+            {
+                "suggested_category": "correct",
+                "suggested_confidence": "low",
+                "suggested_notes": "LLM classification failed — needs manual review.",
+            }
+            for _ in cases
+        ]
 
-    raw = response.content[0].text.strip()
-    # Strip markdown fences
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
-    if raw.endswith("```"):
-        raw = raw[:-3]
-    raw = raw.strip()
+    raw = _strip_fences(llm_response.text)
 
     try:
         results = json.loads(raw)
@@ -311,7 +326,6 @@ def llm_classify_batch(
             results = [results]
         return results
     except json.JSONDecodeError:
-        # If the LLM returns malformed JSON, return low-confidence defaults
         return [
             {
                 "suggested_category": "correct",

@@ -150,7 +150,14 @@ def run_annotation(
     Returns:
         The case dict with human annotation fields populated and review_status set.
     """
-    import anthropic
+    # Route through the centralized api_utils boundary so retry config,
+    # per-stage timeout, and typed errors apply (closes audit H-24).
+    from content_checker.api_utils import (
+        ParseError,
+        TIMEOUT_VALIDATE,
+        create_message,
+        parse_llm_json,
+    )
 
     # Build the user message with all context the annotator needs
     machine_result = case.get("_machine_result")
@@ -187,37 +194,27 @@ def run_annotation(
         f"Provide your annotation as JSON."
     )
 
-    client = anthropic.Anthropic()
-
     try:
-        response = client.messages.create(
+        llm_response = create_message(
+            system=system_prompt,
+            user=user_message,
             model=model,
             max_tokens=500,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_message}],
+            timeout=TIMEOUT_VALIDATE,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         case["human_verdict"] = None
         case["human_confidence"] = "low"
         case["human_notes"] = f"Annotation API call failed: {exc}"
         case["review_status"] = "flagged"
         return case
 
-    raw = response.content[0].text.strip()
-
-    # Strip markdown fences if present
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
-    if raw.endswith("```"):
-        raw = raw[:-3]
-    raw = raw.strip()
-
     try:
-        annotation = json.loads(raw)
-    except json.JSONDecodeError:
+        annotation = parse_llm_json(llm_response.text, context="auto_annotate")
+    except ParseError as exc:
         case["human_verdict"] = None
         case["human_confidence"] = "low"
-        case["human_notes"] = f"Failed to parse annotation response: {raw[:200]}"
+        case["human_notes"] = f"Failed to parse annotation response: {exc}"
         case["review_status"] = "flagged"
         return case
 

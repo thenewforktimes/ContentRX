@@ -19,6 +19,8 @@ from content_checker.api_utils import (
     wrap_user_text,
     ParseError,
     DEFAULT_MODEL,
+    MODEL_CONSISTENCY,
+    TIMEOUT_CONSISTENCY,
 )
 from content_checker.filter import get_multi_snippet_standards
 from content_checker.models import (
@@ -121,6 +123,7 @@ def _check_consistency(
         user=items_text,
         model=model,
         max_tokens=1000,
+        timeout=TIMEOUT_CONSISTENCY,
     )
     latency = time.time() - start
 

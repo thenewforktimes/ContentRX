@@ -15,6 +15,8 @@ from content_checker.api_utils import (
     wrap_user_text,
     ParseError,
     DEFAULT_MODEL,
+    MODEL_VALIDATE,
+    TIMEOUT_VALIDATE,
 )
 from content_checker.models import TokenUsage, Violation
 
@@ -61,7 +63,7 @@ def validate_candidates(
     content_type: str,
     candidates: list[Violation],
     active_notes: list[dict] | None = None,
-    model: str = DEFAULT_MODEL,
+    model: str = MODEL_VALIDATE,
 ) -> tuple[list[Violation], list[Violation], float, TokenUsage]:
     """Validate candidate violations with a focused LLM call.
 
@@ -94,6 +96,7 @@ def validate_candidates(
         user=candidate_text,
         model=model,
         max_tokens=1000,
+        timeout=TIMEOUT_VALIDATE,
     )
     latency = time.time() - start
 
