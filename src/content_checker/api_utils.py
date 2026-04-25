@@ -291,11 +291,22 @@ class LLMResponse:
 
     Intentionally does NOT depend on models.TokenUsage to avoid circular
     imports. Callers construct TokenUsage from input_tokens/output_tokens.
+
+    Cache fields (audit M-24, PR 9) report Anthropic prompt-caching
+    activity from the SDK's `usage` object:
+      - cache_creation_input_tokens: tokens written into the cache on
+        this call (full input cost). First request after cache expiry.
+      - cache_read_input_tokens: tokens read from cache on this call
+        (~10% input cost). Cache hits.
+    Both default to 0 when caching wasn't used or the SDK doesn't
+    report them.
     """
 
     text: str
     input_tokens: int = 0
     output_tokens: int = 0
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
 
 
 def create_message(
@@ -382,6 +393,12 @@ def create_message(
         text="\n".join(text_blocks),
         input_tokens=getattr(response.usage, "input_tokens", 0),
         output_tokens=getattr(response.usage, "output_tokens", 0),
+        cache_creation_input_tokens=getattr(
+            response.usage, "cache_creation_input_tokens", 0,
+        ) or 0,
+        cache_read_input_tokens=getattr(
+            response.usage, "cache_read_input_tokens", 0,
+        ) or 0,
     )
 
 

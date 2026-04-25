@@ -191,6 +191,8 @@ class handler(BaseHTTPRequestHandler):
                     "tokens": {
                         "input": int(getattr(classify_tokens, "input", 0)),
                         "output": int(getattr(classify_tokens, "output", 0)),
+                        "cache_creation_input": int(getattr(classify_tokens, "cache_creation_input", 0)),
+                        "cache_read_input": int(getattr(classify_tokens, "cache_read_input", 0)),
                     },
                 },
             )
@@ -235,6 +237,8 @@ class handler(BaseHTTPRequestHandler):
                 "tokens": {
                     "input": int(getattr(tokens, "input", 0)),
                     "output": int(getattr(tokens, "output", 0)),
+                    "cache_creation_input": int(getattr(tokens, "cache_creation_input", 0)),
+                    "cache_read_input": int(getattr(tokens, "cache_read_input", 0)),
                 },
             },
         )

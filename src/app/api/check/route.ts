@@ -34,7 +34,7 @@ import {
   loadTeamRules,
   recomputeVerdict,
 } from "@/lib/team-rules";
-import { claimQuotaSlot } from "@/lib/usage";
+import { claimQuotaSlot, recordTokenUsage } from "@/lib/usage";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 import { QuotaExhaustedEmail } from "@/emails/quota-exhausted";
 import { QuotaWarningEmail } from "@/emails/quota-warning";
@@ -256,6 +256,23 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("logViolations failed:", err);
+  }
+
+  // Token-cost telemetry (audit M-24, PR 9). Roll up the engine's
+  // reported token usage into the user's current-month usage row so
+  // we can answer "how much did this customer cost us?" without
+  // walking engine logs. Best-effort: a failure here doesn't fail the
+  // request — the user already got their result and quota was already
+  // counted.
+  try {
+    await recordTokenUsage(auth.user.id, {
+      inputTokens: evalResponse.tokens.input,
+      outputTokens: evalResponse.tokens.output,
+      cacheReadInputTokens: evalResponse.tokens.cache_read_input ?? 0,
+      cacheCreationInputTokens: evalResponse.tokens.cache_creation_input ?? 0,
+    });
+  } catch (err) {
+    console.error("recordTokenUsage failed:", err);
   }
 
   return json(

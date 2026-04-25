@@ -91,6 +91,18 @@ export const usage = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     month: text("month").notNull(),
     count: integer("count").notNull().default(0),
+    // Token telemetry (audit M-24, PR 9). Roll-up of Anthropic token
+    // usage across every /api/check the user made this month.
+    // Lets us answer "how much did this customer cost us?" without
+    // walking the engine logs. Default 0 so back-fill on first
+    // increment after deploy is monotonic.
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    // Cache-read input tokens are billed at ~10% of normal input cost.
+    // Tracking separately so the Pro/Team unit-cost picture stays
+    // accurate as PR 8 prompt caching warms the cache.
+    cacheReadInputTokens: integer("cache_read_input_tokens").notNull().default(0),
+    cacheCreationInputTokens: integer("cache_creation_input_tokens").notNull().default(0),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

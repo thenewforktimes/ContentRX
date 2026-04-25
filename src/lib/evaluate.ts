@@ -70,10 +70,24 @@ export type EvaluationResult = {
   rationale_chain?: RationaleHop[];
 };
 
+/** Token-cost telemetry from the engine response (audit M-24, PR 9).
+ * `cache_creation_input` and `cache_read_input` report Anthropic
+ * prompt-caching activity per call. Total billed input ≈
+ * input + cache_creation_input + cache_read_input × 0.10.
+ *
+ * Pre-PR-9 engine versions don't emit the cache fields; the TS side
+ * coerces them to 0 in /api/check. */
+export type EngineTokens = {
+  input: number;
+  output: number;
+  cache_creation_input?: number;
+  cache_read_input?: number;
+};
+
 export type EvaluateResponse = {
   result: EvaluationResult;
   latency_ms: number;
-  tokens: { input: number; output: number };
+  tokens: EngineTokens;
 };
 
 function internalEvaluateUrl(): string {
@@ -122,7 +136,7 @@ export async function evaluate(
 export type ClassifyResponse = {
   result: { content_type: string; moment: string };
   latency_ms: number;
-  tokens: { input: number; output: number };
+  tokens: EngineTokens;
 };
 
 /**
@@ -168,7 +182,7 @@ export type CatalogMoment = {
 export type CatalogResponse = {
   result: { moments: CatalogMoment[] };
   latency_ms: number;
-  tokens: { input: number; output: number };
+  tokens: EngineTokens;
 };
 
 /**
@@ -211,7 +225,7 @@ export type SuggestFixParams = {
 export type SuggestFixResponse = {
   result: { rewritten: string; standard_id: string };
   latency_ms: number;
-  tokens: { input: number; output: number };
+  tokens: EngineTokens;
 };
 
 /**

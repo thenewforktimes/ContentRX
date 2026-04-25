@@ -323,18 +323,37 @@ class PipelineMeta:
 
 @dataclass
 class TokenUsage:
-    """API token usage tracking."""
+    """API token usage tracking.
+
+    `cache_creation_input` and `cache_read_input` (audit M-24, PR 9)
+    expose Anthropic prompt-caching activity so /api/check can store
+    cache-aware cost telemetry per customer. Both default to 0 when
+    caching wasn't used or the SDK didn't report them.
+
+    Note: `input` is the UNCACHED input tokens. The full input billed
+    on a request is `input + cache_creation_input + cache_read_input`,
+    where cache_read pays ~10% of normal input cost.
+    """
 
     input: int = 0
     output: int = 0
+    cache_creation_input: int = 0
+    cache_read_input: int = 0
 
     def __iadd__(self, other: TokenUsage) -> TokenUsage:
         self.input += other.input
         self.output += other.output
+        self.cache_creation_input += other.cache_creation_input
+        self.cache_read_input += other.cache_read_input
         return self
 
     def to_dict(self) -> dict:
-        return {"input": self.input, "output": self.output}
+        return {
+            "input": self.input,
+            "output": self.output,
+            "cache_creation_input": self.cache_creation_input,
+            "cache_read_input": self.cache_read_input,
+        }
 
 
 # ---------------------------------------------------------------------------

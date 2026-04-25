@@ -292,6 +292,8 @@ def _llm_scan(
     tokens = TokenUsage(
         input=llm_response.input_tokens,
         output=llm_response.output_tokens,
+        cache_creation_input=llm_response.cache_creation_input_tokens,
+        cache_read_input=llm_response.cache_read_input_tokens,
     )
 
     try:
