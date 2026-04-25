@@ -40,7 +40,11 @@ _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(_ROOT, "src"))
 
 from content_checker import check  # noqa: E402
-from content_checker.api_utils import PromptInjectionError  # noqa: E402
+from content_checker.api_utils import (  # noqa: E402
+    PromptInjectionError,
+    RateLimitedError,
+    RequestTimeoutError,
+)
 from content_checker.classify import classify  # noqa: E402
 from content_checker.moments import (  # noqa: E402
     MOMENT_TAXONOMY,
@@ -132,6 +136,10 @@ class handler(BaseHTTPRequestHandler):
                 )
             except PromptInjectionError as exc:
                 return self._respond(400, {"error": str(exc)})
+            except RateLimitedError as exc:
+                return self._respond(503, {"error": str(exc)}, retry_after=30)
+            except RequestTimeoutError as exc:
+                return self._respond(504, {"error": str(exc)})
             except Exception:  # noqa: BLE001
                 traceback.print_exc()
                 return self._respond(500, {"error": "Suggestion failed"})
@@ -164,6 +172,10 @@ class handler(BaseHTTPRequestHandler):
                 moment = detect_moment(text=text, content_type=content_type)
             except PromptInjectionError as exc:
                 return self._respond(400, {"error": str(exc)})
+            except RateLimitedError as exc:
+                return self._respond(503, {"error": str(exc)}, retry_after=30)
+            except RequestTimeoutError as exc:
+                return self._respond(504, {"error": str(exc)})
             except Exception:  # noqa: BLE001
                 traceback.print_exc()
                 return self._respond(500, {"error": "Classification failed"})
@@ -195,6 +207,16 @@ class handler(BaseHTTPRequestHandler):
             # with the message so the caller can show it to the user
             # ("modify the input and retry"). Doesn't burn a quota slot.
             return self._respond(400, {"error": str(exc)})
+        except RateLimitedError as exc:
+            # Anthropic 429 after retries. /api/check should backoff,
+            # not treat as a generic 500. Retry-After: 30s is a
+            # reasonable starting point — Anthropic's headers carry the
+            # real value but we don't surface them through the SDK.
+            return self._respond(503, {"error": str(exc)}, retry_after=30)
+        except RequestTimeoutError as exc:
+            # Per-stage timeout exhausted. Lets /api/check distinguish
+            # "engine slow" from "engine broken."
+            return self._respond(504, {"error": str(exc)})
         except Exception:  # noqa: BLE001
             # Keep the full traceback in stderr (Vercel captures it,
             # Sentry ingests from there) but return a generic message
@@ -222,10 +244,12 @@ class handler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:  # noqa: A002
         return
 
-    def _respond(self, status: int, body: dict) -> None:
+    def _respond(self, status: int, body: dict, *, retry_after: int | None = None) -> None:
         payload = json.dumps(body).encode("utf-8")
         self.send_response(status)
         self.send_header("content-type", "application/json")
         self.send_header("content-length", str(len(payload)))
+        if retry_after is not None:
+            self.send_header("retry-after", str(retry_after))
         self.end_headers()
         self.wfile.write(payload)

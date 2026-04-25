@@ -26,6 +26,8 @@ from content_checker.api_utils import (
     wrap_user_text,
     ParseError,
     DEFAULT_MODEL,
+    MODEL_SCAN,
+    TIMEOUT_SCAN,
 )
 from content_checker.audience import Audience, get_audience_prompt_context, is_standard_active
 from content_checker.classify import classify, classify_heuristic
@@ -223,6 +225,7 @@ def _llm_scan(
         user=user_message,
         model=model,
         max_tokens=2000,
+        timeout=TIMEOUT_SCAN,
     )
     latency = time.time() - start
 

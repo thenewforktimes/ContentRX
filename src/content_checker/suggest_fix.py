@@ -21,7 +21,12 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from content_checker.api_utils import DEFAULT_MODEL, LLMResponse, create_message
+from content_checker.api_utils import (
+    DEFAULT_MODEL,
+    LLMResponse,
+    TIMEOUT_SUGGEST_FIX,
+    create_message,
+)
 
 
 # Keep max_tokens modest — rewrites of microcopy are short. Large
@@ -80,6 +85,7 @@ def suggest_fix(
         user=user,
         model=model,
         max_tokens=_MAX_TOKENS,
+        timeout=TIMEOUT_SUGGEST_FIX,
     )
     elapsed_ms = int((time.perf_counter() - started) * 1000)
 

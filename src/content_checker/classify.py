@@ -79,21 +79,26 @@ def _build_classifier_prompt(content_types: list[dict]) -> str:
 def classify_llm(
     text: str,
     content_types: list[dict],
-    model: str = "claude-sonnet-4-20250514",
+    model: str | None = None,
 ) -> tuple[str, float, TokenUsage]:
     """Classify content type using an LLM call.
 
     Returns (content_type_id, latency_seconds, token_usage).
     """
-    # Route through the shared Anthropic client in api_utils so retry
-    # config and future telemetry apply uniformly across the pipeline.
-    # Closes ENG-M-01 from the 2026-04-22 audit.
-    from content_checker.api_utils import get_client, wrap_user_text
+    # Route through create_message so retry config + per-stage timeout +
+    # typed RateLimitedError/RequestTimeoutError handling apply uniformly.
+    # Previously called client.messages.create directly, which closed
+    # ENG-M-01 from the 2026-04-22 audit but still bypassed the
+    # centralized boundary. Now fully aligned with H-10.
+    from content_checker.api_utils import (
+        MODEL_CLASSIFY,
+        TIMEOUT_CLASSIFY,
+        create_message,
+        wrap_user_text,
+    )
 
     system_prompt = _build_classifier_prompt(content_types)
     valid_ids = [ct["id"] for ct in content_types]
-
-    client = get_client()
 
     # Sentinel-delimit user text — even classify is injectable
     # (a successful injection could steer content_type to alter
@@ -101,20 +106,21 @@ def classify_llm(
     wrapped = wrap_user_text(text)
 
     start = time.time()
-    response = client.messages.create(
-        model=model,
-        max_tokens=50,
+    llm_response = create_message(
         system=system_prompt,
-        messages=[{"role": "user", "content": f"Classify this content:\n\n{wrapped}"}],
+        user=f"Classify this content:\n\n{wrapped}",
+        model=model or MODEL_CLASSIFY,
+        max_tokens=50,
+        timeout=TIMEOUT_CLASSIFY,
     )
     latency = time.time() - start
 
     tokens = TokenUsage(
-        input=response.usage.input_tokens,
-        output=response.usage.output_tokens,
+        input=llm_response.input_tokens,
+        output=llm_response.output_tokens,
     )
 
-    raw = response.content[0].text.strip().lower()
+    raw = llm_response.text.strip().lower()
 
     if raw in valid_ids:
         return raw, latency, tokens

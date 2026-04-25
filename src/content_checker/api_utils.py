@@ -36,6 +36,30 @@ DEFAULT_MODEL = "claude-sonnet-4-20250514"
 DEFAULT_MAX_TOKENS = 4096
 DEFAULT_MAX_RETRIES = 2
 
+# Stage-specific model selection. Sonnet does the nuanced reasoning;
+# Haiku handles the simple yes/no judgments at a fraction of the cost
+# (~3-5x cheaper per token, faster TTFT). Closes audit H-25.
+#
+# Anything that can be wrong without much cost-of-being-wrong (classify,
+# validate "is this still a violation in context?") goes to Haiku.
+# Anything where wrong answers are expensive (scan = "find ALL issues",
+# consistency = "compare across snippets") stays on Sonnet.
+MODEL_SCAN = DEFAULT_MODEL
+MODEL_CONSISTENCY = DEFAULT_MODEL
+MODEL_VALIDATE = "claude-haiku-4-5-20251001"
+MODEL_CLASSIFY = "claude-haiku-4-5-20251001"
+
+# Per-stage timeouts (seconds). The Anthropic SDK defaults to 600s,
+# which means a stuck call burns a Vercel function slot for 10 minutes
+# before timing out. Each stage gets a tighter cap based on what it
+# actually does. Closes audit H-26.
+TIMEOUT_DEFAULT = 60.0
+TIMEOUT_CLASSIFY = 15.0  # ~50 output tokens (just the type ID)
+TIMEOUT_VALIDATE = 30.0  # 1k output tokens (per-candidate yes/no)
+TIMEOUT_SCAN = 90.0      # 2k output tokens (full evaluation)
+TIMEOUT_CONSISTENCY = 60.0  # 1k output tokens (multi-snippet check)
+TIMEOUT_SUGGEST_FIX = 30.0  # short rewrite
+
 
 # ---------------------------------------------------------------------------
 # Errors
@@ -61,6 +85,24 @@ class PromptInjectionError(ValueError):
     wrapper and inject prompt content, so we reject before sending.
 
     api/evaluate.py catches this and returns 400 (caller error), not 500.
+    """
+
+
+class RateLimitedError(Exception):
+    """Raised when Anthropic returns 429 after retries are exhausted.
+
+    api/evaluate.py catches this and returns 503 with Retry-After so
+    /api/check can backoff cleanly instead of the caller treating it
+    as a generic engine failure. Closes audit H-27.
+    """
+
+
+class RequestTimeoutError(Exception):
+    """Raised when an Anthropic API call times out (per-stage timeout
+    exhausted, no response).
+
+    api/evaluate.py maps this to 504 so /api/check can distinguish
+    "engine slow" from "engine broken". Closes audit H-27 + M-23.
     """
 
 
@@ -262,6 +304,7 @@ def create_message(
     user: str,
     model: str = DEFAULT_MODEL,
     max_tokens: int = DEFAULT_MAX_TOKENS,
+    timeout: float = TIMEOUT_DEFAULT,
     api_key: str | None = None,
 ) -> LLMResponse:
     """Send a message to Claude and return text + token usage.
@@ -275,23 +318,48 @@ def create_message(
         user: User message content.
         model: Model identifier.
         max_tokens: Maximum response tokens.
+        timeout: Per-call timeout in seconds. SDK default is 600s
+            (way too long for our pipeline); we override per-stage
+            via the TIMEOUT_* constants.
         api_key: Optional API key override.
 
     Returns:
         LLMResponse with text content and token counts.
 
     Raises:
-        anthropic.APIError: On non-retryable API errors.
-        anthropic.AuthenticationError: On invalid API key.
+        RateLimitedError: After SDK retries are exhausted on 429.
+            Caller should return 503 with Retry-After.
+        RequestTimeoutError: When the call exceeds `timeout` seconds.
+            Caller should return 504.
+        anthropic.APIError: Other non-retryable API errors.
+        anthropic.AuthenticationError: Invalid API key.
     """
+    import anthropic
+
     client = get_client(api_key=api_key)
 
-    response = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=system,
-        messages=[{"role": "user", "content": user}],
-    )
+    try:
+        response = client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            system=system,
+            messages=[{"role": "user", "content": user}],
+            timeout=timeout,
+        )
+    except anthropic.RateLimitError as exc:
+        # SDK retried max_retries times with exponential backoff and
+        # still got 429. Re-raise as a typed error so callers (and
+        # api/evaluate) can map to a 503 + Retry-After response
+        # instead of a generic 500.
+        raise RateLimitedError(
+            f"Anthropic rate limit exhausted after retries: {exc}"
+        ) from exc
+    except anthropic.APITimeoutError as exc:
+        # Hit our per-stage timeout. Map to 504 so /api/check can
+        # distinguish "engine slow" from "engine broken."
+        raise RequestTimeoutError(
+            f"Anthropic call exceeded {timeout}s timeout: {exc}"
+        ) from exc
 
     # Extract text from the response content blocks
     text_blocks = [
