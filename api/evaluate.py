@@ -39,20 +39,29 @@ from http.server import BaseHTTPRequestHandler
 _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(_ROOT, "src"))
 
-from content_checker import check  # noqa: E402
+# Module-level imports are limited to the cheap path so catalog mode
+# (the most-cold endpoint — backed by /api/standards + /api/moments,
+# both unauthenticated and called by every MCP server connection) can
+# cold-start without paying for the LLM stack. Closes audit H-23.
+#
+# The cheap imports here:
+#   - api_utils typed exceptions (no anthropic transitive — anthropic
+#     is lazy-imported inside create_message itself)
+#   - moments (just data + a small heuristic)
+#
+# Heavy imports (check, classify, load_standards, suggest_fix) move
+# inside their respective handler branches. Python caches loaded
+# modules so re-entry doesn't re-pay the cost on warm instances.
 from content_checker.api_utils import (  # noqa: E402
     PromptInjectionError,
     RateLimitedError,
     RequestTimeoutError,
 )
-from content_checker.classify import classify  # noqa: E402
 from content_checker.moments import (  # noqa: E402
     MOMENT_TAXONOMY,
     MOMENT_WEIGHTS,
     detect_moment,
 )
-from content_checker.standards.loader import load_standards  # noqa: E402
-from content_checker.suggest_fix import suggest_fix  # noqa: E402
 
 
 class handler(BaseHTTPRequestHandler):
@@ -126,6 +135,8 @@ class handler(BaseHTTPRequestHandler):
                 return self._respond(
                     400, {"error": "standard_id is required for mode=suggest_fix"}
                 )
+            # Lazy import — keeps catalog/classify cold starts fast.
+            from content_checker.suggest_fix import suggest_fix  # noqa: PLC0415
             try:
                 result = suggest_fix(
                     text=text,
@@ -164,6 +175,9 @@ class handler(BaseHTTPRequestHandler):
         # so MCP clients can plan content without burning a quota slot
         # on every classification probe.
         if mode == "classify":
+            # Lazy imports — catalog mode never pays for these.
+            from content_checker.classify import classify  # noqa: PLC0415
+            from content_checker.standards.loader import load_standards  # noqa: PLC0415
             try:
                 content_types = load_standards().get("content_types", [])
                 content_type, classify_latency_s, classify_tokens = classify(
@@ -197,6 +211,8 @@ class handler(BaseHTTPRequestHandler):
                 },
             )
 
+        # Lazy import — only check mode pays. Catalog/classify don't.
+        from content_checker import check  # noqa: PLC0415
         try:
             result, latency_s, tokens = check(
                 text=text,

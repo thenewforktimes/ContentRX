@@ -362,7 +362,18 @@ async def _apply_suggestion(
         # diagnostic that triggered the action.
         source = state.text
 
-    range_obj = _find_range_for_text(source, text)
+    # Prefer the original byte offsets threaded through from the
+    # diagnostic that triggered this action — they pin to the exact
+    # JSX node that fired. The source.find() fallback is for older
+    # diagnostics emitted before audit M-27 (or for callers that don't
+    # supply offsets), and accepts the first-occurrence trade-off.
+    start_byte = payload.get("start_byte")
+    end_byte = payload.get("end_byte")
+    if isinstance(start_byte, int) and isinstance(end_byte, int):
+        range_obj = _byte_range_to_lsp_range(source, start_byte, end_byte)
+    else:
+        range_obj = _find_range_for_text(source, text)
+
     if range_obj is None:
         server.show_message(
             "ContentRX: couldn't locate the original text for rewrite — "
@@ -435,31 +446,49 @@ async def _mark_false_positive(
     )
 
 
-def _find_range_for_text(source: str, text: str) -> lsp.Range | None:
-    """Locate `text` in `source` and return an LSP Range.
+def _byte_range_to_lsp_range(
+    source: str, start_byte: int, end_byte: int,
+) -> lsp.Range | None:
+    """Translate a [start_byte, end_byte) range into an LSP Range.
 
-    We use the first occurrence. Callers (the code-action path) have
-    already constrained the match by standard_id + extracted_text
-    pairing — if that winds up ambiguous (the same copy appears
-    twice), rewriting the first occurrence is the least surprising
-    behaviour.
+    Preferred path when the caller knows the exact byte offsets that
+    fired the diagnostic (audit M-27). Returns None if the bytes fall
+    outside the current document — likely a stale diagnostic from
+    before an edit.
     """
-    idx = source.find(text)
-    if idx == -1:
+    if start_byte < 0 or end_byte < start_byte:
         return None
-    end_idx = idx + len(text)
-    # Defer to the diagnostics layer's existing byte→LSP mapping.
+    source_bytes_len = len(source.encode("utf-8"))
+    if end_byte > source_bytes_len:
+        return None
     from .diagnostics import byte_range_to_lsp_range
 
-    # `str.find` returns character offset, but our helper wants byte
-    # offsets. Convert via utf-8 encoding length up to the index.
-    start_byte = len(source[:idx].encode("utf-8"))
-    end_byte = len(source[:end_idx].encode("utf-8"))
     rng = byte_range_to_lsp_range(source, start_byte, end_byte)
     return lsp.Range(
         start=lsp.Position(line=rng.start_line, character=rng.start_char),
         end=lsp.Position(line=rng.end_line, character=rng.end_char),
     )
+
+
+def _find_range_for_text(source: str, text: str) -> lsp.Range | None:
+    """Locate `text` in `source` and return an LSP Range.
+
+    Fallback path for diagnostics that don't carry byte offsets
+    (pre-audit-M-27 emissions, or callers that don't supply them).
+    Uses the first occurrence; if the same copy appears twice in the
+    document, the first match wins. The new offset-threading path in
+    `_apply_suggestion` should be preferred whenever offsets are
+    available.
+    """
+    idx = source.find(text)
+    if idx == -1:
+        return None
+    end_idx = idx + len(text)
+    # `str.find` returns character offset, but our helper wants byte
+    # offsets. Convert via utf-8 encoding length up to the index.
+    start_byte = len(source[:idx].encode("utf-8"))
+    end_byte = len(source[:end_idx].encode("utf-8"))
+    return _byte_range_to_lsp_range(source, start_byte, end_byte)
 
 
 # ---------------------------------------------------------------------------
