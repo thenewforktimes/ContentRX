@@ -174,6 +174,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   // Welcome to paid: confirmation email + upgrade analytics. Best-effort —
   // a Resend or Plausible outage shouldn't 500 the webhook.
+  //
+  // Closes audit H-13: when the event-id dedupe at the top of POST() fails
+  // open (Redis outage), every replay would re-send the welcome email and
+  // re-fire the upgrade analytics. Each side-effect now has its own
+  // per-(userId, subscription, side-effect) dedupe key so only the first
+  // delivery actually emits.
   try {
     const [paidUser] = await getDb()
       .select({ email: schema.users.email, plan: schema.users.plan })
@@ -196,16 +202,45 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             seats,
             quota,
           }),
+          dedupeKey: `upgrade_email:${userId}:${subscription.id}`,
         }),
-        trackEvent("upgrade", {
+        trackUpgradeOnce({
           userId,
-          props: { plan: paidUser.plan, seats },
+          subscriptionId: subscription.id,
+          plan: paidUser.plan,
+          seats,
         }),
       ]);
     }
   } catch (err) {
     console.warn("post-checkout email/analytics failed", err);
   }
+}
+
+/** trackEvent("upgrade") wrapped with Redis dedupe so a webhook replay
+ * doesn't double-count an upgrade in Plausible. Closes audit H-13. */
+async function trackUpgradeOnce(args: {
+  userId: string;
+  subscriptionId: string;
+  plan: PaidPlan;
+  seats: number;
+}): Promise<void> {
+  const key = `analytics:upgrade:${args.userId}:${args.subscriptionId}`;
+  try {
+    const redis = getRedis();
+    const setResult = await redis.set(key, "1", {
+      nx: true,
+      ex: 30 * 24 * 60 * 60, // 30d — Stripe retries are bounded to days
+    });
+    if (setResult === null) return; // already counted
+  } catch (err) {
+    // Redis outage: fall through and track. Worst case = double-count.
+    console.warn("upgrade analytics dedupe failed, tracking anyway", err);
+  }
+  await trackEvent("upgrade", {
+    userId: args.userId,
+    props: { plan: args.plan, seats: args.seats },
+  });
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -234,12 +269,37 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .set({ status: "canceled" })
     .where(eq(schema.subscriptions.stripeSubId, subscription.id));
 
-  if (userId) {
+  if (!userId) return;
+
+  // Closes audit H-14: don't blindly downgrade to free on every
+  // subscription.deleted. A user mid-plan-switch (canceled team sub +
+  // active pro sub from the same checkout) would otherwise lose access.
+  // Only downgrade if no other entitled subscription remains.
+  const [otherActive] = await db
+    .select({ plan: schema.subscriptions.plan })
+    .from(schema.subscriptions)
+    .where(
+      and(
+        eq(schema.subscriptions.userId, userId),
+        not(eq(schema.subscriptions.stripeSubId, subscription.id)),
+        eq(schema.subscriptions.status, "active"),
+      ),
+    )
+    .limit(1);
+
+  if (otherActive) {
+    // Another sub is still active — keep the user on that plan.
     await db
       .update(schema.users)
-      .set({ plan: "free" })
+      .set({ plan: otherActive.plan })
       .where(eq(schema.users.id, userId));
+    return;
   }
+
+  await db
+    .update(schema.users)
+    .set({ plan: "free" })
+    .where(eq(schema.users.id, userId));
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {

@@ -28,8 +28,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { envelope } from "@/lib/api-envelope";
 import { resolveAuth } from "@/lib/auth";
+import { MOMENTS } from "@/lib/engine-taxonomy";
 import { hashText } from "@/lib/log-violations";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { isKnownStandardId } from "@/lib/standards";
+import { CUSTOM_STANDARD_ID_REGEX } from "@/lib/team-rules";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 import { getDb, schema } from "@/db";
 
@@ -51,12 +54,27 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
 
+// standard_id must be either a known built-in standard (e.g. "ACT-01",
+// "TON-12") or a team-custom standard matching `CUSTOM_STANDARD_ID_REGEX`
+// (TEAM-NN). Anything else is junk that would poison override
+// analytics — closes audit H-06.
+function isValidStandardId(id: string): boolean {
+  return isKnownStandardId(id) || CUSTOM_STANDARD_ID_REGEX.test(id);
+}
+
 const RequestSchema = z.object({
-  standard_id: z.string().min(1).max(64),
+  standard_id: z
+    .string()
+    .min(1)
+    .max(64)
+    .refine(isValidStandardId, {
+      message:
+        "standard_id must be a known engine standard (e.g. ACT-01) or a TEAM-NN custom standard",
+    }),
   // Same 100k cap as /api/check so a malicious body can't blow up the
   // SHA pipeline. Text is hashed and discarded — never persisted.
   text: z.string().min(1).max(100_000),
-  moment: z.string().min(1).max(64).optional(),
+  moment: z.enum(MOMENTS).optional(),
   override_type: z.enum(["dismiss", "accept_as_review", "mark_false_positive"]),
   override_reason: z.string().min(1).max(500).optional(),
   source: z.enum(["plugin", "cli", "action", "dashboard", "lsp"]).default("plugin"),

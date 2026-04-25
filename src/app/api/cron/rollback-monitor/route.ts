@@ -40,20 +40,9 @@ import {
   weightedOverrideCount,
   type GraduationLevel,
 } from "@/lib/graduation";
-import { requireEnv } from "@/lib/require-env";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-function requireCronAuth(req: Request): NextResponse | null {
-  // requireEnv throws on missing OR empty CRON_SECRET → Next.js catches → 500.
-  // The wrong-bearer case still returns 401 (auth failure, not config failure).
-  const expected = requireEnv("CRON_SECRET");
-  const got = req.headers.get("authorization");
-  if (got !== `Bearer ${expected}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return null;
-}
 
 export async function POST(req: Request) {
   const authFail = requireCronAuth(req);
@@ -168,5 +157,21 @@ export async function POST(req: Request) {
   });
 }
 
-// Allow a manual trigger via GET for dev and one-off re-runs.
-export const GET = POST;
+// Manual trigger via GET — defaults to dry-run so a browser preview,
+// link prefetcher, or saved-curl probe can't accidentally auto-demote
+// a standard. Closes audit H-05. Pass `?live=1` to actually demote.
+export async function GET(req: Request): Promise<NextResponse> {
+  const authFail = requireCronAuth(req);
+  if (authFail) return authFail;
+  const url = new URL(req.url);
+  if (url.searchParams.get("live") !== "1") {
+    return NextResponse.json({
+      ok: true,
+      mode: "dry_run",
+      note:
+        "GET is dry-run only. POST (or GET with ?live=1) to actually demote. " +
+        "Vercel Cron uses GET, so set ?live=1 in the cron URL when enabling.",
+    });
+  }
+  return POST(req);
+}
