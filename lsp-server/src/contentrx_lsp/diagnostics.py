@@ -146,6 +146,14 @@ def violations_to_diagnostics(
                         "docs_url": f"{_STANDARDS_URL_BASE}/{std}",
                         "violation": v,
                         "extracted_text": extracted.text,
+                        # Original byte offsets so the apply-suggestion
+                        # command can use them directly instead of
+                        # re-locating via source.find(). Closes audit
+                        # M-27 — the find() approach silently overwrote
+                        # the wrong copy when the same text appeared in
+                        # multiple JSX nodes.
+                        "start_byte": extracted.start_byte,
+                        "end_byte": extracted.end_byte,
                     },
                 )
             )

@@ -92,6 +92,12 @@ def plan_actions_for_diagnostic(
                         )
                         or "",
                         "text": extracted_text,
+                        # Forward the diagnostic's original byte offsets
+                        # so apply_suggestion targets the exact JSX node
+                        # that fired, not the first matching string in
+                        # the document. Closes audit M-27.
+                        "start_byte": diagnostic_data.get("start_byte"),
+                        "end_byte": diagnostic_data.get("end_byte"),
                     }
                 ],
             )
