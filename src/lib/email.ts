@@ -71,9 +71,11 @@ export async function sendEmail({
 
   const resend = client();
   if (!resend) {
-    // Dev / preview environment without RESEND_API_KEY. Log so the
-    // engineer can see what would have been sent and move on.
-    console.info(`[email:dev] would send "${subject}" to ${to}`);
+    // Dev / preview environment without RESEND_API_KEY. Log the subject
+    // (templated, no PII) so the engineer can see what would have been
+    // sent. Recipient address is suppressed — CLAUDE.md says never log
+    // PII, and dev/preview logs land in shared aggregators.
+    console.info(`[email:dev] would send "${subject}" (recipient suppressed)`);
     return { ok: true };
   }
 
