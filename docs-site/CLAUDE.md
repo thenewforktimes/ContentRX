@@ -1,56 +1,77 @@
 # docs-site — Claude Code instructions
 
-This is the **ContentRX documentation site**. It deploys to
-`docs.contentrx.io` from its own Vercel project, separate from the main
-`contentrx.io` app, but lives in the same repo so the docs can
-read directly from `../src/content_checker/standards/standards_library.json`
-at build time.
+This is the **ContentRX documentation site**. It deploys to its own
+Vercel project (target domain: `docs.contentrx.app` per the
+post-pivot ADR), separate from the main app, but lives in the same
+monorepo so the build can co-evolve with the engine.
 
 ## What's locked
 
-- Next.js 15 App Router, TypeScript, Tailwind v4
-- `@next/mdx` for long-form pages (whitepaper, contributing, moments)
-- TSX pages for data-driven content (standards index, individual standards)
-- Standards page is a dynamic `[id]` route with `generateStaticParams`
-  so all 47 pages pre-render at build
-- No Nextra (would require an additional design system the rest of the
-  monorepo doesn't use)
-- No client state — every page is a Server Component
+- Next.js 15 App Router, TypeScript, Tailwind v4.
+- `@next/mdx` for long-form pages (whitepaper, contributing, guides,
+  case studies).
+- No Nextra. No client state. Every page is a Server Component.
+- **Public taxonomy is not part of this site.** Per ADR
+  `decisions/2026-04-25-private-taxonomy-pivot.md`, the 47 standards,
+  13 moments, per-standard versioning, and rationale chain are
+  internal artifacts only. Phase D (#129) removed the `/spec/*` and
+  `/model/*` routes that previously rendered them; the loaders in
+  `lib/standards.ts` / `lib/moments.ts` / `lib/changelog.ts` and the
+  vendored substrate JSON are gone with them.
 
-## How standards data flows
+## What this site renders today
 
-1. Source of truth: `src/content_checker/standards/standards_library.json`
-   in the parent repo (engine).
-2. `lib/standards.ts` reads it at request/build time via
-   `process.cwd() + "../src/content_checker/standards/..."`.
-3. `app/spec/standards/[id]/page.tsx` exports `generateStaticParams()`
-   that walks every standard ID, so SSG covers all 47 pages.
+- `app/page.mdx` — landing.
+- `app/whitepaper/page.mdx` — methodology, redacted of substrate.
+- `app/contributing/page.mdx` — rewritten for the private-taxonomy
+  posture (no "open the standards-library JSON" instructions).
+- `app/guides/*` — public hand-written guides (error messages, Figma
+  design review, Next.js + shadcn buttons, custom examples).
+- `app/case-studies/page.tsx` + `lib/case-studies.ts` — typed
+  registry; each case study lands as a single MDX file under
+  `app/case-studies/<slug>/page.mdx` plus a registry entry.
 
-When the engine bumps the standards library (via a new minor version),
-this site's content updates on the next deploy automatically — there is
-no separate sync step.
+## Public-credibility surfaces
 
-## Moments
+These live in the **main** app (`contentrx.app`), not here:
 
-Moments live in `src/content_checker/moments.py` (Python data, not JSON).
-The current `app/spec/moments/page.mdx` is hand-written until a sibling
-`moments.json` is exported alongside the standards library. Keep the
-hand-written page in sync with the Python source until that lands.
+- `/accuracy` — measured kappa with 95% CI, design target, generated
+  nightly from substrate. Source: `reports/accuracy/latest.json` in
+  the parent repo.
+- `/calibration` — weekly calibration log entries. Source:
+  `reports/calibration/<YYYY>-<WW>.md`.
+- `/essays` — monthly named-expert essays in Robo's voice.
+  Source: `contentrx-docs/essays/` (target — the staging area is
+  `essays/drafts/` in the parent repo until promotion).
+- `/reports` — quarterly reports. Source:
+  `reports/quarterly/<YYYY>-<Q>.md`.
+
+When these land on `docs.contentrx.app` (planned), they'll either be
+copied via Nextra includes from the parent repo's `reports/` directory
+or proxied via the main app's API. The deploy split is not yet wired.
+
+## What not to do
+
+- Don't reintroduce a `/spec/*` or `/model/*` route. Those were
+  removed in Phase D for ADR-level reasons.
+- Don't import substrate JSON from the engine. The vendored copies
+  are gone; importing from the parent's `src/content_checker/standards/`
+  re-leaks the private taxonomy into the public bundle.
+- Don't add a `lib/standards.ts` / `lib/moments.ts` / `lib/changelog.ts`
+  loader. If a future ADR supersedes the 2026-04-25 pivot, the
+  reactivation is gated on that ADR landing first.
 
 ## Deploying
 
-This site has its own `vercel.json` / `vercel.ts` (TBD when the user
-creates the new Vercel project) and its own `docs.contentrx.io` domain.
-
 ```bash
 cd docs-site
-npm install         # first time only
+npm install
 npm run dev         # localhost:3001
-npm run build       # production build (reads engine JSON)
+npm run build       # production build
 ```
 
-For the production deploy, the Vercel project should:
-1. Set "Root directory" to `docs-site/`
-2. Use the default Next.js framework preset
-3. Bind the `docs.contentrx.io` domain
-4. No env vars are needed — the site is fully static-from-JSON
+Vercel project setup:
+1. "Root directory" → `docs-site/`
+2. Default Next.js framework preset
+3. Bind `docs.contentrx.app` once the domain is ready
+4. No env vars needed
