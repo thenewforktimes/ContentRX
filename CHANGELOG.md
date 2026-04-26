@@ -10,6 +10,40 @@ changes per surface, in reverse chronological order.
 
 Source of truth: `src/content_checker/__init__.py` (`__version__`).
 
+### 4.7.1 — 2026-04-26 (situation_ambiguity carve-out)
+
+**Verdict policy change** — `derive_verdict` now suppresses the
+`review_recommended` downgrade when `situation_ambiguity` is the SOLE
+fired review signal AND there are no violations. The PASS path returns
+`("pass", None)` instead of `("review_recommended", "situation_ambiguity")`.
+
+**Why.** The moment heuristic falls back to `MOMENT_CONFIDENCE_FALLBACK`
+(0.5) for any input that doesn't trip a specific pattern — most
+generic UI copy without an explicit `moment` parameter. Pre-4.7.1
+this downgraded *every* such case, including clean PASSes ("Save
+changes" / `button_cta` returning `verdict: "review_recommended"`
+with `violations: []`). The human's queue filled with non-actionable
+rows where nothing was to adjudicate.
+
+**What still works the same.**
+
+- `situation_ambiguity` + at least one violation → still flips to
+  `review_recommended`. The human decides whether the moment changes
+  the answer for that violation.
+- `situation_ambiguity` + any other review signal (e.g.,
+  `ensemble_disagreement` per Session 13's empty-violations case) →
+  still flips. Precedence picks the stronger subtype as the displayed
+  reason.
+- Every other review signal (`standards_conflict`,
+  `ensemble_disagreement`, `out_of_distribution`, `novel_pattern`,
+  `low_confidence`) is unchanged.
+
+**Test coverage.** Three new tests in `tests/test_verdict.py`:
+the empty-violations carve-out, the with-violations regression
+fence, and the carve-out-doesn't-apply-when-other-signals-fire
+fence. 1718 → 1721 pytest. No standards or preprocessor logic
+changed; parity gate unaffected.
+
 ### 4.7.0 — 2026-04-25 (private-taxonomy pivot, ADR 2026-04-25)
 
 **Breaking** — wire format bumps to `schema_version: "2.0.0"`. With

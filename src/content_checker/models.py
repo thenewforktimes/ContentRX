@@ -654,6 +654,8 @@ def derive_verdict(
 
     Logic (in order):
       - overall_verdict == "error"      → ("error", None)
+      - situation_ambiguity ALONE +
+        no violations                   → ("pass", None)  [v4.7.1]
       - any review-signal fires         → ("review_recommended",
                                            typed subtype per precedence)
       - no violations                   → ("pass", None)
@@ -663,6 +665,13 @@ def derive_verdict(
     even when `violations` is empty. Session 13 specifically: a
     validate-rejection with nothing surviving is still the ensemble
     disagreeing with itself — Robo reviews regardless.
+
+    Carve-out (v4.7.1): `situation_ambiguity` is uniquely weak among
+    review signals — it just means "moment classifier confidence < 0.6,"
+    which fires for any text that doesn't trip a specific moment
+    pattern (most generic UI copy). Surfacing it for empty-violations
+    inputs floods the queue with non-actionable rows. When it's the
+    SOLE fired signal AND there are no violations, return pass.
 
     When multiple review signals fire, the subtype with the highest
     precedence (REVIEW_REASON_PRECEDENCE[0]) wins. Precedence order is
@@ -703,6 +712,17 @@ def derive_verdict(
         fired.add(REVIEW_NOVEL_PATTERN)
     if low_confidence:
         fired.add(REVIEW_LOW_CONFIDENCE)
+
+    # `situation_ambiguity` alone is the weakest review signal — it just
+    # means the moment heuristic shrugged. Without anything to actually
+    # adjudicate (no violations, no other signals), surfacing it as
+    # `review_recommended` asks the human to review nothing. Suppress.
+    #
+    # Other empty-violations review signals (notably ensemble_disagreement
+    # per Session 13's "validate rejected the scan" case) still flip to
+    # review_recommended — those represent real disagreement worth reading.
+    if fired == {REVIEW_SITUATION_AMBIGUITY} and not violations:
+        return VERDICT_PASS, None
 
     if fired:
         for reason in REVIEW_REASON_PRECEDENCE:
