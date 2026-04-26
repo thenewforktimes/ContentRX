@@ -111,6 +111,11 @@ const TEST_API_KEY = "cx_aliceAaaaaaaabbbbbbbbccccccccdd";
 
 beforeAll(async () => {
   process.env.NEXT_PUBLIC_APP_URL = "https://test.contentrx";
+  // Force the default (private) taxonomy mode for these route tests.
+  // The PUBLIC_TAXONOMY=true smoke CI sets the flag to true to exercise
+  // the reversibility-insurance path; this suite is specifically the
+  // private-taxonomy contract regression, so we override.
+  delete process.env.PUBLIC_TAXONOMY;
   harness = await createTestDb();
   dbRef.current = harness.db;
   redisRef.current = createRedisStub();
