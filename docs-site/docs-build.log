@@ -1,8 +1,0 @@
-
-> contentrx-docs@0.1.0 prebuild
-> node scripts/prebuild.mjs
-
-
-> contentrx-docs@0.1.0 build
-> next build
-
