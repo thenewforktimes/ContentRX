@@ -352,3 +352,47 @@ class TestDeriveVerdictPrecedence:
         )
         assert verdict == VERDICT_ERROR
         assert reason is None
+
+    # v4.7.1 — situation_ambiguity carve-out. The moment heuristic falls
+    # back to MOMENT_CONFIDENCE_FALLBACK (0.5) for any input that doesn't
+    # trip a specific pattern, which means most innocuous UI copy without
+    # an explicit moment param trips moment_ambiguous. Pre-4.7.1 this
+    # downgraded ALL such cases to review_recommended — including empty-
+    # violations PASSes ("Save changes" / button_cta returning verdict
+    # "review_recommended" with no violations to review).
+
+    def test_situation_ambiguity_alone_no_violations_passes(self):
+        """Sole signal + no violations → pass. The human has nothing
+        to adjudicate; surfacing it as review_recommended is noise."""
+        verdict, reason = derive_verdict(
+            overall_verdict="pass",
+            violations=[],
+            moment_ambiguous=True,
+        )
+        assert verdict == VERDICT_PASS
+        assert reason is None
+
+    def test_situation_ambiguity_with_violations_still_review(self):
+        """When there's an actual violation, ambiguity still surfaces —
+        the human decides whether the moment changes the answer."""
+        verdict, reason = derive_verdict(
+            overall_verdict="fail",
+            violations=[_high_conf_violation()],
+            moment_ambiguous=True,
+        )
+        assert verdict == VERDICT_REVIEW_RECOMMENDED
+        assert reason == REVIEW_SITUATION_AMBIGUITY
+
+    def test_situation_ambiguity_with_other_signal_still_review(self):
+        """When a stronger signal also fires, the carve-out does NOT
+        suppress — the stronger signal wins on precedence and review
+        still emits."""
+        verdict, reason = derive_verdict(
+            overall_verdict="pass",
+            violations=[],
+            moment_ambiguous=True,
+            scan_validate_disagreement=True,
+        )
+        assert verdict == VERDICT_REVIEW_RECOMMENDED
+        # Precedence: ensemble_disagreement beats situation_ambiguity.
+        assert reason == REVIEW_ENSEMBLE_DISAGREEMENT
