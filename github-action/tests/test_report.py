@@ -73,6 +73,94 @@ def test_violations_rollup_counts() -> None:
     assert "Be descriptive." in md
 
 
+def test_suggestion_renders_as_diff_fenced_block() -> None:
+    """PR-36 — when both `entry["text"]` and `suggestion` are present,
+    render a `diff`-fenced code block so GitHub colors the - and + lines
+    red/green. Falls back to plain `_suggestion:_` only when there's
+    nothing to compare against."""
+    reports = [
+        _report(
+            "src/CTA.tsx",
+            [
+                {
+                    "text": "Click here",
+                    "line": 5,
+                    "kind": "jsx-text",
+                    "violations": [
+                        {
+                            "standard_id": "ACC-01",
+                            "issue": "Use descriptive link text.",
+                            "suggestion": "Sign up for the trial",
+                            "severity": "high",
+                        }
+                    ],
+                }
+            ],
+        )
+    ]
+    md = render_markdown(reports, total_strings=1)
+    # The fence opens with ```diff and contains both -/+ lines.
+    assert "```diff" in md
+    assert "- Click here" in md
+    assert "+ Sign up for the trial" in md
+    # Plain "_suggestion:_" line is NOT used when we have a diff.
+    assert "_suggestion:_ Sign up for the trial" not in md
+
+
+def test_suggestion_falls_back_to_plain_when_text_missing() -> None:
+    """When the entry has no `text` (older code path or upstream bug),
+    fall back to the plain `_suggestion:_` line — no half-rendered
+    diff block with an empty `-` line."""
+    reports = [
+        _report(
+            "src/X.tsx",
+            [
+                {
+                    "text": "",
+                    "line": 1,
+                    "kind": "jsx-text",
+                    "violations": [
+                        {
+                            "standard_id": "X",
+                            "issue": "bad",
+                            "suggestion": "Try this instead.",
+                        },
+                    ],
+                }
+            ],
+        ),
+    ]
+    md = render_markdown(reports, total_strings=1)
+    assert "```diff" not in md
+    assert "_suggestion:_ Try this instead." in md
+
+
+def test_suggestion_identical_to_text_omits_diff() -> None:
+    """If the engine somehow emits a no-op suggestion, render the plain
+    line rather than a diff block with two identical sides."""
+    reports = [
+        _report(
+            "src/X.tsx",
+            [
+                {
+                    "text": "Save",
+                    "line": 1,
+                    "kind": "jsx-text",
+                    "violations": [
+                        {
+                            "standard_id": "X",
+                            "issue": "weird",
+                            "suggestion": "Save",
+                        },
+                    ],
+                }
+            ],
+        ),
+    ]
+    md = render_markdown(reports, total_strings=1)
+    assert "```diff" not in md
+
+
 def test_reports_with_only_non_violating_entries_are_hidden() -> None:
     reports = [
         _report(
