@@ -31,7 +31,7 @@
  */
 
 import { auth } from "@clerk/nextjs/server";
-import { and, asc, eq, or, sql } from "drizzle-orm";
+import { and, asc, eq, or } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Eyebrow } from "@/components/ui/eyebrow";
