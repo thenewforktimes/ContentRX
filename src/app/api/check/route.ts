@@ -35,6 +35,7 @@ import {
   loadTeamRules,
   recomputeVerdict,
 } from "@/lib/team-rules";
+import { teamScope } from "@/lib/team-scope";
 import { claimQuotaSlot, recordTokenUsage } from "@/lib/usage";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 import { QuotaExhaustedEmail } from "@/emails/quota-exhausted";
@@ -257,18 +258,10 @@ export async function POST(req: Request) {
   // Log + increment are observational — if they fail, the user still gets
   // their result. We surface the failure through Sentry, not to the user.
   try {
-    // team_id always equals "team-owner-or-self":
-    //   - team member  → team owner's user.id
-    //   - team owner   → own user.id (resolveAuth returns teamOwnerUserId=null
-    //                    for the owner themselves; promote)
-    //   - free / Pro   → own user.id (was: NULL — broke the dashboard's
-    //                    "This week" / Active-Surfaces / patterns reads
-    //                    because the readers query
-    //                    `team_id = teamOwnerUserId ?? userId`)
-    // The downside is none — team-only aggregations still match team
-    // owner's id; per-individual reads now match user's own id;
-    // free-plan users see their own activity on their own dashboard.
-    const teamIdForLog = auth.teamOwnerUserId ?? auth.user.id;
+    // team_id always equals "team-owner-or-self" — see lib/team-scope.ts
+    // for the full rationale. Centralized in `teamScope()` so writes
+    // and reads always agree (PR-198 fix for the team_id NULL bug).
+    const teamIdForLog = teamScope(auth);
     await logViolations({
       userId: auth.user.id,
       teamId: teamIdForLog,

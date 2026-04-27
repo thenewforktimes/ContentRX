@@ -32,6 +32,7 @@ import { MOMENTS } from "@/lib/engine-taxonomy";
 import { hashText } from "@/lib/log-violations";
 import { checkRateLimit } from "@/lib/ratelimit";
 import { isKnownStandardId } from "@/lib/standards";
+import { teamScope } from "@/lib/team-scope";
 import { CUSTOM_STANDARD_ID_REGEX } from "@/lib/team-rules";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 import { getDb, schema } from "@/db";
@@ -173,13 +174,11 @@ export async function POST(req: Request) {
     session_id,
   } = parsed.data;
 
-  // Team scope mirrors violations: free/pro users have team_id=null;
-  // team-plan users (member or owner) attribute to the OWNER's user.id
-  // so per-team rollups are sensible.
-  const teamId =
-    auth.plan === "team"
-      ? (auth.teamOwnerUserId ?? auth.user.id)
-      : null;
+  // team_id always equals "team-owner-or-self" (lib/team-scope.ts).
+  // Pre-PR-198 this route wrote `team_id = null` for free/Pro users,
+  // matching /api/check's old behavior — both flipped together so
+  // override-report reads + violation reads always agree.
+  const teamId = teamScope(auth);
 
   try {
     const db = getDb();
