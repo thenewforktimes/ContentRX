@@ -2,19 +2,24 @@
  * /dashboard — account overview. Server-rendered so we can hit the DB
  * inline without a round-trip to a separate API endpoint.
  *
- * Section order (Apr 2026 inversion): API key first because it's the
- * asset the customer is here to manage; usage bar second as the live
- * signal; subscription third (billing); team-tier surfaces fourth;
- * calibration last. Pre-inversion the order put billing/usage above
- * the API key, which buried the integration step new customers came
- * for.
+ * Section order (Apr 2026 inversion + PR-16/17):
+ *   1. Header (email + plan pill)
+ *   2. Try a check (inline ExplainClient, the hero)
+ *   3. API key
+ *   4. Usage (amber at ≥80%)
+ *   5. Active surfaces row (last-call timestamp per source)
+ *   6. Subscription
+ *   7. Team-tier surfaces
+ *   8. Calibration
  *
- * Usage bar tones: amber at ≥80% so the customer has runway to
- * upgrade before they hit zero.
+ * Try-a-check at the top serves both new users (touch the product
+ * before installing) and returning users (one-off "let me sanity-check
+ * this string"). Active surfaces row is the "are my integrations
+ * alive?" surface — the dashboard's primary job post-MCP-shift.
  */
 
 import { auth } from "@clerk/nextjs/server";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { buttonStyles } from "@/components/ui/button";
@@ -23,6 +28,7 @@ import { getDb, schema } from "@/db";
 import { currentMonth, monthlyQuota, type Plan } from "@/lib/quotas";
 import { getOrProvisionUser } from "@/lib/user-provisioning";
 import { ApiKeyPanel } from "./api-key-panel";
+import { ExplainClient } from "./explain/explain-client";
 import { SubscriptionPanel } from "./subscription-panel";
 
 const USAGE_WARNING_THRESHOLD = 0.8;
@@ -44,12 +50,6 @@ export default async function DashboardPage() {
     redirect("/sign-in?redirect_url=/dashboard");
   }
 
-  // Lazy-provision the users row if the Clerk webhook hasn't landed
-  // yet (or got dropped). Mirrors /auth/figma-callback's behavior so a
-  // first-load dashboard hit isn't gated on webhook delivery. On the
-  // rare provisioning failure (Clerk API hiccup, transient DB error)
-  // fall back to the placeholder UI rather than crashing into the
-  // global error boundary.
   const user = await getOrProvisionUser(clerkId);
   if (!user) {
     return (
@@ -60,14 +60,11 @@ export default async function DashboardPage() {
   }
 
   const plan = user.plan as Plan;
-  // Closes audit H-17: was 4 sequential awaits. seats / used /
-  // activeSub are all independent of each other (each only needs
-  // user.id and the already-resolved plan), so fan them out in
-  // parallel. monthlyQuota stays synchronous after seats resolves.
-  const [seats, used, activeSub] = await Promise.all([
+  const [seats, used, activeSub, surfaceActivity] = await Promise.all([
     loadSeats(user.id, plan, user.teamOwnerUserId),
     loadCurrentUsage(user.id),
     loadActiveSubscription(user.id, user.teamOwnerUserId),
+    loadSurfaceActivity(user.id, user.teamOwnerUserId),
   ]);
   const quota = monthlyQuota(plan, seats);
   const usedPct = quota > 0 ? Math.min(100, Math.round((used / quota) * 100)) : 0;
@@ -84,6 +81,8 @@ export default async function DashboardPage() {
         <PlanPill plan={plan} />
       </header>
 
+      <TryACheckPanel />
+
       <ApiKeyPanel
         initialPrefix={user.apiKeyPrefix}
         initialCreatedAt={
@@ -97,6 +96,8 @@ export default async function DashboardPage() {
         usedPct={usedPct}
         tone={usageTone}
       />
+
+      <ActiveSurfacesRow activity={surfaceActivity} />
 
       <SubscriptionPanel
         plan={plan}
@@ -119,6 +120,20 @@ export default async function DashboardPage() {
 
       <CalibrateLink optedOut={user.preferenceOptedOutAt !== null} />
     </div>
+  );
+}
+
+function TryACheckPanel() {
+  return (
+    <section className="rounded-lg border border-neutral-200 p-5 dark:border-neutral-800">
+      <header className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Try a check</h2>
+        <span className="text-xs text-neutral-500">
+          Paste any UI string · 1 check
+        </span>
+      </header>
+      <ExplainClient />
+    </section>
   );
 }
 
@@ -175,6 +190,111 @@ function UsagePanel({
       )}
     </section>
   );
+}
+
+type SurfaceKey = "mcp" | "lsp" | "action" | "plugin" | "cli";
+type SurfaceActivity = Record<SurfaceKey, { count: number; lastAt: Date | null }>;
+
+const SURFACES: ReadonlyArray<{
+  key: SurfaceKey;
+  label: string;
+  installHref: string;
+  installLabel: string;
+}> = [
+  { key: "mcp", label: "MCP", installHref: "/install#mcp", installLabel: "Install" },
+  { key: "lsp", label: "LSP", installHref: "/install#lsp", installLabel: "Install" },
+  {
+    key: "action",
+    label: "GitHub Action",
+    installHref: "/install#action",
+    installLabel: "Install",
+  },
+  {
+    key: "plugin",
+    label: "Figma",
+    installHref: "/install#figma",
+    installLabel: "Install",
+  },
+  { key: "cli", label: "CLI", installHref: "/install#cli", installLabel: "Install" },
+];
+
+function ActiveSurfacesRow({ activity }: { activity: SurfaceActivity }) {
+  return (
+    <section>
+      <h2 className="mb-3 text-sm font-semibold">Active surfaces</h2>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        {SURFACES.map((s) => (
+          <SurfaceCard
+            key={s.key}
+            label={s.label}
+            installHref={s.installHref}
+            installLabel={s.installLabel}
+            count={activity[s.key].count}
+            lastAt={activity[s.key].lastAt}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SurfaceCard({
+  label,
+  installHref,
+  installLabel,
+  count,
+  lastAt,
+}: {
+  label: string;
+  installHref: string;
+  installLabel: string;
+  count: number;
+  lastAt: Date | null;
+}) {
+  const connected = count > 0 && lastAt !== null;
+  return (
+    <div className="rounded-md border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+      <p className="font-medium">{label}</p>
+      <div className="mt-2 flex items-center gap-1.5">
+        <span
+          aria-hidden
+          className={
+            connected
+              ? "inline-block h-2 w-2 rounded-full bg-emerald-500"
+              : "inline-block h-2 w-2 rounded-full border border-neutral-300 dark:border-neutral-700"
+          }
+        />
+        <span className="text-xs text-neutral-600 dark:text-neutral-400">
+          {connected ? formatRelative(lastAt) : "Not connected"}
+        </span>
+      </div>
+      {connected ? (
+        <p className="mt-1 text-xs tabular-nums text-neutral-500">
+          {count.toLocaleString()} {count === 1 ? "check" : "checks"}
+        </p>
+      ) : (
+        <Link
+          href={installHref}
+          className="mt-1 inline-block text-xs text-neutral-700 underline underline-offset-2 dark:text-neutral-300"
+        >
+          {installLabel} →
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function formatRelative(date: Date): string {
+  const now = Date.now();
+  const diff = now - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function CalibrateLink({ optedOut }: { optedOut: boolean }) {
@@ -289,7 +409,6 @@ async function loadActiveSubscription(
   status: string;
   currentPeriodEnd: Date | null;
 } | null> {
-  // For team members, the billing status lives on the team owner's row.
   const ownerId = teamOwnerUserId ?? userId;
   const db = getDb();
   const [row] = await db
@@ -323,11 +442,52 @@ async function loadCurrentUsage(userId: string): Promise<number> {
   return row?.count ?? 0;
 }
 
+/**
+ * Aggregate per-source check counts + last-call time. Scoped to the
+ * team (teamId = teamOwnerUserId for members, user.id for owners).
+ * Returns a complete record with zero-counts for surfaces never used —
+ * the renderer can lay out all five cards regardless of activity.
+ */
+async function loadSurfaceActivity(
+  userId: string,
+  teamOwnerUserId: string | null,
+): Promise<SurfaceActivity> {
+  const teamId = teamOwnerUserId ?? userId;
+  const db = getDb();
+  const rows = (await db
+    .select({
+      source: schema.violations.source,
+      count: sql<number>`count(*)::int`,
+      lastAt: sql<Date>`max(${schema.violations.createdAt})`,
+    })
+    .from(schema.violations)
+    .where(eq(schema.violations.teamId, teamId))
+    .groupBy(schema.violations.source)
+    .orderBy(desc(sql`max(${schema.violations.createdAt})`))) as Array<{
+    source: string;
+    count: number;
+    lastAt: Date;
+  }>;
+
+  const out: SurfaceActivity = {
+    mcp: { count: 0, lastAt: null },
+    lsp: { count: 0, lastAt: null },
+    action: { count: 0, lastAt: null },
+    plugin: { count: 0, lastAt: null },
+    cli: { count: 0, lastAt: null },
+  };
+  for (const r of rows) {
+    if (r.source in out) {
+      out[r.source as SurfaceKey] = {
+        count: r.count,
+        lastAt: r.lastAt instanceof Date ? r.lastAt : new Date(r.lastAt),
+      };
+    }
+  }
+  return out;
+}
+
 function PlanPill({ plan }: { plan: Plan }) {
-  // Semantically progressive: neutral (free) → blue (pro, paid) →
-  // emerald (team, paid + collaborative). The pre-inversion purple
-  // for team felt arbitrary; emerald reads as "shared / collaborative"
-  // (per the design critique).
   const styles: Record<Plan, string> = {
     free: "bg-neutral-100 text-neutral-700 dark:bg-neutral-900 dark:text-neutral-300",
     pro: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
