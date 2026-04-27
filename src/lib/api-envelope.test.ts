@@ -227,4 +227,63 @@ describe("publicCheckEnvelope", () => {
     expect(env.verdict).toBe("review_recommended");
     expect(env.review_reason).toBe("low_confidence");
   });
+
+  // -----------------------------------------------------------------
+  // Privacy contract snapshot — ADR 2026-04-25.
+  //
+  // Pins the EXACT shape that ships to user-facing surfaces. Any
+  // future refactor that accidentally surfaces a substrate field
+  // (`standard_id`, `rule_version`, `rationale_chain`, `passes`,
+  // etc.) will diff loudly here instead of slipping past triage.
+  // The audit (2026-04-27) called this out as missing — this is
+  // the test it was asking for.
+  //
+  // Inline snapshot keeps the expected shape co-located with the
+  // assertion so reviewers don't have to chase a separate __snapshots__
+  // file when the contract intentionally changes.
+  // -----------------------------------------------------------------
+  it("privacy snapshot — kitchen-sink substrate violation produces clean public envelope", () => {
+    delete process.env.PUBLIC_TAXONOMY;
+    const env = publicCheckEnvelope(makeSubstrateResult());
+    // Stable serialization for the snapshot — no Date / undefined
+    // surprises across runs.
+    expect(JSON.stringify(env, null, 2)).toMatchInlineSnapshot(`
+      "{
+        "schema_version": "2.0.0",
+        "violations": [
+          {
+            "issue": "This destructive confirmation does not name what gets deleted.",
+            "suggestion": "Replace 'Are you sure?' with 'Delete the workspace?'.",
+            "severity": "high",
+            "confidence": 0.92
+          }
+        ],
+        "verdict": "violation",
+        "review_reason": null,
+        "warnings": []
+      }"
+    `);
+  });
+
+  it("privacy snapshot — every substrate field name is absent from default envelope JSON", () => {
+    // Belt-and-suspenders: even if the snapshot above stops being
+    // run (skipped, deleted), this string-search asserts that the
+    // serialized envelope contains zero substrate field names. Any
+    // future field added to SUBSTRATE_VIOLATION_FIELDS or
+    // SUBSTRATE_TOP_LEVEL_FIELDS gets covered automatically.
+    delete process.env.PUBLIC_TAXONOMY;
+    const env = publicCheckEnvelope(makeSubstrateResult());
+    const serialized = JSON.stringify(env);
+    for (const forbidden of SUBSTRATE_VIOLATION_FIELDS) {
+      expect(serialized).not.toContain(`"${forbidden}"`);
+    }
+    for (const forbidden of SUBSTRATE_TOP_LEVEL_FIELDS) {
+      expect(serialized).not.toContain(`"${forbidden}"`);
+    }
+    // Specific high-risk values from the kitchen-sink violation that
+    // would identify the private taxonomy if leaked.
+    expect(serialized).not.toContain("CLR-01");
+    expect(serialized).not.toContain("PRF-11");
+    expect(serialized).not.toContain("rationale_chain");
+  });
 });
