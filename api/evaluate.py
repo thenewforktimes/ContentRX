@@ -265,19 +265,25 @@ class handler(BaseHTTPRequestHandler):
             # Keep the full traceback in stderr (Vercel captures it,
             # Sentry ingests from there). Per ENG-H-01 the message
             # surfaced to the public TS caller is generic; the
-            # internal-only "detail" field carries the typed exception
-            # name so /api/check (which already gates on the internal
-            # secret) can log it for diagnostics. /api/check still
-            # collapses the upstream body to "Evaluation service
-            # unavailable" before returning to the browser, so
-            # nothing from `detail` leaks to user-visible output —
-            # only to founder-accessible logs.
+            # internal-only `detail` and `traceback` fields carry the
+            # typed exception name and the file:line where it threw,
+            # so /api/check (gated by INTERNAL_EVAL_SECRET) can log
+            # them for diagnostics. /api/check still collapses the
+            # upstream body to "Evaluation service unavailable" before
+            # returning to the browser, so nothing here leaks to
+            # user-visible output — only founder-accessible logs.
             traceback.print_exc()
+            tb_lines = traceback.format_exc().splitlines()
+            # Last 8 lines = the innermost frame + the exception line.
+            # Bounded so the response stays well under any header/body
+            # caps.
+            tb_tail = "\n".join(tb_lines[-8:]) if tb_lines else ""
             return self._respond(
                 500,
                 {
                     "error": "Evaluation failed",
                     "detail": f"{type(exc).__name__}: {exc}",
+                    "traceback": tb_tail,
                 },
             )
 
