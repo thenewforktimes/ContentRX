@@ -836,9 +836,71 @@
   .quota-banner.exhausted .btn-primary {
     background: #dc2626;
   }
+
+  /* PR-12 — pre-scan confirm modal. Overlay sits above all screens
+     and is shown only when a batch would consume more than the
+     CONFIRM_THRESHOLD checks (defined in JS below). */
+  .scan-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 1000;
+  }
+  .scan-confirm-overlay.open {
+    display: flex;
+  }
+  .scan-confirm-dialog {
+    background: var(--figma-color-bg, #fff);
+    color: var(--figma-color-text, #222);
+    border-radius: 6px;
+    padding: 16px;
+    max-width: 320px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  }
+  .scan-confirm-dialog h3 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .scan-confirm-dialog p {
+    margin: 0 0 12px 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--figma-color-text-secondary, #555);
+  }
+  .scan-confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .scan-confirm-actions .btn {
+    width: auto;
+    padding: 6px 14px;
+    font-size: 11px;
+  }
 </style>
 </head>
 <body>
+
+<!-- ================================================================== -->
+<!-- PR-12 — Pre-scan confirm modal. Sits above all screens. Hidden by  -->
+<!-- default; openConfirmDialog(count) reveals + returns a Promise<bool>. -->
+<!-- ================================================================== -->
+<div id="scan-confirm-overlay" class="scan-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="scan-confirm-title">
+  <div class="scan-confirm-dialog">
+    <h3 id="scan-confirm-title">Confirm scan</h3>
+    <p id="scan-confirm-body">This scan will use N checks against your monthly quota. Continue?</p>
+    <div class="scan-confirm-actions">
+      <button type="button" class="btn btn-text" id="btn-scan-confirm-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="btn-scan-confirm-go">Continue</button>
+    </div>
+  </div>
+</div>
 
 <!-- ================================================================== -->
 <!-- SCREEN: Sign in (shown when no cx_token is on file)                -->
@@ -4173,9 +4235,60 @@ window.onmessage = async (event) => {
 
 
 /**
+ * PR-12 — Pre-scan confirmation gate. Shown before kicking off any batch
+ * larger than CONFIRM_THRESHOLD nodes so the user can't accidentally
+ * burn their quota on a frame they didn't realize was big.
+ *
+ * Returns Promise<boolean>: true to proceed, false to cancel. Below
+ * the threshold, resolves to true immediately without showing UI.
+ */
+const SCAN_CONFIRM_THRESHOLD = 10;
+
+function confirmBatchScan(count) {
+  if (count <= SCAN_CONFIRM_THRESHOLD) {
+    return Promise.resolve(true);
+  }
+  return new Promise((resolve) => {
+    const overlay = document.getElementById("scan-confirm-overlay");
+    const body = document.getElementById("scan-confirm-body");
+    const goBtn = document.getElementById("btn-scan-confirm-go");
+    const cancelBtn = document.getElementById("btn-scan-confirm-cancel");
+    body.textContent =
+      `This scan will use ${count} checks against your monthly quota. ` +
+      `Continue?`;
+    overlay.classList.add("open");
+    goBtn.focus();
+
+    function cleanup(decision) {
+      overlay.classList.remove("open");
+      goBtn.removeEventListener("click", onGo);
+      cancelBtn.removeEventListener("click", onCancel);
+      document.removeEventListener("keydown", onKey);
+      resolve(decision);
+    }
+    function onGo() { cleanup(true); }
+    function onCancel() { cleanup(false); }
+    function onKey(e) {
+      if (e.key === "Escape") { e.preventDefault(); cleanup(false); }
+      else if (e.key === "Enter") { e.preventDefault(); cleanup(true); }
+    }
+    goBtn.addEventListener("click", onGo);
+    cancelBtn.addEventListener("click", onCancel);
+    document.addEventListener("keydown", onKey);
+  });
+}
+
+/**
  * Execute a batch scan with progress UI. Shared by page-scan and selection-scan.
  */
 async function executeBatchScan(nodes) {
+  // PR-12 — pre-action gate. Below the threshold this is a no-op.
+  const proceed = await confirmBatchScan(nodes.length);
+  if (!proceed) {
+    showScreen("main");
+    return;
+  }
+
   showScreen("scanning");
   document.getElementById("scan-title").textContent =
     `Scanning ${nodes.length} text layer${nodes.length !== 1 ? "s" : ""}...`;
