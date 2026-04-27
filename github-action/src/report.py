@@ -112,7 +112,21 @@ def render_markdown(
                 suggestion = v.get("suggestion", "").strip()
                 lines.append(f"  - **{severity}**: {issue}")
                 if suggestion:
-                    lines.append(f"    - _suggestion:_ {suggestion}")
+                    # PR-36 — render the suggestion as a `diff`-fenced
+                    # code block. GitHub renders these natively with
+                    # red/green line backgrounds, so the change reads
+                    # at a glance. Falls back to plain "_suggestion:_"
+                    # when the original string is missing or identical
+                    # (the latter shouldn't happen, but guard anyway).
+                    original = entry.get("text", "")
+                    if original and original.strip() != suggestion:
+                        lines.append("")
+                        lines.append("    ```diff")
+                        lines.append(f"    - {original}")
+                        lines.append(f"    + {suggestion}")
+                        lines.append("    ```")
+                    else:
+                        lines.append(f"    - _suggestion:_ {suggestion}")
         lines.append("")
 
     if truncation_notice:
