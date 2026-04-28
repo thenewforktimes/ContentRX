@@ -270,3 +270,91 @@ async def test_example_json_parser_accepts_snake_and_camel_case():
         "updated_at": "2026-04-24T16:00:00Z",
     })
     assert camel == snake
+
+
+# -----------------------------------------------------------------------------
+# ADR conformance — admin echo-back carve-out (decisions/2026-04-28-admin-echo-back-carveout.md)
+#
+# ADR 2026-04-25 ("private taxonomy") strips `standard_id` from user-facing
+# rendering surfaces — evaluate_copy responses, web app violation cards, CLI
+# output, etc. ADR 2026-04-28 carved out an explicit exception for
+# admin-tier echo-back surfaces: when the team admin TYPED IN the
+# standard_id earlier and is just getting their own input back, the field
+# is allowed to flow through unaltered.
+#
+# These tests pin both halves of the contract:
+#   - Echo-back responses (custom_example_*) MUST include standard_id.
+#   - Rendering responses (evaluate_copy, etc.) MUST strip it. That half is
+#     enforced in test_client.py:74-76; we cross-reference it here so the
+#     two halves are findable from one place.
+#
+# A future contributor who "fixes" what looks like a leak by stripping
+# standard_id from custom_example_* will fail this test and get pointed at
+# the ADR. That's the design.
+# -----------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_adr_conformance_custom_example_list_preserves_standard_id():
+    """Admin echo-back carve-out: standard_id flows through custom_example_list
+    responses to the team admin. See decisions/2026-04-28-admin-echo-back-carveout.md.
+    Stripping this field would break the curation workflow."""
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "schema_version": "1.6.0",
+            "warnings": [],
+            "result": {
+                "examples": [{
+                    "id": "ce_1",
+                    "text": "Contact administrator.",
+                    "verdict": "violation",
+                    "moment": None,
+                    "contentType": "error_message",
+                    "standardId": "VT-05",  # admin-supplied; carve-out allows echo
+                    "notes": "Blames the user.",
+                    "contributeUpstream": False,
+                    "createdAt": "2026-04-28T12:00:00.000Z",
+                    "updatedAt": "2026-04-28T12:00:00.000Z",
+                }],
+                "count": 1,
+                "cap": 500,
+            },
+        })
+
+    client = _client_with(httpx.MockTransport(handler))
+    async with client:
+        result = await client.list_custom_examples()
+
+    # Carve-out asserts: standard_id MUST round-trip back to the admin.
+    assert result.examples[0].standard_id == "VT-05"
+
+
+@pytest.mark.asyncio
+async def test_adr_conformance_custom_example_search_preserves_standard_id():
+    """Same carve-out applies to search responses. See ADR 2026-04-28."""
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "schema_version": "1.6.0",
+            "warnings": [],
+            "result": {
+                "examples": [{
+                    "id": "ce_1",
+                    "text": "Contact administrator.",
+                    "verdict": "violation",
+                    "moment": None,
+                    "contentType": "error_message",
+                    "standardId": "VT-05",
+                    "notes": None,
+                    "contributeUpstream": False,
+                    "createdAt": "2026-04-28T12:00:00.000Z",
+                    "updatedAt": "2026-04-28T12:00:00.000Z",
+                }],
+                "count": 1,
+            },
+        })
+
+    client = _client_with(httpx.MockTransport(handler))
+    async with client:
+        result = await client.search_custom_examples(text="Contact administrator.")
+
+    assert result.examples[0].standard_id == "VT-05"
