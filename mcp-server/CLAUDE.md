@@ -86,14 +86,35 @@ When pushing a new version to PyPI:
    in `pyproject.toml` — they must match. Update the User-Agent in
    `client.py` (`_USER_AGENT`) too.
 2. Update `README.md` if the tool surface changed.
-3. `pytest tests/` green.
-4. `python -m build` (produces `dist/*.whl` and `dist/*.tar.gz`).
-5. Push a `mcp-v0.X.Y` tag — `.github/workflows/publish_mcp.yml`
+3. Add an entry to `CHANGELOG.md` at the top under the new version
+   number. Follow the Keep a Changelog format already established.
+4. `pytest tests/` green.
+5. **Pre-flight: confirm the PyPI Trusted Publisher is still
+   configured.** Visit
+   `https://pypi.org/manage/project/contentrx-mcp/settings/publishing/`
+   and verify a GitHub publisher exists for owner `thenewforktimes`,
+   repo `contentRX`, workflow `publish_mcp.yml`, environment
+   `publish`. If the row isn't there, the publish step will fail
+   with `invalid-publisher` and you'll have to add it mid-release.
+   This used to be a TODO comment in the workflow file and burned
+   one release cycle when a publisher wasn't set up; now it's a
+   step.
+6. `python -m build` (produces `dist/*.whl` and `dist/*.tar.gz`).
+7. Push a `mcp-v0.X.Y` tag — `.github/workflows/publish_mcp.yml`
    handles the PyPI upload via trusted publishing (no API token in
-   the workflow itself).
-6. Verify `pip install --upgrade contentrx-mcp` in a clean venv picks
-   up the new version, and `contentrx-mcp --help` (or the MCP
-   inspector) confirms the new tools are registered.
+   the workflow itself). The workflow verifies that the tag version
+   matches `pyproject.toml` before building, so a stale tag fails
+   fast.
+8. Verify `pip install --upgrade contentrx-mcp` in a clean venv picks
+   up the new version (PyPI metadata cache may take 1–2 min to
+   refresh), and `contentrx-mcp --help` (or the MCP inspector)
+   confirms the new tools are registered.
+
+If the publish step fails with `invalid-publisher`, the workflow file
+itself has inline troubleshooting at the publish step pointing back to
+the PyPI settings URL. Re-run the failed jobs after fixing the config:
+`gh run rerun <run-id> --failed --repo thenewforktimes/contentRX`. No
+re-tag is needed.
 
 ## Tool description style guide
 

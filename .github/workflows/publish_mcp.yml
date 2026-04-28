@@ -68,6 +68,25 @@ jobs:
           name: dist
           path: dist/
 
+      # IF THIS STEP FAILS WITH `invalid-publisher`:
+      #
+      # The OIDC token issued by GitHub was valid, but PyPI does not have
+      # a Trusted Publisher configured that matches the claims this
+      # workflow sends. Visit
+      #   https://pypi.org/manage/project/contentrx-mcp/settings/publishing/
+      # and confirm a GitHub Trusted Publisher exists with these EXACT
+      # values:
+      #   Owner:            thenewforktimes
+      #   Repository name:  contentRX
+      #   Workflow name:    publish_mcp.yml
+      #   Environment name: publish      <-- NOT "release" (PyPI's
+      #                                       placeholder text). Must
+      #                                       match `environment.name`
+      #                                       above.
+      #
+      # Once corrected, re-run this workflow with
+      #   gh run rerun <run-id> --failed --repo thenewforktimes/contentRX
+      # No re-tag is needed.
       - name: Publish via Trusted Publishing
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1
         with:
