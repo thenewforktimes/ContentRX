@@ -29,7 +29,12 @@ import { envelope } from "@/lib/api-envelope";
 import { resolveAuth } from "@/lib/auth";
 import { MOMENTS } from "@/lib/engine-taxonomy";
 import { hashText } from "@/lib/log-violations";
+import {
+  detectSensitivePatterns,
+  sensitiveDataErrorMessage,
+} from "@/lib/pii-screen";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { logSafeError } from "@/lib/safe-error-log";
 import { revalidateDashboard } from "@/lib/revalidate";
 import { isKnownStandardId } from "@/lib/standards";
 import { teamScope } from "@/lib/team-scope";
@@ -121,6 +126,27 @@ export async function POST(req: Request) {
     );
   }
 
+  // PII pre-screen — refuse credentials and PII on the override path
+  // too. The text gets sha256-hashed before storage, but it transits
+  // the engine for context-recovery, so the upstream rules apply.
+  // Suggested/applied text is screened with the primary text. See
+  // `lib/pii-screen.ts`.
+  const candidates = [
+    parsed.data.text,
+    parsed.data.suggested_text ?? "",
+    parsed.data.applied_text ?? "",
+  ].join("\n");
+  const sensitivePatterns = detectSensitivePatterns(candidates);
+  if (sensitivePatterns.length > 0) {
+    return json(
+      {
+        error: sensitiveDataErrorMessage(sensitivePatterns),
+        patterns: sensitivePatterns,
+      },
+      { status: 400 },
+    );
+  }
+
   // Same 60/min budget as /api/check. Override-spamming a single user
   // can't be allowed to skew the implicit-labeling signal.
   const rl = await checkRateLimit(auth.user.id);
@@ -195,7 +221,7 @@ export async function POST(req: Request) {
     revalidateDashboard({ teamId });
     return json(envelope({ override: row }), { status: 201 });
   } catch (err) {
-    console.error("violation override insert failed:", err);
+    logSafeError("violation override insert failed", err);
     return json({ error: "Failed to record override" }, { status: 500 });
   }
 }

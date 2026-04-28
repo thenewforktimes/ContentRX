@@ -25,7 +25,12 @@ import { z } from "zod";
 import { resolveAuth } from "@/lib/auth";
 import { corsJson, corsPreflight } from "@/lib/cors";
 import { classify } from "@/lib/evaluate";
+import {
+  detectSensitivePatterns,
+  sensitiveDataErrorMessage,
+} from "@/lib/pii-screen";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { logSafeError } from "@/lib/safe-error-log";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 
 export async function OPTIONS(req: Request) {
@@ -58,6 +63,19 @@ export async function POST(req: Request) {
   }
   const { text } = parsed.data;
 
+  // PII pre-screen — block credentials and PII before they reach the
+  // engine, Anthropic, Sentry, or function logs. See `lib/pii-screen.ts`.
+  const sensitivePatterns = detectSensitivePatterns(text);
+  if (sensitivePatterns.length > 0) {
+    return json(
+      {
+        error: sensitiveDataErrorMessage(sensitivePatterns),
+        patterns: sensitivePatterns,
+      },
+      { status: 400 },
+    );
+  }
+
   const rl = await checkRateLimit(auth.user.id);
   if (!rl.success) {
     return json(
@@ -80,7 +98,7 @@ export async function POST(req: Request) {
   try {
     classifyResponse = await classify(text);
   } catch (err) {
-    console.error("classify() failed:", err);
+    logSafeError("classify() failed", err);
     return json(
       { error: "Classification service unavailable" },
       { status: 502 },

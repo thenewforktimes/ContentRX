@@ -24,7 +24,12 @@ import {
   CreateExampleRequestSchema,
 } from "@/lib/custom-examples-schemas";
 import { corsJson, corsPreflight } from "@/lib/cors";
+import {
+  detectSensitivePatterns,
+  sensitiveDataErrorMessage,
+} from "@/lib/pii-screen";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { logSafeError } from "@/lib/safe-error-log";
 import { revalidateDashboard } from "@/lib/revalidate";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 import { getDb, schema } from "@/db";
@@ -133,6 +138,22 @@ export async function POST(req: Request) {
   }
   const data = parsed.data;
 
+  // PII pre-screen — custom examples persist their `text` raw in the
+  // database (we need it for the short-circuit lookup). That makes
+  // them a long-term storage liability if they contain credentials
+  // or PII. Refuse the insert here so the bad data never lands.
+  // See `lib/pii-screen.ts`.
+  const sensitivePatterns = detectSensitivePatterns(data.text);
+  if (sensitivePatterns.length > 0) {
+    return json(
+      {
+        error: sensitiveDataErrorMessage(sensitivePatterns),
+        patterns: sensitivePatterns,
+      },
+      { status: 400 },
+    );
+  }
+
   // verdict=violation requires standard_id (an entry that asserts
   // "this fails" is useless without naming the standard it fails
   // against). verdict=pass requires standard_id to be empty.
@@ -203,7 +224,7 @@ export async function POST(req: Request) {
         { status: 409 },
       );
     }
-    console.error("POST /api/team-custom-examples failed:", err);
+    logSafeError("POST /api/team-custom-examples failed", err);
     return json(
       { error: "Failed to create custom example." },
       { status: 500 },
