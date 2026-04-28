@@ -7,8 +7,9 @@ This is the surface that turns ContentRX from "a thing designers run
 on Figma frames" into "a thing your AI agent consults before writing
 a button label." It speaks
 [Model Context Protocol](https://modelcontextprotocol.io) over stdio
-and exposes two tools (this release) backed by the public ContentRX
-API.
+and exposes seven tools — three for content review and four for
+Team-plan custom-example curation — all backed by the public
+ContentRX API.
 
 ## Install
 
@@ -49,7 +50,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`
 }
 ```
 
-Restart Claude desktop. The two tools appear in the tools picker.
+Restart Claude desktop. The tools appear in the tools picker.
 
 ### Claude Code
 
@@ -66,9 +67,11 @@ desktop's. Use the same `command` / `args` / `env` block.
 
 ## Tools
 
-### `evaluate_copy` — full review (counts against quota)
+### Content review
 
-Check UI copy against the 47-standard content-design library.
+#### `evaluate_copy` — full review (counts against quota)
+
+Check UI copy against the content-design standards library.
 
 ```
 evaluate_copy(
@@ -76,19 +79,54 @@ evaluate_copy(
   moment_hint: str | None,        # optional: "error_recovery", "onboarding", etc.
   context: str | None,            # optional free-text context (reserved)
 ) -> {
-  overall_verdict: "pass" | "fail" | "error",
-  content_type: str,              # e.g. "error_message", "button_cta"
-  moment: str,                    # e.g. "error_recovery"
-  violations: [{standard_id, issue, suggestion, severity, ...}],
-  passes: [{standard_id, rule}],
-  summary: str | None,
+  verdict: "pass" | "violation" | "review_recommended",
+  review_reason: str | None,      # populated when verdict == "review_recommended"
+  violations: [{
+    issue: str,                   # human-readable description of the violation
+    suggestion: str,              # concrete rewrite recommendation
+    severity: "low" | "medium" | "high",
+    confidence: float,            # 0..1
+  }],
+  warnings: [str],                # advisory; may be empty
 }
 ```
+
+Schema 2.0.0 envelope. The taxonomy is intentionally private — rule
+citations, internal IDs, and reasoning chains stay server-side. The
+public surface is the violation itself plus a concrete suggestion.
 
 Counts against your monthly quota (Free: 25, Pro: 5,000, Team:
 5,000 × seats).
 
-### `classify_moment` — quick moment probe (no quota cost)
+#### `evaluate_copy_batch` — multiple strings in one call
+
+Same review as `evaluate_copy` but takes a list. A `dry_run` flag lets
+the caller confirm quota cost before committing to a large batch.
+
+```
+evaluate_copy_batch(
+  strings: list[str],
+  moment_hint: str | None,         # applied to every string
+  content_type_hint: str | None,   # applied to every string
+  dry_run: bool = false,            # set true first for batches of 10+
+) -> {
+  # dry_run=true:
+  dry_run: true, string_count: N, would_use_checks: N, message: str
+
+  # dry_run=false:
+  results: [
+    { text: str, verdict, review_reason, violations, warnings } |
+    { text: str, error: { kind, message } }
+  ],
+  checks_used: int,                 # successfully completed
+  terminated_early: bool,
+  termination_reason: str | None,   # set on auth/quota failures that abort the rest
+}
+```
+
+Each successful string consumes one quota unit.
+
+#### `classify_moment` — quick moment probe (no quota cost)
 
 Classify what UI moment a string represents — without running the
 full evaluation. Useful for planning copy before you write it.
@@ -102,6 +140,44 @@ classify_moment(text: str) -> {
 
 Free of quota. Rate-limited at 60/min per user (same bucket as
 `evaluate_copy`).
+
+### Team-plan custom examples
+
+Team-plan teams can curate strings whose verdict is well-known to them
+— a phrasing they've already vetted as on-brand (`verdict: "pass"`) or
+a known anti-pattern they don't want regressing (`verdict: "violation"`).
+When `/api/check` sees a matching string from that team again, it
+short-circuits to the stored verdict instead of re-running the LLM.
+Reduces noise on recurring voice calls and saves quota.
+
+These tools are Team plan only and require team-admin role.
+
+#### `custom_example_add`
+
+```
+custom_example_add(
+  text: str,                       # the exact phrasing to short-circuit
+  verdict: "pass" | "violation",
+  moment: str | None,              # scope match to one moment context
+  content_type: str | None,        # scope match to one content_type context
+  standard_id: str | None,         # required when verdict == "violation"
+  notes: str | None,               # 1–3 sentences explaining the decision
+  contribute_upstream: bool = false,  # opt in to anonymised contribution
+)
+```
+
+#### `custom_example_list(limit?)`
+
+List the team's entries. Read-only; any authenticated team member can view.
+
+#### `custom_example_search(text)`
+
+Look up by normalised text. Use before `_add` to avoid duplicate-entry
+errors — matching is case + whitespace insensitive.
+
+#### `custom_example_remove(example_id)`
+
+Delete an entry by id.
 
 ## Prompts
 
@@ -136,14 +212,16 @@ Claude Code calls `evaluate_copy` before writing the JSX:
 evaluate_copy(text="Click here to view pricing")
 
 → verdict: "violation"
+  review_reason: null
   violations: [
     {
       issue: "Vague CTA — 'Click here' doesn't name the destination",
       suggestion: "Lead with the action verb + object: 'View pricing'",
-      severity: "block",
+      severity: "high",
       confidence: 0.91
     }
   ]
+  warnings: []
 ```
 
 Claude writes `<Button>View pricing</Button>` instead. Review that

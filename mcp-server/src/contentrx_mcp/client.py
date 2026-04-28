@@ -17,7 +17,7 @@ import httpx
 
 from .auth import get_api_base_url, get_api_key
 
-_USER_AGENT = "contentrx-mcp/0.6.0"
+_USER_AGENT = "contentrx-mcp/0.7.0"
 _TIMEOUT_SECONDS = 60.0
 
 
