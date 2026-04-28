@@ -41,7 +41,6 @@ describe("credit card detection", () => {
   // Stripe-published test card numbers, Luhn-valid by design.
   const VISA_TEST = "4111111111111111";
   const MASTERCARD_TEST = "5555555555554444";
-  const AMEX_TEST = "378282246310005";
 
   it("fires on a Visa test number", () => {
     expect(detectSensitivePatterns(`Card: ${VISA_TEST}`)).toEqual([

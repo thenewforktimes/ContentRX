@@ -30,6 +30,7 @@ import {
   sensitiveDataErrorMessage,
 } from "@/lib/pii-screen";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { logSafeError } from "@/lib/safe-error-log";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 
 export async function OPTIONS(req: Request) {
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
   try {
     classifyResponse = await classify(text);
   } catch (err) {
-    console.error("classify() failed:", err);
+    logSafeError("classify() failed", err);
     return json(
       { error: "Classification service unavailable" },
       { status: 502 },

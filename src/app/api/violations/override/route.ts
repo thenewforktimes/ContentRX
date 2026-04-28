@@ -34,6 +34,7 @@ import {
   sensitiveDataErrorMessage,
 } from "@/lib/pii-screen";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { logSafeError } from "@/lib/safe-error-log";
 import { revalidateDashboard } from "@/lib/revalidate";
 import { isKnownStandardId } from "@/lib/standards";
 import { teamScope } from "@/lib/team-scope";
@@ -220,7 +221,7 @@ export async function POST(req: Request) {
     revalidateDashboard({ teamId });
     return json(envelope({ override: row }), { status: 201 });
   } catch (err) {
-    console.error("violation override insert failed:", err);
+    logSafeError("violation override insert failed", err);
     return json({ error: "Failed to record override" }, { status: 500 });
   }
 }

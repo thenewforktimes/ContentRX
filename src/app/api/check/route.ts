@@ -31,6 +31,7 @@ import {
   sensitiveDataErrorMessage,
 } from "@/lib/pii-screen";
 import { currentMonth, monthlyQuota } from "@/lib/quotas";
+import { logSafeError } from "@/lib/safe-error-log";
 import { checkRateLimit } from "@/lib/ratelimit";
 import {
   applyAddedRules,
@@ -212,7 +213,7 @@ export async function POST(req: Request) {
     } catch (err) {
       // Matching failures must never break a scan. Fall through to
       // the LLM path with a warning; Sentry catches it.
-      console.error("findMatchingExample failed; falling through:", err);
+      logSafeError("findMatchingExample failed; falling through", err);
     }
   }
 
@@ -245,7 +246,7 @@ export async function POST(req: Request) {
       // Log detail to stderr (Sentry ingests via Vercel). Return an opaque
       // message to the caller — the Python-side error can include file paths,
       // model names, Anthropic error bodies, or a truncated LLM response.
-      console.error("evaluate() failed:", err);
+      logSafeError("evaluate() failed", err);
       return json(
         { error: "Evaluation service unavailable" },
         { status: 502 },
@@ -294,10 +295,10 @@ export async function POST(req: Request) {
     }),
   ]);
   if (logResult.status === "rejected") {
-    console.error("logViolations failed:", logResult.reason);
+    logSafeError("logViolations failed", logResult.reason);
   }
   if (tokenResult.status === "rejected") {
-    console.error("recordTokenUsage failed:", tokenResult.reason);
+    logSafeError("recordTokenUsage failed", tokenResult.reason);
   }
 
   // Bust the dashboard's edge cache + tag-cached loaders so the usage

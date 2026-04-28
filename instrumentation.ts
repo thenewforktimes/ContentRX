@@ -8,6 +8,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { validateRequiredEnvAtStartup } from "@/lib/require-env";
+import { scrubSentryEvent } from "@/lib/sentry-scrub";
 
 // Known-benign errors we don't want to fill the Sentry quota. These are
 // network / abort patterns that happen during normal usage, not bugs:
@@ -39,11 +40,17 @@ export async function register() {
   // real signal we want is unhandled exceptions, not traces. 5% of
   // traces + 100% of errors keeps us well under quota for typical
   // traffic and still surfaces perf regressions.
+  //
+  // `beforeSend` runs the user-content scrubber (`lib/sentry-scrub.ts`)
+  // on every event. `sendDefaultPii: false` is the baseline; the
+  // scrubber is the second layer that strips request bodies, auth
+  // headers, text-shaped extras, and truncates exception messages.
   const commonConfig = {
     dsn,
     tracesSampleRate: 0.05,
     sendDefaultPii: false,
     ignoreErrors: SENTRY_IGNORE_ERRORS,
+    beforeSend: scrubSentryEvent,
   } as const;
 
   if (process.env.NEXT_RUNTIME === "nodejs") {

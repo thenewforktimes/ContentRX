@@ -27,6 +27,7 @@ import {
 import { currentMonth, monthlyQuota } from "@/lib/quotas";
 import { corsJson, corsPreflight } from "@/lib/cors";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { logSafeError } from "@/lib/safe-error-log";
 import { claimQuotaSlot } from "@/lib/usage";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 
@@ -150,7 +151,7 @@ export async function POST(req: Request) {
       }),
     );
   } catch (err) {
-    console.error("/api/suggest-fix failed:", err);
+    logSafeError("/api/suggest-fix failed", err);
     return json(
       { error: "Suggestion failed" },
       { status: 500 },

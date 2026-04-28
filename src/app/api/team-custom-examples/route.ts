@@ -29,6 +29,7 @@ import {
   sensitiveDataErrorMessage,
 } from "@/lib/pii-screen";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { logSafeError } from "@/lib/safe-error-log";
 import { revalidateDashboard } from "@/lib/revalidate";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 import { getDb, schema } from "@/db";
@@ -223,7 +224,7 @@ export async function POST(req: Request) {
         { status: 409 },
       );
     }
-    console.error("POST /api/team-custom-examples failed:", err);
+    logSafeError("POST /api/team-custom-examples failed", err);
     return json(
       { error: "Failed to create custom example." },
       { status: 500 },

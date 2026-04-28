@@ -42,8 +42,13 @@ if (dsn) {
   // Dynamic import — webpack creates a separate chunk for @sentry/nextjs
   // that only loads when this branch runs. The .then is fire-and-forget;
   // we don't block module evaluation on Sentry init.
-  import("@sentry/nextjs")
-    .then((Sentry) => {
+  // Two-step dynamic import so the scrubber only loads alongside Sentry
+  // (no point shipping it on routes Sentry isn't on).
+  Promise.all([
+    import("@sentry/nextjs"),
+    import("@/lib/sentry-scrub"),
+  ])
+    .then(([Sentry, { scrubSentryEvent }]) => {
       Sentry.init({
         dsn,
         // Lower than server (browser sessions are noisier; 5% is plenty
@@ -55,6 +60,9 @@ if (dsn) {
         replaysOnErrorSampleRate: 0.1,
         sendDefaultPii: false,
         ignoreErrors: BROWSER_IGNORE_ERRORS,
+        // Strip text-shaped fields, request bodies, auth headers, and
+        // truncate long exception messages. See `lib/sentry-scrub.ts`.
+        beforeSend: scrubSentryEvent,
       });
       _onRouterTransitionStart = Sentry.captureRouterTransitionStart as RouterTransitionFn;
     })
