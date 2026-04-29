@@ -446,6 +446,121 @@ export const violationOverrides = pgTable(
   ],
 ).enableRLS();
 
+// Suggestion candidates — ADR 2026-04-29 (suggestion calibration loop).
+//
+// The customer side of the two-tier signal architecture. Every customer
+// action that informs suggestion phrasing (Copy on a finding, Adjust →
+// rewrite, Team rule creation, preference pair) writes a row here. The
+// founder /admin queue triages these into PRECEDENTS (the curated set
+// the runtime LLM context reads). Only Robert's curation reaches the
+// runtime prompt — customers never poison the model directly.
+//
+// Privacy: per ADR 2026-04-28, every text-bearing field is PII-screened
+// before write (handled at the route layer via src/lib/pii-screen.ts).
+// `share_upstream` defaults FALSE; rows scoped to a team owner stay
+// team-private until the customer explicitly opts in. The /admin triage
+// surface only sees rows where `share_upstream = TRUE`.
+//
+// Substrate context (moment, contentType, standardId) is server-side-
+// correlated at write time by joining against the violations table via
+// (userId, textHash). When correlation finds no match (race, deletion),
+// the fields stay nullable and Robert's triage assigns them at /admin
+// review time.
+export const suggestionCandidates = pgTable(
+  "suggestion_candidates",
+  {
+    id: cuid(),
+    // Substrate bucket axes — populated server-side by correlating
+    // against the violations table. Nullable because correlation may
+    // miss; /admin triage backfills.
+    moment: text("moment"),
+    contentType: text("content_type"),
+    standardId: text("standard_id"),
+    // Source distinguishes signal weight at retrieval time:
+    //   customer_copy     — positive signal: someone used the LLM's
+    //                        suggestion as-is. Lowest weight.
+    //   customer_rewrite  — direct rewrite proposal from a customer.
+    //                        Higher weight when share_upstream = true.
+    //   team_rule         — derived from a team's custom example with
+    //                        contributeUpstream = true (existing flag
+    //                        on team_custom_examples).
+    //   preference_pair   — from /api/preferences/session pairwise
+    //                        elicitation. Existing substrate.
+    source: text("source", {
+      enum: [
+        "customer_copy",
+        "customer_rewrite",
+        "team_rule",
+        "preference_pair",
+      ],
+    }).notNull(),
+    // Who emitted the signal. Nullable + set-null on delete to keep the
+    // signal alive past account deletion (audit H-08 pattern).
+    sourceUserId: text("source_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    // Team scope for opt-out tracking. When a row's team_owner_user_id
+    // is set, it's visible to that team's admins regardless of
+    // share_upstream. share_upstream additionally exposes it to /admin.
+    sourceTeamOwnerUserId: text("source_team_owner_user_id").references(
+      () => users.id,
+      { onDelete: "set null" },
+    ),
+    // sha256 of the input string the customer was checking. Same
+    // hashing convention as violations.textHash. Used for clustering
+    // and de-dup at /admin triage time.
+    inputHash: text("input_hash").notNull(),
+    // For customer_copy: the LLM's own suggestion (engine output, not
+    // PII). For customer_rewrite: the customer's rewrite (PII-screened
+    // before insert). For team_rule / preference_pair: the canonical
+    // text from that source. Nullable for sources that don't carry a
+    // candidate string per row.
+    candidateText: text("candidate_text"),
+    // Optional issue/notes context, useful for clustering at triage.
+    // Carries the public-envelope `issue` field for customer-source
+    // rows; null otherwise. PII-screened.
+    issueContext: text("issue_context"),
+    // Customer's explicit opt-in, per ADR 2026-04-28. Default FALSE.
+    // FALSE = team-private. TRUE = eligible for /admin triage and
+    // (after approval) promotion to suggestion_precedents.
+    shareUpstream: boolean("share_upstream").notNull().default(false),
+    // Triage state. Pending = unreviewed; Approved = promoted to
+    // suggestion_precedents (Block 2a); Rejected = slop, kept for
+    // metrics; Merged = combined into an existing precedent.
+    status: text("status", {
+      enum: ["pending", "approved", "rejected", "merged"],
+    })
+      .notNull()
+      .default("pending"),
+    reviewedBy: text("reviewed_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // /admin triage hot path: bucket by (moment, content_type,
+    // standard_id) and filter on status. Partial index on pending
+    // rows — the queue Robert reads — keeps the index small.
+    index("suggestion_candidates_bucket_status_idx").on(
+      t.moment,
+      t.contentType,
+      t.standardId,
+      t.status,
+    ),
+    // Team-private slice: when a customer's row is share_upstream=false,
+    // it still surfaces to that team's analytics. This index supports
+    // "show me my team's candidates."
+    index("suggestion_candidates_team_idx").on(t.sourceTeamOwnerUserId),
+    // FK index on source_user_id for the deletion cascade.
+    index("suggestion_candidates_user_idx").on(t.sourceUserId),
+    // Browsing: most recent first within a bucket.
+    index("suggestion_candidates_created_idx").on(t.createdAt),
+  ],
+).enableRLS();
+
 // Graduation status per standard — human-eval build plan Session 10.
 //
 // Stores the current graduation level per standard (robo_labels →
@@ -873,6 +988,7 @@ export type TeamRule = InferSelectModel<typeof teamRules>;
 export type Violation = InferSelectModel<typeof violations>;
 export type DittoSync = InferSelectModel<typeof dittoSyncs>;
 export type ViolationOverride = InferSelectModel<typeof violationOverrides>;
+export type SuggestionCandidate = InferSelectModel<typeof suggestionCandidates>;
 export type GraduationStatus = InferSelectModel<typeof graduationStatus>;
 export type RationaleFeedback = InferSelectModel<typeof rationaleFeedback>;
 export type TeamCustomExample = InferSelectModel<typeof teamCustomExamples>;

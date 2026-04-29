@@ -18,8 +18,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FindingAdjustModal } from "@/components/finding-adjust-modal";
 import { Pill } from "@/components/ui/pill";
-import type { PublicCheckEnvelope } from "@/lib/api-envelope";
+import type { PublicCheckEnvelope, PublicViolation } from "@/lib/api-envelope";
 import {
   humanizeReviewReason,
   humanizeSeverity,
@@ -273,32 +274,11 @@ export function ExplainClient() {
           {response.violations.length > 0 && (
             <ul className="space-y-2">
               {response.violations.map((v, i) => (
-                <li
+                <FindingCard
                   key={i}
-                  className="rounded-md border border-stone-200 bg-white p-3 text-sm dark:border-stone-800 dark:bg-stone-900"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <SeverityBadge severity={v.severity} />
-                    {v.suggestion && (
-                      <CopySuggestionButton
-                        submittedText={response.submittedText}
-                        suggestion={v.suggestion}
-                        severity={v.severity}
-                        confidence={v.confidence}
-                        issue={v.issue}
-                      />
-                    )}
-                  </div>
-                  <p className="mt-2 text-stone-900 dark:text-stone-100">
-                    {v.issue}
-                  </p>
-                  {v.suggestion && (
-                    <DiffBlock
-                      before={response.submittedText}
-                      after={v.suggestion}
-                    />
-                  )}
-                </li>
+                  finding={v}
+                  submittedText={response.submittedText}
+                />
               ))}
             </ul>
           )}
@@ -544,6 +524,89 @@ function formatResetDate(isoString: string): string {
   } catch {
     return "next month";
   }
+}
+
+/**
+ * FindingCard — one row in the violations list. Owns the per-card
+ * state for the Adjust modal and the post-save "Your version" inline
+ * affordance. Per ADR 2026-04-29 §4: after a save, the card stays
+ * visible but shows the user's rewrite labeled "Your version" beside
+ * the original LLM suggestion (when the rewrite path was taken),
+ * plus a "Recorded" affordance on the verdict path.
+ */
+function FindingCard({
+  finding,
+  submittedText,
+}: {
+  finding: PublicViolation;
+  submittedText: string;
+}) {
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [savedState, setSavedState] = useState<{
+    verdictRecorded: boolean;
+    rewriteRecorded: boolean;
+    rewriteText: string | null;
+  } | null>(null);
+
+  return (
+    <li className="rounded-md border border-stone-200 bg-white p-3 text-sm dark:border-stone-800 dark:bg-stone-900">
+      <div className="flex items-start justify-between gap-3">
+        <SeverityBadge severity={finding.severity} />
+        <div className="flex shrink-0 items-center gap-2">
+          {finding.suggestion && (
+            <CopySuggestionButton
+              submittedText={submittedText}
+              suggestion={finding.suggestion}
+              severity={finding.severity}
+              confidence={finding.confidence}
+              issue={finding.issue}
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => setAdjustOpen(true)}
+            aria-label="Adjust this finding"
+            className="shrink-0 rounded-md border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200 dark:hover:bg-stone-900"
+          >
+            Adjust
+          </button>
+        </div>
+      </div>
+      <p className="mt-2 text-stone-900 dark:text-stone-100">{finding.issue}</p>
+      {finding.suggestion && (
+        <DiffBlock before={submittedText} after={finding.suggestion} />
+      )}
+
+      {savedState?.rewriteText && (
+        <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50/50 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/20">
+          <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+            Your version
+          </p>
+          <p className="mt-1 text-sm text-stone-900 dark:text-stone-100">
+            {savedState.rewriteText}
+          </p>
+        </div>
+      )}
+
+      {savedState && !savedState.rewriteText && savedState.verdictRecorded && (
+        <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-300">
+          Recorded. Thanks for the calibration signal.
+        </p>
+      )}
+
+      <FindingAdjustModal
+        open={adjustOpen}
+        onClose={() => setAdjustOpen(false)}
+        submittedText={submittedText}
+        currentSuggestion={finding.suggestion ?? ""}
+        issue={finding.issue}
+        onSaved={(saved) => {
+          setSavedState(saved);
+          setAdjustOpen(false);
+        }}
+      />
+    </li>
+  );
 }
 
 function SeverityBadge({ severity }: { severity: string }) {
