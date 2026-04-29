@@ -9,18 +9,32 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-white dark:bg-stone-950">
       <header className="border-b border-stone-200 dark:border-stone-800">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-6 px-6 py-4">
           <Link href="/dashboard" className="text-sm font-semibold">
             ContentRX
           </Link>
-          <SignOutButton>
-            <button
-              type="button"
-              className="text-xs text-stone-500 hover:text-stone-900 dark:hover:text-stone-100"
+          <nav className="flex items-center gap-5 text-xs">
+            <Link
+              href="/dashboard"
+              className="text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
             >
-              Sign out
-            </button>
-          </SignOutButton>
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/settings"
+              className="text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+            >
+              Settings
+            </Link>
+            <SignOutButton>
+              <button
+                type="button"
+                className="text-stone-500 hover:text-stone-900 dark:hover:text-stone-100"
+              >
+                Sign out
+              </button>
+            </SignOutButton>
+          </nav>
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-6 py-10">{children}</main>
