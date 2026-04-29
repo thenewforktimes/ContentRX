@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 
-LIBRARY_PATH = Path("src/content_checker/standards/standards_library.json")
+LIBRARY_PATH = Path("src/content_checker/standards/private/standards_library.json")
 
 
 # Conservative attribution map. Each entry: standard_id → sources to add.

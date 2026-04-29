@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 
-LIBRARY_PATH = Path("src/content_checker/standards/standards_library.json")
+LIBRARY_PATH = Path("src/content_checker/standards/private/standards_library.json")
 INITIAL_VERSION = "4.6.1"
 INITIAL_DATE = "2026-04-23"
 INITIAL_NOTE = (
