@@ -11,7 +11,7 @@
  * the JSON; don't branch a second copy.
  */
 
-import library from "@/content_checker/standards/standards_library.json";
+import library from "@/content_checker/standards/private/standards_library.json";
 
 export type StandardSummary = {
   id: string;
