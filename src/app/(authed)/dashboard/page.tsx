@@ -119,7 +119,7 @@ export default async function DashboardPage() {
           <PlanPill plan={plan} />
         </header>
 
-        <TryACheckPanel />
+        <TryACheckPanel plan={plan} />
 
         {/*
           UsagePanelLive + ActiveSurfacesRowLive are Client Components
@@ -181,7 +181,7 @@ export default async function DashboardPage() {
   );
 }
 
-function TryACheckPanel() {
+function TryACheckPanel({ plan }: { plan: Plan }) {
   return (
     <section className="rounded-lg border border-stone-200 p-5 dark:border-stone-800">
       <header className="mb-3 flex items-center justify-between">
@@ -190,7 +190,7 @@ function TryACheckPanel() {
           Paste any UI string · 1 check
         </span>
       </header>
-      <ExplainClient />
+      <ExplainClient plan={plan} />
     </section>
   );
 }
