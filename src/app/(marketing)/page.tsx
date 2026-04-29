@@ -1,35 +1,50 @@
 /**
- * Landing page — human-eval build plan Session 25.
+ * Landing page — 2026-04-29 rewrite.
  *
- * Replaces the Session-0 placeholder with positioning copy structured
- * around the two wedges the plan names:
+ * Robert's brief (the previous landing's failure modes):
+ *   - "Content model for product copy" was narrowing the market
+ *     more than it was helping. The brand promise is staff-level
+ *     content design review, in every repo.
+ *   - The destructive-confirmation / error-message examples were
+ *     the kind of thing a style guide would cover, so they didn't
+ *     land as differentiators.
+ *   - The "judgment calls, not rule books" frame implicitly
+ *     disrespected style guides. The real story is that
+ *     ContentRX takes the work of managing and enforcing the
+ *     rules out of the human's hands, not that the rules don't
+ *     matter.
+ *   - The Grammarly contrast and Stripe Radar frame were earning
+ *     no real estate. Cut.
+ *   - "Built by a content designer" needed the org callouts —
+ *     Intuit, Meta, Opendoor, PayPal — to anchor the named-expert
+ *     positioning.
  *
- *   1. Situation-aware review — ContentRX holds the moment context that
- *      engineers and PMs without content-design training can't hold.
- *   2. Judgment calls — staff-content-designer pattern recognition
- *      encoded, not a rule book.
+ * New section order:
+ *   1. Hero — the brand promise, in the headline.
+ *   2. What it does — situation-aware review framed as "the
+ *      style guide you don't have to update."
+ *   3. Why it works — the work without the maintenance.
+ *   4. How it works — animated five-stage pipeline diagram.
+ *      The model around the model is the moat in visual form.
+ *   5. Where it runs — surfaces, condensed.
+ *   6. Built by — Robert Ballard, with the org arc.
  *
- * Plus a sharp Grammarly/LanguageTool/Alex contrast, the Stripe Radar
- * frame for "the model IS the product," and links to the accountability
- * surface (/accuracy, /sources, /ethics) — the taxonomy itself is
- * private per ADR 2026-04-25; the public surface is the kappa story
- * and the calibration log, not /model.
- *
- * Voice note for Robert: this draft is in my voice. Prose is editable;
- * the structure + the five sections matter for the acceptance
- * criterion. Copy that changes the wedge will also need /about edits.
+ * Voice: per docs/copy-vocabulary.md. Calm, confident, charming.
+ * No em dashes. Names the actor. Doesn't blame the reader. Points
+ * at concrete surfaces (PR, IDE, CLI) over abstract value.
  */
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonStyles } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { HowItWorksDiagram } from "@/components/how-it-works-diagram";
 import { Section } from "@/components/ui/section";
 
 export const metadata: Metadata = {
-  title: "ContentRX. The content model for product copy",
+  title: "ContentRX. Staff-level content design review, in every repo",
   description:
-    "Situation-aware review for error states, destructive confirmations, permissions flows, and the other moments where copy stops being decoration and starts being the product.",
+    "ContentRX reads the strings you ship with the judgment of a staff content designer. Verdict, suggestion, rationale. In your pull request, your IDE, and your Figma file, before the next review cycle.",
 };
 
 export default function Home() {
@@ -38,16 +53,13 @@ export default function Home() {
       <header>
         <Eyebrow>ContentRX</Eyebrow>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          The content model for product copy.
+          Staff-level content design review in every repo
         </h1>
         <p className="mt-6 text-lg text-stone-700 dark:text-stone-300">
-          Situation-aware review for the moments where copy stops being
-          decoration and starts being the product: error states, empty
-          states, permissions flows, destructive confirmations, compliance
-          disclosures. A staff content designer&apos;s pattern recognition,
-          running where product copy is increasingly written:{" "}
-          <strong>Claude Code, Cursor, your CLI, and every pull request</strong>
-          . With the Figma plugin alongside for design-time checks.
+          ContentRX reads the strings you ship with the judgment of a
+          staff content designer. Verdict, suggestion, rationale, in
+          your pull request, your IDE, and your Figma file. Before the
+          next review cycle, before merge.
         </p>
         <div className="mt-8 flex flex-wrap gap-3 text-sm">
           <Link href="/sign-up" className={buttonStyles({ variant: "primary" })}>
@@ -71,134 +83,147 @@ export default function Home() {
         </div>
       </header>
 
-      <Section eyebrow="Wedge 1" title="Situation-aware review">
+      <Section
+        eyebrow="What it does"
+        title="A style guide you don't have to update."
+      >
         <p>
-          Most UI copy is fine. The stakes are concentrated in a
-          handful of moments: an error message that tells the user
-          what went wrong and what to do next; a destructive
-          confirmation that names the thing being destroyed; a
-          permissions button that asks for access instead of
-          declaring submission; an empty state that points somewhere
-          useful.
+          Style guides go stale. Voice docs live in a Notion that no
+          one can find. The judgment calls about how your product
+          should sound are real, and they matter, but they don&apos;t
+          show up in the moment you need them. Not at 4pm on Friday
+          when you&apos;re typing a button label.
         </p>
         <p className="mt-3">
-          Engineers and PMs without content-design training can&apos;t
-          hold all that context in their heads while they&apos;re
-          shipping features. ContentRX holds it for them. It knows
-          that the same sentence reads differently in a destructive
-          confirmation than on a feature browse page, and applies
-          the standards that match the moment it detected.
-        </p>
-      </Section>
-
-      <Section eyebrow="Wedge 2" title="Judgment calls, not rule books">
-        <p>
-          A staff content designer looks at an error message and
-          sees whether it owns the failure or blames the user.
-          That&apos;s not a rule you can look up in a style guide.
-          It&apos;s pattern recognition built from years of practice.
-          ContentRX encodes that pattern recognition.
-          The evaluation chain publishes{" "}
-          <Link href="/accuracy" className="underline underline-offset-2">
-            its own accuracy
-          </Link>
-          {" "}with confidence intervals and no composite score.
+          ContentRX is the content design voice in the room when you
+          don&apos;t have a content designer at the table. It reads
+          what you wrote, recognises the moment you&apos;re writing
+          for, and applies the standards that match. The same sentence
+          reads differently in a destructive confirmation than on a
+          marketing page. ContentRX knows which one you&apos;re in.
         </p>
       </Section>
 
       <Section
-        eyebrow="Sharp contrast"
-        title="Not the layer Grammarly / LanguageTool / Alex already cover"
+        eyebrow="Why it works"
+        title="The work without the maintenance."
       >
         <p>
-          Those tools check that your sentence is grammatical and
-          inclusive. Excellent at what they do. ContentRX checks a
-          different thing: that your error message <em>shouldn&apos;t
-          be an error message at all</em>; that your destructive
-          confirmation names what will be destroyed; that your
-          permissions button says <code>Request access</code> and not{" "}
-          <code>Submit</code>.
+          Style guides exist for good reason. The rules are real:
+          don&apos;t blame the user, name the consequence in a
+          destructive confirmation, write CTAs as action verbs. None
+          of this is news. The problem has never been that the rules
+          don&apos;t exist. The problem is keeping them current,
+          finding them when you&apos;re shipping, and applying them
+          consistently across everyone writing strings. Engineers,
+          PMs, content designers, the LLM that just drafted the
+          first pass.
         </p>
         <p className="mt-3">
-          You can run both. The layers don&apos;t compete. They stack.
+          ContentRX bakes the rules into the workflow. By the time
+          you finish typing an error message, ContentRX has read
+          every error message in your repo and knows which voice
+          you ship in. Every verdict carries a rationale chain so
+          you can see the read.
+        </p>
+        <p className="mt-3">
+          And because the model is the product, the model is
+          accountable. Measured accuracy lives at{" "}
+          <Link href="/accuracy" className="underline underline-offset-2">
+            /accuracy
+          </Link>
+          . Drift gets reported in the weekly{" "}
+          <Link
+            href="/calibration"
+            className="underline underline-offset-2"
+          >
+            /calibration
+          </Link>
+          {" "}log.
         </p>
       </Section>
 
       <Section
-        eyebrow="The Stripe Radar frame"
-        title="The model is the product"
+        eyebrow="How it works"
+        title="The model around the model."
       >
         <p>
-          Stripe Radar is a model. Stripe sells the model. The rules
-          engineers write on top are secondary; the learned patterns
-          from every transaction Stripe has ever seen are the moat.
+          ContentRX isn&apos;t an LLM with a prompt. It&apos;s a
+          content-design pipeline that gives the LLM the context it
+          needs to render a real judgment. The classifier reads the
+          moment. The filter narrows the standards down to the ones
+          that apply. The reviewer evaluates against those standards
+          with patterns built over years of practice. The validator
+          checks the work. The merger compresses everything into a
+          single envelope: issue, suggestion, severity, confidence.
         </p>
-        <p className="mt-3">
-          ContentRX is a model. We sell the model.{" "}
-          <Link href="/sources" className="underline underline-offset-2">
-            Every source that shaped it
-          </Link>
-          {" "}is named with its license and opt-out path;{" "}
-          <Link href="/accuracy" className="underline underline-offset-2">
-            calibration
-          </Link>
-          {" "}is reported honestly with 95% CIs and no composite
-          headline. The rules you can disable per team;{" "}
-          <Link href="/ethics" className="underline underline-offset-2">
-            the commitments
-          </Link>
-          {" "}you can&apos;t.
-        </p>
+        <HowItWorksDiagram />
       </Section>
 
-      <Section eyebrow="Surfaces" title="Runs at the generation layer">
+      <Section eyebrow="Where it runs" title="Where you ship copy.">
         <p>
-          Content-standards enforcement is moving upstream.
-          Engineers write product copy in the IDE now; PRs carry
-          more strings than design files; LLMs draft the first pass
-          before a content designer sees it. ContentRX meets that
-          reality by leading with the surfaces where copy is
-          actually written today, with the Figma plugin alongside
-          for design-time checks.
+          Content review is moving upstream. PRs carry more strings
+          than design files. LLMs draft the first pass before a
+          content designer sees it. ContentRX leads with the
+          surfaces where copy gets written today.
         </p>
         <ul className="mt-4 ml-5 list-disc space-y-2">
           <li>
-            <strong>MCP server.</strong> Claude Code, Cursor, and
-            any MCP client call <code>evaluate_copy</code> and{" "}
-            <code>classify_moment</code> directly. Inline content
-            review during generation, not after.{" "}
-            <Link href="/install#mcp" className="underline underline-offset-2">
+            <strong>MCP server</strong> for Claude Code, Cursor, and
+            any MCP client. Inline review during generation, not
+            after.{" "}
+            <Link
+              href="/install#mcp"
+              className="underline underline-offset-2"
+            >
               Install
             </Link>
             .
           </li>
           <li>
-            <strong>CLI.</strong>{" "}
+            <strong>CLI</strong> for the terminal and CI.{" "}
             <code>contentrx &quot;Click here&quot;</code> or{" "}
             <code>--batch strings.txt</code>. <code>--explain</code>{" "}
-            prints the full rationale chain. Stdlib-only install.{" "}
-            <Link href="/install#cli" className="underline underline-offset-2">
+            prints the rationale chain. Stdlib-only install.{" "}
+            <Link
+              href="/install#cli"
+              className="underline underline-offset-2"
+            >
               Install
             </Link>
             .
           </li>
           <li>
-            <strong>GitHub Action.</strong> Evaluates strings touched
-            in a pull request. <code>fail-on: review</code> gates
-            the merge on review-recommended verdicts. Drops into
-            any repo with a YAML snippet.{" "}
-            <Link href="/install#action" className="underline underline-offset-2">
+            <strong>GitHub Action</strong> that evaluates strings
+            touched in a pull request. <code>fail-on: review</code>{" "}
+            gates merge on review-recommended verdicts.{" "}
+            <Link
+              href="/install#action"
+              className="underline underline-offset-2"
+            >
               Install
             </Link>
             .
           </li>
           <li>
-            <strong>Figma plugin.</strong> Design-time check.
-            Scan a frame, per-string verdicts with moment banners
-            and rationale chains. Three-button stance per finding
-            (Agree / Disagree / Ship anyway). Best for the copy
-            that comes in through design, not code.{" "}
-            <Link href="/install#figma" className="underline underline-offset-2">
+            <strong>LSP</strong> for VS Code, Zed, and any LSP
+            editor. Verdicts as diagnostics, inline.{" "}
+            <Link
+              href="/install#lsp"
+              className="underline underline-offset-2"
+            >
+              Install
+            </Link>
+            .
+          </li>
+          <li>
+            <strong>Figma plugin</strong> for design-time review.
+            Per-string verdicts with moment banners and rationale
+            chains.{" "}
+            <Link
+              href="/install#figma"
+              className="underline underline-offset-2"
+            >
               Install
             </Link>
             .
@@ -206,19 +231,18 @@ export default function Home() {
         </ul>
       </Section>
 
-      <Section eyebrow="About the voice" title="Built by a content designer">
+      <Section eyebrow="Built by" title="Someone who has been in the room.">
         <p>
-          ContentRX is the content model that Robert (a staff content
-          designer) would run on his own work. The moments, the
-          weights, and the standards all carry one designer&apos;s
-          judgment calls, attributed and published. Read the{" "}
+          Robert Ballard, staff content designer at PayPal. Previously
+          Intuit, Meta, and Opendoor. The moments, the weights, and
+          the standards all carry a single designer&apos;s judgment
+          calls, attributed and published. Read the{" "}
           <Link href="/about" className="underline underline-offset-2">
             about-the-model
           </Link>
           {" "}page for the longer story.
         </p>
       </Section>
-
     </main>
   );
 }
