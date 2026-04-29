@@ -155,15 +155,17 @@ export default async function ImpactPage() {
       {totalSignals === 0 && (
         <section className="rounded-lg border border-stone-200 bg-stone-50 p-5 dark:border-stone-800 dark:bg-stone-900">
           <p className="text-sm text-stone-700 dark:text-stone-300">
-            No signals yet. Run a check on{" "}
+            No signals yet. Run a check on the dashboard, then click
+            Copy or Adjust on a finding to start contributing.
+          </p>
+          <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
             <Link
               href="/dashboard"
               className="underline underline-offset-2"
             >
-              your dashboard
+              Go to the dashboard
             </Link>
-            , then click <strong>Copy</strong> or <strong>Adjust</strong>{" "}
-            on a finding to start contributing.
+            .
           </p>
         </section>
       )}
