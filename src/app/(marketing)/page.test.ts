@@ -5,16 +5,22 @@ import { describe, expect, it } from "vitest";
 /**
  * Copy-pin tests for the landing page + /about page.
  *
- * Human-eval build plan Session 25 sets structural acceptance
- * criteria on the positioning copy: two wedges named, the Grammarly
- * contrast, the Stripe Radar frame, and the accountability surface
- * linked. These tests lock those sections as present — they don't
- * pin the prose itself, which is Robert's to edit.
+ * Updated 2026-04-29 for Robert's landing rewrite (cut Grammarly
+ * contrast + Stripe Radar frame; rebuilt around the brand promise
+ * "staff-level content design review, in every repo"). The wedge
+ * vocabulary changed: "situation-aware" stayed, "judgment calls"
+ * was reframed as "the work without the maintenance" (the prior
+ * frame implicitly disrespected style guides; the new frame says
+ * the rules are real and ContentRX takes the work of managing
+ * them off the human).
  *
- * Bracketed placeholders (e.g. `{years shipping…}`) must never ship;
- * the shape lets Robert leave fill-in-later notes in the source without
- * shipping them to production. The test fails on any `{…}` that
- * survives to main.
+ * Tests pin structure, not prose. Robert edits the prose; the
+ * tests catch regressions like "the brand promise dropped out of
+ * the hero" or "the org callouts walked off the page."
+ *
+ * Bracketed placeholders (e.g. `{years shipping…}`) must never
+ * ship; the shape lets Robert leave fill-in-later notes in the
+ * source without shipping them to production.
  */
 
 const ROOT = path.join(__dirname, "..", "..", "..");
@@ -35,25 +41,49 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
   const source = readSource("src/app/(marketing)/page.tsx");
   const visible = visibleCopy(source);
 
-  it("names both wedges with the plan's vocabulary", () => {
-    expect(visible).toMatch(/situation-aware/i);
-    expect(visible).toMatch(/judgment calls?/i);
+  it("leads with the brand promise (staff-level content design review, in every repo)", () => {
+    // The hero h1 is the brand promise. If a future edit weakens
+    // the headline (drops "staff" or drops "every repo"), this
+    // test fails — staff-level positioning is the whole hook.
+    expect(visible).toMatch(/Staff[- ]level content design review/i);
+    expect(visible).toMatch(/in every repo/i);
   });
 
-  it("keeps the Grammarly / LanguageTool / Alex contrast", () => {
-    expect(visible).toMatch(/Grammarly/);
-    expect(visible).toMatch(/LanguageTool/);
-    expect(visible).toMatch(/Alex/);
+  it("frames the wedge as a style guide you don't have to update", () => {
+    // The "situation-aware" term stays as a load-bearing concept;
+    // the customer-facing reframe is "style guide you don't have
+    // to update" plus "voice in the room when you don't have a
+    // content designer at the table."
+    expect(visible).toMatch(/style guide/i);
+    expect(visible).toMatch(/voice in the room/i);
   });
 
-  it("invokes the Stripe Radar frame", () => {
-    expect(visible).toMatch(/Stripe Radar/);
+  it("calls out the model around the model with the diagram", () => {
+    // The how-it-works section visualises the pipeline. The
+    // <HowItWorksDiagram /> import + render are the structural
+    // gate against accidentally dropping the diagram.
+    expect(source).toContain("HowItWorksDiagram");
+    expect(visible).toMatch(/the model around the model/i);
   });
 
-  it("links the public accountability surface", () => {
-    for (const href of ["/accuracy", "/sources", "/ethics"]) {
-      expect(visible).toContain(`href="${href}"`);
+  it("names the four orgs in the founder credit (Intuit, Meta, Opendoor, PayPal)", () => {
+    // The named-expert positioning hinges on the org arc. If a
+    // future edit drops one of these, the credibility surface
+    // narrows.
+    for (const org of ["Intuit", "Meta", "Opendoor", "PayPal"]) {
+      expect(visible).toContain(org);
     }
+    expect(visible).toMatch(/Robert Ballard/);
+  });
+
+  it("links the public accountability surface from the body copy", () => {
+    // /accuracy and /calibration are inline-linked from the
+    // "why it works" section. The remaining trust surfaces
+    // (/sources, /ethics, /privacy, /security) live in the
+    // global <SiteFooter>; the body copy doesn't have to carry
+    // every cross-link, but it has to walk the reader to at
+    // least one accountability surface inline.
+    expect(visible).toMatch(/href="\/(accuracy|calibration)"/);
   });
 
   it("does not link to the private /model surface", () => {
@@ -65,10 +95,10 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
     expect(visible).not.toMatch(/real marketing copy ships in Session/i);
   });
 
-  it("leads with generation-layer surfaces per Session 29", () => {
-    // The Surfaces list must list MCP before Figma — the whole
-    // point of Session 29 is that the Figma plugin is no longer the
-    // flagship. This test is the structural gate.
+  it("leads with generation-layer surfaces (MCP before Figma)", () => {
+    // The Surfaces list must list MCP before Figma — Session 29
+    // moved the Figma plugin off the flagship slot, and the
+    // post-pivot positioning kept it that way.
     const mcpIdx = visible.indexOf("<strong>MCP server.</strong>");
     const figmaIdx = visible.indexOf("<strong>Figma plugin.</strong>");
     expect(mcpIdx).toBeGreaterThan(-1);
@@ -77,9 +107,8 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
   });
 
   it("hero CTA points to /install, not straight to the Figma community page", () => {
-    // Before Session 29 the hero button was a direct
-    // figma.com/community link. Post-Session-29 it funnels through
-    // /install so first-time visitors see MCP/CLI/Action first.
+    // The hero funnels through /install so first-time visitors
+    // see MCP/CLI/Action before Figma.
     expect(visible).toContain('href="/install"');
     expect(visible).not.toMatch(
       /href=["']https?:\/\/(www\.)?figma\.com\/community[^"']*["']\s+className=[^>]*bg-black/,
