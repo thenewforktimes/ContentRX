@@ -1,0 +1,65 @@
+name: Customer-copy engine check
+
+# Runs the dogfood loop: changed customer copy in this PR goes through
+# ContentRX's own engine via /api/evaluate. Blocks merge on
+# verdict=violation; surfaces verdict=review_recommended as warnings;
+# silent on pass + engine error.
+#
+# This is the layer the mechanical lint can't see. The lint catches
+# em dashes and "guys"; the engine catches:
+#
+#   - Error messages that blame the user
+#   - Destructive confirmations that don't name the consequence
+#   - CTAs that read "Click here" semantically even if they don't
+#     spell it that way
+#   - Generic responses ("consider revising", "you might want to")
+#   - Calm/confident/charming drift
+#
+# Runs on pull_request only. Push to main skips the engine check —
+# the mechanical lint already covers the cheap deterministic stuff
+# on every push, and re-running the engine on full main twice a day
+# is a quota burn we don't need.
+#
+# Cost note: each call hits Anthropic upstream. Diff scoping bounds
+# cost to actual change size (typically 5-50 strings). PR 5 adds a
+# response cache to avoid re-evaluating unchanged strings between
+# CI runs on the same branch.
+
+on:
+  pull_request:
+
+concurrency:
+  # Only one engine check per PR at a time. A new push to the branch
+  # cancels the in-flight run; the freshest result wins.
+  group: check-engine-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-engine:
+    name: check:engine
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          # Full history so `git diff origin/<base>...HEAD` resolves.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run engine check (diff-scoped)
+        env:
+          INTERNAL_EVAL_SECRET: ${{ secrets.INTERNAL_EVAL_SECRET }}
+        run: |
+          if [ -z "$INTERNAL_EVAL_SECRET" ]; then
+            echo "INTERNAL_EVAL_SECRET is not set in repo secrets. Skipping engine check."
+            echo "Add the secret in repo settings → Secrets and variables → Actions to enable."
+            exit 0
+          fi
+          npm run check:engine -- --diff=origin/${{ github.event.pull_request.base.ref }} --pretty
