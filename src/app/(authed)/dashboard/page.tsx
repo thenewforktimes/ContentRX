@@ -436,7 +436,7 @@ function TeamRulesLink() {
         evaluation your team runs.
       </p>
       <Link
-        href="/dashboard/team/rules"
+        href="/dashboard/rules"
         className={buttonStyles({ variant: "secondary", size: "sm" })}
       >
         Edit team rules
