@@ -193,7 +193,7 @@ export default async function OverridesPage() {
           The rules your team dismisses most. Use this to decide which
           standards to disable or override in your{" "}
           <Link
-            href="/dashboard/team/rules"
+            href="/dashboard/rules"
             className="underline underline-offset-2"
           >
             team rules
