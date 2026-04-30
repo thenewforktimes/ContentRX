@@ -17,6 +17,11 @@ import { z } from "zod";
 import { publicCheckEnvelope } from "@/lib/api-envelope";
 import { revalidateDashboard } from "@/lib/revalidate";
 import { resolveAuth } from "@/lib/auth";
+import {
+  checkCostPause,
+  evaluateAndPauseIfExceeded,
+  recordUsageEvent,
+} from "@/lib/cost-monitor";
 import { corsJson, corsPreflight } from "@/lib/cors";
 import {
   findMatchingExample,
@@ -202,6 +207,28 @@ export async function POST(req: Request) {
     );
   }
 
+  // Cost-monitor pause check — Phase 4 of the pre-pilot launch build.
+  // When a user crossed their daily/monthly cost threshold on a
+  // previous call, the threshold-evaluation logic flipped
+  // `cost_pause_active = true`. Subsequent calls 402 here until a
+  // founder Resume from /admin/costs clears the flag. Defaults are
+  // permissive ($50/day, $500/month) — this only fires on runaway
+  // scripts or misconfigured CI loops, not normal heavy use.
+  const isPaused = await checkCostPause(auth.user.id).catch((err) => {
+    logSafeError("checkCostPause failed; defaulting to not-paused", err);
+    return false;
+  });
+  if (isPaused) {
+    return json(
+      {
+        error:
+          "Pilot account paused for review. Email Robo to resume.",
+        paused: true,
+      },
+      { status: 402 },
+    );
+  }
+
   const quota = monthlyQuota(auth.plan, auth.seats);
 
   // Rate-limit check first (cheap + purely time-based), then the
@@ -372,15 +399,21 @@ export async function POST(req: Request) {
   const withAdds = applyAddedRules(overridden, text, teamRules.adds);
   const result = recomputeVerdict(withAdds);
 
-  // Log + token-usage writes are observational — both run in parallel
-  // since neither depends on the other, and a failure in either should
-  // never fail the request. The user already got their result and quota
-  // was already counted at claimQuotaSlot time.
+  // Log + token-usage + cost-event writes are observational — all run
+  // in parallel since none depends on the others, and a failure in
+  // any should never fail the request. The user already got their
+  // result and quota was already counted at claimQuotaSlot time.
   // team_id always equals "team-owner-or-self" — see lib/team-scope.ts
   // for the full rationale. Centralized in `teamScope()` so writes and
   // reads always agree (PR-198 fix for the team_id NULL bug).
   const teamIdForLog = teamScope(auth);
-  const [logResult, tokenResult] = await Promise.allSettled([
+  const tokens = {
+    inputTokens: evalResponse.tokens.input,
+    outputTokens: evalResponse.tokens.output,
+    cacheReadInputTokens: evalResponse.tokens.cache_read_input ?? 0,
+    cacheCreationInputTokens: evalResponse.tokens.cache_creation_input ?? 0,
+  };
+  const [logResult, tokenResult, eventResult] = await Promise.allSettled([
     logViolations({
       userId: auth.user.id,
       teamId: teamIdForLog,
@@ -394,11 +427,18 @@ export async function POST(req: Request) {
         (result as { review_reason?: string | null }).review_reason ?? null,
       runId: run_id ?? null,
     }),
-    recordTokenUsage(auth.user.id, {
-      inputTokens: evalResponse.tokens.input,
-      outputTokens: evalResponse.tokens.output,
-      cacheReadInputTokens: evalResponse.tokens.cache_read_input ?? 0,
-      cacheCreationInputTokens: evalResponse.tokens.cache_creation_input ?? 0,
+    recordTokenUsage(auth.user.id, tokens),
+    // Phase 4 cost-monitor: per-call event row (daily granularity for
+    // /admin/costs and the threshold-evaluation logic). The engine
+    // doesn't surface its model id today, so we pass null and let the
+    // cost helper apply a conservative Sonnet-class fallback rate —
+    // the cost monitor is for anomaly detection, not invoice accuracy.
+    recordUsageEvent({
+      userId: auth.user.id,
+      segmentType: meterDecision.tier,
+      unitsConsumed: meterDecision.unitsConsumed,
+      ...tokens,
+      modelId: null,
     }),
   ]);
   if (logResult.status === "rejected") {
@@ -406,6 +446,28 @@ export async function POST(req: Request) {
   }
   if (tokenResult.status === "rejected") {
     logSafeError("recordTokenUsage failed", tokenResult.reason);
+  }
+  if (eventResult.status === "rejected") {
+    logSafeError("recordUsageEvent failed", eventResult.reason);
+  } else {
+    // Threshold evaluation runs after the event row lands so the new
+    // call's spend is included in the daily/monthly sum. Errors here
+    // are non-fatal — the next call's evaluation will catch the same
+    // threshold cross. Don't await the email; the user response
+    // doesn't depend on it.
+    void evaluateAndPauseIfExceeded(auth.user.id)
+      .then((result) => {
+        if (result?.pausedNow) {
+          notifyCostPause({
+            userEmail: auth.user.email,
+            userId: auth.user.id,
+            ...result,
+          });
+        }
+      })
+      .catch((err) => {
+        logSafeError("evaluateAndPauseIfExceeded failed", err);
+      });
   }
 
   // Bust the dashboard's edge cache + tag-cached loaders so the usage
@@ -519,4 +581,37 @@ async function notifyQuotaExhausted(args: {
   } catch (err) {
     console.warn("quota-exhausted email failed", err);
   }
+}
+
+/**
+ * Founder alert: a user crossed their daily/monthly cost threshold and
+ * the cost monitor flipped `cost_pause_active`. Logs a structured
+ * warning to Vercel function logs (Sentry ingests). Email-template
+ * build is deferred — the founder reads the pause from /admin/costs
+ * on next login. The threshold-evaluator's atomic UPDATE guard
+ * de-dupes re-pause attempts so this fires at most once per crossing.
+ */
+function notifyCostPause(args: {
+  userEmail: string;
+  userId: string;
+  dailySpendUsd: number;
+  monthlySpendUsd: number;
+  dailyThresholdUsd: number;
+  monthlyThresholdUsd: number;
+}) {
+  const trigger: "daily" | "monthly" =
+    args.dailySpendUsd >= args.dailyThresholdUsd ? "daily" : "monthly";
+  console.warn(
+    JSON.stringify({
+      kind: "cost-pause",
+      userId: args.userId,
+      userEmail: args.userEmail,
+      trigger,
+      dailySpendUsd: args.dailySpendUsd,
+      monthlySpendUsd: args.monthlySpendUsd,
+      dailyThresholdUsd: args.dailyThresholdUsd,
+      monthlyThresholdUsd: args.monthlyThresholdUsd,
+      message: `Cost-pause triggered. Resume at /admin/costs.`,
+    }),
+  );
 }

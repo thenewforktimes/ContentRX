@@ -584,3 +584,53 @@ describe("/api/check — engine failure", () => {
     expect(JSON.stringify(body)).not.toContain("python engine down");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Cost-pause middleware (Phase 4 cost monitor)
+// ---------------------------------------------------------------------------
+
+describe("/api/check — cost pause", () => {
+  it("returns 402 with a paused message when cost_pause_active is true", async () => {
+    const userId = await seedAuthedUser("pro");
+    await harness.db
+      .update(schema.users)
+      .set({ costPauseActive: true })
+      .where(eq(schema.users.id, userId));
+    cannedEval.current = PASS_RESULT;
+    // Clear accumulated mock calls from earlier tests in the suite —
+    // we only want to assert the engine wasn't called for THIS request.
+    const { evaluate } = await import("@/lib/evaluate");
+    vi.mocked(evaluate).mockClear();
+
+    const res = await POST(makeReq({ text: "anything" }));
+    expect(res.status).toBe(402);
+    const body = await res.json();
+    expect(body.paused).toBe(true);
+    expect(body.error).toMatch(/paused/i);
+    // Engine must NOT be called for paused users.
+    expect(vi.mocked(evaluate)).not.toHaveBeenCalled();
+  });
+
+  it("writes a usage_events row on every successful check", async () => {
+    const userId = await seedAuthedUser("pro");
+    cannedEval.current = PASS_RESULT;
+
+    const res = await POST(
+      makeReq({ text: "Save changes", segment_type: "standard" }),
+    );
+    expect(res.status).toBe(200);
+
+    const events = await harness.db
+      .select()
+      .from(schema.usageEvents)
+      .where(eq(schema.usageEvents.userId, userId));
+    expect(events).toHaveLength(1);
+    expect(events[0]!.segmentType).toBe("standard");
+    expect(events[0]!.unitsConsumed).toBe(1);
+    expect(events[0]!.inputTokens).toBe(800);
+    expect(events[0]!.outputTokens).toBe(50);
+    expect(parseFloat(events[0]!.estimatedCostUsd ?? "0")).toBeGreaterThan(
+      0,
+    );
+  });
+});
