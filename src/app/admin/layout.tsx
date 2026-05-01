@@ -25,6 +25,7 @@ import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CommandPalette } from "@/components/admin/command-palette";
 import { isContentRXAdmin } from "@/lib/graduation";
 import { loadSidebarCounts } from "@/lib/admin/sidebar-counts";
 
@@ -62,6 +63,10 @@ export default async function AdminLayout({
           >
             ContentRX · Admin
           </Link>
+
+          <div className="mt-4 px-2">
+            <CommandPalette />
+          </div>
 
           <nav aria-label="Admin sections" className="mt-6 space-y-6 text-sm">
             <NavGroup label="Model">
