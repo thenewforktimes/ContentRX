@@ -24,7 +24,11 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from . import __version__
-from .humanize import humanize_severity, humanize_verdict
+from .humanize import (
+    humanize_review_reason,
+    humanize_severity,
+    humanize_verdict,
+)
 
 DEFAULT_API_URL = "https://contentrx.io"
 DEFAULT_TIMEOUT_SECONDS = 60
@@ -261,7 +265,7 @@ def print_result(
         verdict_line = f"{color}{verdict_line}{reset}"
     print(f"\n{verdict_line}", file=stream)
     if verdict == "review_recommended" and review_reason:
-        print(f"  Reason: {review_reason}", file=stream)
+        print(f"  {humanize_review_reason(review_reason)}", file=stream)
 
     if violations:
         print(f"\n  Findings ({len(violations)}):", file=stream)

@@ -385,8 +385,10 @@ def test_print_result_verbose_includes_usage() -> None:
     assert "123 ms" in out
 
 
-def test_print_result_review_recommended_shows_reason() -> None:
-    """Schema 2.0.0 surfaces typed review_reason at the top level."""
+def test_print_result_review_recommended_shows_humanized_reason() -> None:
+    """Schema 2.0.0 surfaces typed review_reason at the top level. The
+    CLI passes the raw enum through `humanize_review_reason` so the
+    customer sees plain language, not engine-pipeline vocabulary."""
     buf = io.StringIO()
     payload = {
         "schema_version": "2.0.0",
@@ -398,7 +400,9 @@ def test_print_result_review_recommended_shows_reason() -> None:
     passed = print_result("Maybe?", payload, verbose=False, stream=buf)
     out = buf.getvalue()
     assert "Worth a look" in out
-    assert "low_confidence" in out
+    # Raw enum must NOT leak to the customer surface — humanized only.
+    assert "low_confidence" not in out
+    assert "We weren't fully sure about this one" in out
     # REVIEW counts as passed for exit-code purposes.
     assert passed is True
 
