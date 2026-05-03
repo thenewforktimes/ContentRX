@@ -122,10 +122,10 @@ export function FindingMakeRuleModal({
     >
       <div className="w-full max-w-lg rounded-lg border border-stone-200 bg-white shadow-xl dark:border-stone-800 dark:bg-stone-950">
         <header className="border-b border-stone-200 px-5 py-4 dark:border-stone-800">
-          <h2 className="text-base font-semibold text-stone-900 dark:text-stone-100">
+          <h2 className="text-base font-semibold text-strong">
             Make a rule for your team
           </h2>
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+          <p className="mt-1 text-sm text-default">
             Pin this exact string as a pass. Future checks for your
             team won&apos;t flag it.
           </p>
@@ -140,7 +140,7 @@ export function FindingMakeRuleModal({
           )}
 
           <div>
-            <label className="block text-xs font-medium text-stone-700 dark:text-stone-300">
+            <label className="block text-xs font-medium text-default">
               The string
             </label>
             <textarea
@@ -150,16 +150,16 @@ export function FindingMakeRuleModal({
               maxLength={100_000}
               className="mt-1 block w-full rounded-md border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
             />
-            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            <p className="mt-1 text-xs text-quiet">
               Match is case-insensitive. Whitespace gets normalized
               before lookup.
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-stone-700 dark:text-stone-300">
+            <label className="block text-xs font-medium text-default">
               Why this should pass{" "}
-              <span className="font-normal text-stone-500 dark:text-stone-400">(optional)</span>
+              <span className="font-normal text-quiet">(optional)</span>
             </label>
             <textarea
               value={notes}
@@ -180,10 +180,10 @@ export function FindingMakeRuleModal({
                 className="mt-0.5 h-4 w-4 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500 dark:border-stone-700"
               />
               <span className="flex-1">
-                <span className="font-medium text-stone-900 dark:text-stone-100">
+                <span className="font-medium text-strong">
                   Help calibrate the ContentRX model
                 </span>
-                <span className="mt-0.5 block text-stone-600 dark:text-stone-400">
+                <span className="mt-0.5 block text-quiet">
                   Your rule becomes a candidate for review. Only
                   approved suggestions reach the model. Off by
                   default.

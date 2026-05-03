@@ -135,7 +135,7 @@ export default async function RunPage({ params }: RunParams) {
         <Eyebrow>Run</Eyebrow>
         <h1 className="text-2xl font-semibold">{run_id}</h1>
         <section className="rounded-lg border border-stone-200 p-6 dark:border-stone-800">
-          <p className="text-sm text-stone-600 dark:text-stone-300">
+          <p className="text-sm text-default">
             This run has no findings on your account, or it expired.
             ContentRX retains run history for 90 days.
           </p>
@@ -188,7 +188,7 @@ export default async function RunPage({ params }: RunParams) {
       <header>
         <Eyebrow>Run</Eyebrow>
         <h1 className="mt-2 text-2xl font-semibold tabular-nums">{run_id}</h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-1 text-sm text-default">
           {sourceLabel} · {formatTimeRange(earliestAt, latestAt)}
         </p>
       </header>
@@ -241,11 +241,11 @@ function Stat({
     tone === "high"
       ? "text-rose-700 dark:text-rose-400"
       : tone === "muted"
-        ? "text-stone-700 dark:text-stone-300"
-        : "text-stone-900 dark:text-stone-100";
+        ? "text-default"
+        : "text-strong";
   return (
     <div className="rounded-lg border border-stone-200 p-4 dark:border-stone-800">
-      <div className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <div className="text-xs uppercase tracking-wide text-quiet">
         {label}
       </div>
       <div className={`mt-1 text-2xl font-semibold tabular-nums ${valueClasses}`}>
@@ -266,7 +266,7 @@ function FileBlock({
     <section className="rounded-lg border border-stone-200 p-4 dark:border-stone-800">
       <header className="mb-3 flex items-center justify-between">
         <code className="text-sm font-medium">{file}</code>
-        <span className="text-xs text-stone-500 dark:text-stone-400">
+        <span className="text-xs text-quiet">
           {items.length} {items.length === 1 ? "finding" : "findings"}
         </span>
       </header>
@@ -278,7 +278,7 @@ function FileBlock({
           >
             <SeverityDot severity={it.severity} />
             <div className="flex-1">
-              <div className="text-stone-700 dark:text-stone-300">
+              <div className="text-default">
                 {humanizeContentType(it.contentType)}
                 {it.moment && (
                   <>

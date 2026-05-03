@@ -122,13 +122,13 @@ export default async function JoinPage({ searchParams }: PageProps) {
   return (
     <main className="mx-auto max-w-md px-6 py-20">
       <header className="mb-6">
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           You&apos;re invited
         </p>
         <h1 className="mt-2 text-2xl font-semibold">
           Join {owner?.email ?? "a ContentRX team"}
         </h1>
-        <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-3 text-sm text-quiet">
           Accepting this invitation adds your account to the team. You&apos;ll
           share the team&apos;s monthly check quota, custom rules, and
           custom examples.
@@ -137,7 +137,7 @@ export default async function JoinPage({ searchParams }: PageProps) {
 
       <JoinButton token={token} />
 
-      <p className="mt-6 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-6 text-xs text-quiet">
         Signed in as <span className="font-mono">{user.email}</span>. If
         that&apos;s not right,{" "}
         <Link href="/sign-out" className="underline underline-offset-2">
@@ -162,7 +162,7 @@ function ErrorCard({
     <main className="mx-auto max-w-md px-6 py-20">
       <section className="rounded-lg border border-stone-200 p-6 dark:border-stone-800">
         <h1 className="text-lg font-semibold">{title}</h1>
-        <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-3 text-sm text-quiet">
           {body}
         </p>
         {cta && (

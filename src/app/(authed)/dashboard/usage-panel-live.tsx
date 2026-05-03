@@ -102,7 +102,7 @@ export function UsagePanelLive({
     <section className="rounded-lg border border-stone-200 p-5 dark:border-stone-800">
       <header className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold">Usage this month</h2>
-        <span className="text-xs text-stone-500 dark:text-stone-300">
+        <span className="text-xs text-default">
           {currentMonth()}
         </span>
       </header>
@@ -110,7 +110,7 @@ export function UsagePanelLive({
         <span className="text-3xl font-semibold tabular-nums">
           {used.toLocaleString()}
         </span>
-        <span className="text-sm text-stone-500 dark:text-stone-300">
+        <span className="text-sm text-default">
           of {quota.toLocaleString()} checks
         </span>
       </div>
@@ -120,17 +120,17 @@ export function UsagePanelLive({
           style={{ width: `${usedPct}%` }}
         />
       </div>
-      <p className="mt-2 text-xs text-stone-500 dark:text-stone-300">
+      <p className="mt-2 text-xs text-default">
         Resets {nextMonthReset()}.
       </p>
       {tone === "warn" && (
-        <p className="mt-2 text-xs text-stone-900 dark:text-stone-100">
+        <p className="mt-2 text-xs text-strong">
           You&apos;re close to your monthly limit. Upgrade to keep
           checking before {nextMonthReset()}.
         </p>
       )}
       {tone === "exhausted" && (
-        <p className="mt-2 text-xs text-stone-900 dark:text-stone-100">
+        <p className="mt-2 text-xs text-strong">
           You&apos;ve run out of free content checks. Upgrade to keep
           checking.
         </p>

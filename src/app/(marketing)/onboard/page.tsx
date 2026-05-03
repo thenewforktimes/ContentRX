@@ -93,7 +93,7 @@ export default async function OnboardPage() {
         <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
           Where do you want to use it first?
         </h1>
-        <p className="mt-4 text-lg text-stone-700 dark:text-stone-300">
+        <p className="mt-4 text-lg text-default">
           Pick the surface you&apos;ll start with. You can use the others
           later. One API key covers them all, and your 20 free checks
           a month are shared across every surface.
@@ -112,10 +112,10 @@ export default async function OnboardPage() {
               className="flex h-full flex-col gap-3 transition group-hover:border-stone-400 dark:group-hover:border-stone-600"
             >
               <h2 className="text-base font-semibold">{option.name}</h2>
-              <p className="flex-1 text-sm text-stone-700 dark:text-stone-300">
+              <p className="flex-1 text-sm text-default">
                 {option.description}
               </p>
-              <p className="text-sm font-medium text-stone-900 dark:text-stone-100">
+              <p className="text-sm font-medium text-strong">
                 {option.cta}
               </p>
             </Card>
@@ -123,7 +123,7 @@ export default async function OnboardPage() {
         ))}
       </section>
 
-      <footer className="mt-12 text-sm text-stone-600 dark:text-stone-400">
+      <footer className="mt-12 text-sm text-quiet">
         <p>
           Not sure?{" "}
           <Link

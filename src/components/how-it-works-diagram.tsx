@@ -149,7 +149,7 @@ export function HowItWorksDiagram() {
           );
         })}
       </ol>
-      <p className="mt-4 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-4 text-xs text-quiet">
         Each stage compresses what reaches the LLM down to the
         standards that actually apply to your string in your moment.
         That&apos;s the model around the model.
@@ -178,13 +178,13 @@ function StageCard({
         "data-[state=complete]:border-emerald-200 data-[state=complete]:bg-emerald-50/50 data-[state=complete]:dark:border-emerald-900 data-[state=complete]:dark:bg-emerald-950/20",
       ].join(" ")}
     >
-      <p className="text-[10px] font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-quiet">
         Stage {index + 1}
       </p>
-      <p className="mt-1 text-sm font-semibold text-stone-900 dark:text-stone-100">
+      <p className="mt-1 text-sm font-semibold text-strong">
         {stage.label}
       </p>
-      <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">
+      <p className="mt-1 text-xs text-default">
         {stage.caption}
       </p>
       <div
@@ -192,7 +192,7 @@ function StageCard({
           "mt-3 min-h-[2.25rem] transition-opacity duration-500",
           state === "pending"
             ? "opacity-0"
-            : "opacity-100 text-stone-700 dark:text-stone-200",
+            : "opacity-100 text-default",
         ].join(" ")}
         aria-hidden={state === "pending"}
       >
@@ -248,10 +248,10 @@ function VerdictCard() {
       className="space-y-1 text-[11px] leading-tight"
     >
       <p>
-        <span className="font-mono text-stone-500 dark:text-stone-400">
+        <span className="font-mono text-quiet">
           suggestion:
         </span>{" "}
-        <span className="font-medium text-stone-900 dark:text-stone-100">
+        <span className="font-medium text-strong">
           &ldquo;View pricing&rdquo;
         </span>
       </p>

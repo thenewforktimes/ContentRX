@@ -100,7 +100,7 @@ export function FlagForReview({
   const triggerClassName =
     variant === "card-action"
       ? "shrink-0 rounded-md border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200 dark:hover:bg-stone-900"
-      : "text-xs text-stone-600 underline underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100";
+      : "text-xs text-stone-600 underline underline-offset-2 hover:text-quiet dark:hover:text-stone-100";
   const triggerLabel =
     variant === "card-action" ? "Flag" : "Flag for review";
 
@@ -137,11 +137,11 @@ export function FlagForReview({
             <header className="space-y-2">
               <h2
                 id={`${consentId}-title`}
-                className="text-lg font-semibold text-stone-900 dark:text-stone-100"
+                className="text-lg font-semibold text-strong"
               >
                 Flag for review
               </h2>
-              <p className="text-sm text-stone-600 dark:text-stone-300">
+              <p className="text-sm text-default">
                 You&rsquo;re sending this {violationId ? "finding" : "check"}{" "}
                 to Robert to review. He&rsquo;ll see the original text, the
                 verdict, and your note. With your consent, it can be used
@@ -200,7 +200,7 @@ export function FlagForReview({
               <fieldset>
                 <legend
                   id={reasonId}
-                  className="text-sm font-medium text-stone-800 dark:text-stone-200"
+                  className="text-sm font-medium text-default"
                 >
                   What&rsquo;s off?
                 </legend>
@@ -231,7 +231,7 @@ export function FlagForReview({
               <div>
                 <label
                   htmlFor={noteId}
-                  className="text-sm font-medium text-stone-800 dark:text-stone-200"
+                  className="text-sm font-medium text-default"
                 >
                   Note (optional)
                 </label>

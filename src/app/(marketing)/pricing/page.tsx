@@ -38,12 +38,12 @@ export default function PricingPage() {
         <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
           A staff content designer&apos;s verdict on every string you ship.
         </h1>
-        <p className="mt-4 text-lg text-stone-700 dark:text-stone-300">
+        <p className="mt-4 text-lg text-default">
           Free to start, $39/month to use it daily, $59/seat for teams.
           In your repo, your PR, your Figma file, your terminal, without
           ever leaving the work.
         </p>
-        <p className="mt-4 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-4 text-sm text-quiet">
           All paid plans share the same engine, the same calibrated reviewer,
           and the same five surfaces. The differences are seat count, monthly
           checks, and admin features.
@@ -262,14 +262,14 @@ function PlanCard({
         </div>
         <p className="mt-1 text-2xl font-semibold">{price}</p>
         {priceSubnote && (
-          <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+          <p className="mt-1 text-xs text-quiet">
             {priceSubnote}
           </p>
         )}
       </div>
-      <div className="flex-1 space-y-2 text-sm text-stone-700 dark:text-stone-300">
+      <div className="flex-1 space-y-2 text-sm text-default">
         <p className="font-medium">{quota}</p>
-        <ul className="space-y-1 text-stone-600 dark:text-stone-400">
+        <ul className="space-y-1 text-quiet">
           {features.map((feature) => (
             <li key={feature} className="flex gap-2">
               <span aria-hidden>·</span>
@@ -288,7 +288,7 @@ function PlanCard({
           {cta.label}
         </Link>
       ) : (
-        <p className="text-xs text-stone-600 dark:text-stone-400">
+        <p className="text-xs text-quiet">
           We&apos;ll announce availability on{" "}
           <Link href="/calibration" className="underline underline-offset-2">
             /calibration
@@ -303,10 +303,10 @@ function PlanCard({
 function Faq({ q, a }: { q: string; a: React.ReactNode }) {
   return (
     <div>
-      <dt className="font-medium text-stone-900 dark:text-stone-100">
+      <dt className="font-medium text-strong">
         {q}
       </dt>
-      <dd className="mt-1 text-stone-700 dark:text-stone-300">{a}</dd>
+      <dd className="mt-1 text-default">{a}</dd>
     </div>
   );
 }

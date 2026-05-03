@@ -153,15 +153,15 @@ export default async function AdminSuggestionsPage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="text-2xl font-semibold text-strong">
           Suggestion calibration
         </h1>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-2 text-sm text-default">
           Customer rewrites that opted into upstream sharing. Approve to
           promote the cluster to a single precedent the runtime scan
           prompt reads. Reject for slop.
         </p>
-        <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+        <p className="mt-2 text-xs text-quiet">
           {totalPending} pending candidate{totalPending === 1 ? "" : "s"}{" "}
           across {clusters.length} cluster{clusters.length === 1 ? "" : "s"}
           {" · "}
@@ -205,7 +205,7 @@ export default async function AdminSuggestionsPage() {
 
       {recentPrecedents.length > 0 && (
         <section className="mt-12">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
             Recent precedents
           </h2>
           <ul className="mt-3 space-y-2 text-sm">
@@ -214,11 +214,11 @@ export default async function AdminSuggestionsPage() {
                 key={p.id}
                 className="rounded-md border border-stone-200 bg-white px-3 py-2 dark:border-stone-800 dark:bg-stone-950"
               >
-                <p className="font-mono text-xs text-stone-500 dark:text-stone-400">
+                <p className="font-mono text-xs text-quiet">
                   {p.moment} · {p.contentType} · {p.standardId} · ×
                   {p.sampleSize}
                 </p>
-                <p className="mt-1 text-stone-900 dark:text-stone-100">
+                <p className="mt-1 text-strong">
                   {p.approvedText}
                 </p>
               </li>

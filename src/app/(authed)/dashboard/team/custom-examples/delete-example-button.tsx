@@ -60,7 +60,7 @@ export function DeleteExampleButton({ id }: { id: string }) {
   }
 
   if (state === "deleting") {
-    return <span className="text-[11px] text-stone-500 dark:text-stone-400">Deleting…</span>;
+    return <span className="text-[11px] text-quiet">Deleting…</span>;
   }
 
   if (state === "error") {

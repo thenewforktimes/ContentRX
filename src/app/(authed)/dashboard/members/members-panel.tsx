@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Pill } from "@/components/ui/pill";
 
 type Member = {
@@ -83,7 +84,7 @@ export function MembersPanel({
     <div className="flex flex-col gap-8">
       <section className="rounded-lg border border-stone-200 p-5 dark:border-stone-800">
         <h2 className="text-sm font-semibold">Invite a teammate</h2>
-        <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">
+        <p className="mt-1 text-xs text-default">
           They&apos;ll get an email with a link that&apos;s good for 7 days.
           {seatsAvailable === 0 && (
             <>
@@ -93,14 +94,14 @@ export function MembersPanel({
           )}
         </p>
         <form onSubmit={onInvite} className="mt-3 flex flex-wrap gap-2">
-          <input
+          <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="teammate@example.com"
             required
             disabled={state === "submitting" || seatsAvailable === 0}
-            className="flex-1 min-w-[240px] rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100"
+            className="flex-1 min-w-[240px]"
           />
           <Button
             type="submit"
@@ -136,7 +137,7 @@ export function MembersPanel({
               >
                 <div>
                   <p className="font-medium">{p.email}</p>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                  <p className="text-xs text-quiet">
                     Sent {formatDate(p.createdAt)} · expires{" "}
                     {formatDate(p.expiresAt)}
                   </p>
@@ -173,7 +174,7 @@ export function MembersPanel({
                   )}
                 </p>
                 {!m.isOwner && (
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                  <p className="text-xs text-quiet">
                     Joined {formatDate(m.joinedAt)}
                   </p>
                 )}

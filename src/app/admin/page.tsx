@@ -77,23 +77,23 @@ export default async function AdminTodayPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <header className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-quiet">
             {today}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold text-stone-900 dark:text-stone-100">
+          <h1 className="mt-1 text-2xl font-semibold text-strong">
             Today&rsquo;s queue
           </h1>
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+          <p className="mt-1 text-sm text-quiet">
             The cases worth your nuance — recent flagged checks where the
             resolution improves the model. Routine subtypes are off by
             default.
           </p>
         </div>
         <div className="text-right">
-          <p className="font-mono text-2xl font-semibold tabular-nums text-stone-900 dark:text-stone-100">
+          <p className="font-mono text-2xl font-semibold tabular-nums text-strong">
             {queue.rows.length}
           </p>
-          <p className="text-xs text-stone-500 dark:text-stone-400">
+          <p className="text-xs text-quiet">
             in view
           </p>
         </div>
@@ -105,7 +105,7 @@ export default async function AdminTodayPage({ searchParams }: PageProps) {
       />
 
       {queue.selectedSubtypes.length > 0 && (
-        <p className="text-xs text-stone-500 dark:text-stone-400">
+        <p className="text-xs text-quiet">
           {queue.selectedSubtypes
             .map((s) => SUBTYPE_LABEL[s])
             .join(" · ")}
@@ -117,12 +117,12 @@ export default async function AdminTodayPage({ searchParams }: PageProps) {
         <RightRail pilotSummary={pilotSummary} triggers={triggers} />
       </div>
 
-      <p className="text-xs text-stone-500 dark:text-stone-400">
+      <p className="text-xs text-quiet">
         Looking for the exhaustive view across every subtype and a
         180-day window?{" "}
         <Link
           href="/admin/queue"
-          className="underline underline-offset-2 hover:text-stone-900 dark:text-stone-100 dark:hover:text-stone-100"
+          className="underline underline-offset-2 hover:text-strong dark:hover:text-stone-100"
         >
           Open the full queue
         </Link>
@@ -162,7 +162,7 @@ function SubtypeFilterPills({
         }
         href={`/admin?subtypes=${ALL_SUBTYPES.join(",")}`}
       />
-      <span className="mx-1 self-center text-xs text-stone-400 dark:text-stone-600">
+      <span className="mx-1 self-center text-xs text-faint">
         |
       </span>
       {ALL_SUBTYPES.map((s) => {
@@ -243,7 +243,7 @@ function QueueList({ rows }: { rows: TodayQueueRow[] }) {
   if (rows.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-stone-300 bg-white p-8 text-center text-sm text-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-400">
-        <p className="font-medium text-stone-700 dark:text-stone-300">
+        <p className="font-medium text-default">
           Nothing in this view.
         </p>
         <p className="mt-1">
@@ -270,42 +270,42 @@ function QueueRow({ row }: { row: TodayQueueRow }) {
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <Pill tone={tone}>{SUBTYPE_LABEL[row.subtype]}</Pill>
           {row.contentType && (
-            <span className="text-stone-600 dark:text-stone-400">
+            <span className="text-quiet">
               {humanizeContentType(row.contentType)}
             </span>
           )}
           {row.moment && (
-            <span className="text-stone-500 dark:text-stone-500">
+            <span className="text-quiet">
               · {humanizeMoment(row.moment)}
             </span>
           )}
           {row.source && (
-            <span className="text-stone-500 dark:text-stone-500">
+            <span className="text-quiet">
               · {row.source}
             </span>
           )}
         </div>
-        <div className="text-right text-xs text-stone-500 dark:text-stone-400">
+        <div className="text-right text-xs text-quiet">
           {formatRelative(row.createdAt)}
         </div>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-        <span className="font-mono text-stone-700 dark:text-stone-300">
+        <span className="font-mono text-default">
           {row.standardId}
         </span>
         {row.severity && (
-          <span className="text-stone-500 dark:text-stone-500">
+          <span className="text-quiet">
             severity: {row.severity}
           </span>
         )}
         {row.textHash && (
-          <span className="font-mono text-stone-400 dark:text-stone-600">
+          <span className="font-mono text-faint">
             #{row.textHash.slice(0, 12)}
           </span>
         )}
         <Link
           href={`/admin/queue?subtype=${row.subtype}`}
-          className="ml-auto text-stone-700 underline underline-offset-2 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+          className="ml-auto text-stone-700 underline underline-offset-2 hover:text-default dark:hover:text-stone-100"
         >
           Triage in queue →
         </Link>
@@ -324,7 +324,7 @@ function RightRail({
   return (
     <aside className="space-y-6">
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600 dark:text-stone-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
           Pilots snapshot
         </h2>
         <ul className="mt-2 space-y-1 text-xs">
@@ -339,17 +339,17 @@ function RightRail({
         </ul>
         <Link
           href="/admin/pilots"
-          className="mt-2 block text-xs text-stone-700 underline underline-offset-2 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+          className="mt-2 block text-xs text-stone-700 underline underline-offset-2 hover:text-default dark:hover:text-stone-100"
         >
           Open pilot tracker →
         </Link>
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600 dark:text-stone-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
           Conversation triggers
         </h2>
-        <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+        <p className="mt-1 text-xs text-quiet">
           What to talk to which pilot about, today.
         </p>
         {triggers.length === 0 ? (
@@ -365,20 +365,20 @@ function RightRail({
               >
                 {trigger.kind === "debrief_50_checks" ? (
                   <>
-                    <p className="font-medium text-stone-900 dark:text-stone-100">
+                    <p className="font-medium text-strong">
                       Schedule a debrief
                     </p>
-                    <p className="mt-1 text-stone-600 dark:text-stone-400">
+                    <p className="mt-1 text-quiet">
                       {trigger.email} ran {trigger.checks7d} checks in
                       the last 7 days.
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="font-medium text-stone-900 dark:text-stone-100">
+                    <p className="font-medium text-strong">
                       At-risk pilot
                     </p>
-                    <p className="mt-1 text-stone-600 dark:text-stone-400">
+                    <p className="mt-1 text-quiet">
                       {trigger.email} ({trigger.plan}) hasn&rsquo;t run a
                       check in {trigger.daysIdle} days.
                     </p>
@@ -411,7 +411,7 @@ function RailRow({
           ? "bg-rose-500"
           : "bg-stone-400";
   return (
-    <li className="flex items-center justify-between text-stone-700 dark:text-stone-300">
+    <li className="flex items-center justify-between text-default">
       <span className="flex items-center gap-2">
         <span className={`h-1.5 w-1.5 rounded-full ${dot}`} aria-hidden />
         {label}

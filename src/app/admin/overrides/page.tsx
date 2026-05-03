@@ -110,10 +110,10 @@ export default async function AdminOverridesPage({
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="text-2xl font-semibold text-strong">
           Override inbox
         </h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-1 text-sm text-quiet">
           Triage every dismissal into the corpus, the patch queue, or
           mark not-actionable. Last 30 days, sorted most-recent-first.
         </p>
@@ -151,7 +151,7 @@ export default async function AdminOverridesPage({
       </section>
 
       {(params.user || params.standard) && (
-        <section className="text-xs text-stone-600 dark:text-stone-400">
+        <section className="text-xs text-quiet">
           {params.user && <span>User: {params.user} · </span>}
           {params.standard && (
             <span>Standard: {params.standard} · </span>
@@ -177,8 +177,8 @@ export default async function AdminOverridesPage({
               className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="text-xs text-stone-600 dark:text-stone-400">
-                  <p className="font-medium text-stone-900 dark:text-stone-100">
+                <div className="text-xs text-quiet">
+                  <p className="font-medium text-strong">
                     {row.userEmail ?? row.userId ?? "(deleted user)"}
                   </p>
                   <p>
@@ -189,18 +189,18 @@ export default async function AdminOverridesPage({
                   </p>
                 </div>
                 <div className="text-right text-xs">
-                  <p className="font-mono text-stone-700 dark:text-stone-300">
+                  <p className="font-mono text-default">
                     {row.standardId}
                   </p>
                   {row.moment && (
-                    <p className="text-stone-500 dark:text-stone-400">
+                    <p className="text-quiet">
                       {row.moment}
                     </p>
                   )}
                 </div>
               </div>
               {(row.overrideReasonCode || row.overrideReason) && (
-                <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+                <p className="mt-2 text-sm text-default">
                   {row.overrideReasonCode && (
                     <span className="font-medium">
                       {row.overrideReasonCode.replace(/_/g, " ")}.{" "}
@@ -226,10 +226,10 @@ export default async function AdminOverridesPage({
                   Triage to corpus is unavailable for this row.
                 </p>
               )}
-              <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
+              <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-quiet">
                 <span>
                   Status:{" "}
-                  <span className="font-medium text-stone-700 dark:text-stone-300">
+                  <span className="font-medium text-default">
                     {STATUS_LABEL[row.status]}
                   </span>
                 </span>

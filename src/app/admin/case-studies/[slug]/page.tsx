@@ -88,15 +88,15 @@ export default async function AdminCaseStudyDetailPage({
             ← Back to case studies
           </Link>
         </p>
-        <h1 className="mt-2 font-mono text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="mt-2 font-mono text-2xl font-semibold text-strong">
           {detail.slug}
         </h1>
         {detail.description && (
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+          <p className="mt-2 text-sm text-quiet">
             {detail.description}
           </p>
         )}
-        <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-stone-600 dark:text-stone-400">
+        <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-quiet">
           {detail.repo && (
             <Meta label="Repo" value={detail.repo} mono />
           )}
@@ -112,7 +112,7 @@ export default async function AdminCaseStudyDetailPage({
       </header>
 
       <section className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
           Verdict distribution
         </h2>
         <div className="mt-3 flex flex-wrap gap-3 text-xs">
@@ -141,7 +141,7 @@ export default async function AdminCaseStudyDetailPage({
         </div>
         {Object.keys(detail.review_reason_counts).length > 0 && (
           <div className="mt-4">
-            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
               Review reasons
             </h3>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -200,10 +200,10 @@ export default async function AdminCaseStudyDetailPage({
       {detail.summary_md && (
         <section className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900">
           <details>
-            <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-quiet">
               Auto-rolled summary
             </summary>
-            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-stone-700 dark:text-stone-300">
+            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-default">
 {detail.summary_md}
             </pre>
           </details>
@@ -228,14 +228,14 @@ function ResultsSection({
       <header>
         <h2
           id={`section-${verdict}`}
-          className="text-base font-semibold text-stone-900 dark:text-stone-100"
+          className="text-base font-semibold text-strong"
         >
           {VERDICT_LABEL[verdict]}{" "}
-          <span className="font-mono text-sm text-stone-500 dark:text-stone-400">
+          <span className="font-mono text-sm text-quiet">
             ({rows.length})
           </span>
         </h2>
-        <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+        <p className="mt-1 text-xs text-quiet">
           {VERDICT_DESCRIPTION[verdict]}
         </p>
       </header>
@@ -267,7 +267,7 @@ function ResultRow({ row }: { row: EngineResultRow }) {
     <li className="flex flex-col gap-2 px-4 py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="flex flex-1 flex-wrap items-baseline gap-3">
-          <p className="font-sans text-sm text-stone-900 dark:text-stone-100">
+          <p className="font-sans text-sm text-strong">
             {row.input.text}
           </p>
           {review_reason && (
@@ -280,7 +280,7 @@ function ResultRow({ row }: { row: EngineResultRow }) {
           <LogRefinementButton defaults={buildDefaults(row, verdict)} />
         )}
       </div>
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-[10px] text-stone-500 dark:text-stone-400">
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-[10px] text-quiet">
         <span>{row.input.kind}</span>
         <span>{row.input.source_file}:{row.input.line}</span>
         {row.elapsed_ms !== undefined && <span>{row.elapsed_ms}ms</span>}
@@ -296,15 +296,15 @@ function ResultRow({ row }: { row: EngineResultRow }) {
             <li key={j} className="space-y-1">
               <div className="flex flex-wrap items-baseline gap-2 text-xs">
                 <SeverityBadge severity={v.severity} />
-                <span className="text-stone-900 dark:text-stone-100">
+                <span className="text-strong">
                   {v.issue}
                 </span>
-                <span className="font-mono text-[10px] text-stone-500 dark:text-stone-400">
+                <span className="font-mono text-[10px] text-quiet">
                   conf {(v.confidence ?? 0).toFixed(2)}
                 </span>
               </div>
               {v.suggestion && (
-                <p className="text-xs text-stone-600 dark:text-stone-400">
+                <p className="text-xs text-quiet">
                   → {v.suggestion}
                 </p>
               )}
@@ -443,10 +443,10 @@ function Meta({
 }) {
   return (
     <div>
-      <dt className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <dt className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
         {label}
       </dt>
-      <dd className={`mt-0.5 ${mono ? "font-mono" : ""} text-stone-800 dark:text-stone-200`}>
+      <dd className={`mt-0.5 ${mono ? "font-mono" : ""} text-default`}>
         {value}
       </dd>
     </div>

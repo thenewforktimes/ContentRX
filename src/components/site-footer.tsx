@@ -51,7 +51,7 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           <div>
             <p className="text-sm font-semibold">ContentRX</p>
-            <p className="mt-2 text-xs text-stone-600 dark:text-stone-400">
+            <p className="mt-2 text-xs text-quiet">
               The content model for product copy.
             </p>
           </div>
@@ -88,7 +88,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <p className="text-xs font-semibold uppercase tracking-wide text-quiet">
         {title}
       </p>
       <ul className="mt-3 space-y-2 text-sm">
@@ -97,14 +97,14 @@ function FooterColumn({
             {link.external ? (
               <a
                 href={link.href}
-                className="text-stone-700 hover:text-stone-900 dark:text-stone-200 dark:hover:text-stone-50"
+                className="text-stone-700 hover:text-default dark:hover:text-stone-50"
               >
                 {link.label}
               </a>
             ) : (
               <Link
                 href={link.href}
-                className="text-stone-700 hover:text-stone-900 dark:text-stone-200 dark:hover:text-stone-50"
+                className="text-stone-700 hover:text-default dark:hover:text-stone-50"
               >
                 {link.label}
               </Link>

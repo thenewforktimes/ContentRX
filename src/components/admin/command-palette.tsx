@@ -197,7 +197,7 @@ export function CommandPalette() {
             onKeyDown={onKeyDown}
             className="w-full max-w-2xl overflow-hidden rounded-lg border border-stone-200 bg-white shadow-2xl dark:border-stone-800 dark:bg-stone-900"
           >
-            <div className="border-b border-stone-200 dark:border-stone-800">
+            <div className="border-b border-line">
               <input
                 id={inputId}
                 ref={inputRef}
@@ -216,7 +216,7 @@ export function CommandPalette() {
                 </p>
               )}
               {!error && query.trim().length === 0 && (
-                <div className="px-4 py-6 text-sm text-stone-500 dark:text-stone-400">
+                <div className="px-4 py-6 text-sm text-quiet">
                   <p>
                     Type to search across{" "}
                     <span className="font-medium">overrides</span>,{" "}
@@ -239,7 +239,7 @@ export function CommandPalette() {
                 </div>
               )}
               {!error && query.trim().length > 0 && results.length === 0 && (
-                <p className="px-4 py-6 text-sm text-stone-500 dark:text-stone-400">
+                <p className="px-4 py-6 text-sm text-quiet">
                   {loading ? "Searching…" : "No matches."}
                 </p>
               )}
@@ -315,14 +315,14 @@ function ResultRow({
             {TYPE_LABEL[result.type]}
           </Pill>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm text-stone-900 dark:text-stone-100">
+            <p className="truncate text-sm text-strong">
               {result.textPreview}
             </p>
-            <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
+            <p className="mt-1 truncate text-xs text-quiet">
               {result.contextLine}
             </p>
           </div>
-          <span className="shrink-0 self-center text-[11px] text-stone-400 dark:text-stone-600">
+          <span className="shrink-0 self-center text-[11px] text-faint">
             {formatRelative(new Date(result.createdAt))}
           </span>
         </div>

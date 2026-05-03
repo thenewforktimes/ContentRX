@@ -30,13 +30,13 @@ export default function EthicsPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
       <header className="mb-10">
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           ContentRX ethical framework
         </p>
         <h1 className="mt-3 text-3xl font-semibold">
           How I collect, attribute, and use external signal
         </h1>
-        <p className="mt-4 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-4 text-sm text-quiet">
           ContentRX learns from public sources: design systems, style
           guides, OSS repos that demonstrate content-design craft. Those
           sources deserve clear rules about how their work is used.
@@ -278,7 +278,7 @@ export default function EthicsPage() {
 
       <section className="mt-12 rounded-lg border border-stone-300 bg-stone-50 p-6 text-sm dark:border-stone-700 dark:bg-stone-900">
         <h2 className="text-base font-semibold">How to opt out</h2>
-        <p className="mt-2 text-stone-700 dark:text-stone-300">
+        <p className="mt-2 text-default">
           If you maintain a project and don&apos;t want ContentRX to
           train on it, email{" "}
           <a
@@ -291,14 +291,14 @@ export default function EthicsPage() {
           Include the repo URL or style-guide URL you&apos;re speaking
           for. No justification required.
         </p>
-        <p className="mt-3 text-stone-700 dark:text-stone-300">
+        <p className="mt-3 text-default">
           The commitment on my side: confirm receipt within a week,
           stop fresh crawls in the next cycle, and best-effort remove
           already-derived signal in the release that follows.
         </p>
       </section>
 
-      <footer className="mt-16 text-xs text-stone-500 dark:text-stone-400">
+      <footer className="mt-16 text-xs text-quiet">
         <p>
           Last updated 2026-04-23. This page lives under the ContentRX
           main site at <code className="font-mono">contentrx.io/ethics</code>
@@ -329,14 +329,14 @@ function Section({
 }) {
   return (
     <section className="mt-8 border-t border-stone-200 pt-8 first:border-t-0 first:pt-0 dark:border-stone-800">
-      <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+      <p className="text-xs font-mono uppercase tracking-widest text-quiet">
         Commitment {number}
       </p>
       <h2 className="mt-2 text-xl font-semibold">{title}</h2>
-      <p className="mt-2 text-sm italic text-stone-600 dark:text-stone-400">
+      <p className="mt-2 text-sm italic text-quiet">
         {summary}
       </p>
-      <div className="mt-4 text-sm text-stone-700 dark:text-stone-300">
+      <div className="mt-4 text-sm text-default">
         {children}
       </div>
     </section>

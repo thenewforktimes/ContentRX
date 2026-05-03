@@ -100,7 +100,7 @@ export default async function ImpactPage() {
               ? "1 signal you've shared"
               : `${totalSignals.toLocaleString()} signals you've shared`}
         </h1>
-        <p className="mt-3 max-w-2xl text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-3 max-w-2xl text-sm text-default">
           Every time you copy a suggestion, write a better rewrite, or
           add a rule for your team, ContentRX gets a calibration
           signal. Approved rewrites become precedents the model reads
@@ -144,7 +144,7 @@ export default async function ImpactPage() {
               ? "1 of your signals is now a model precedent"
               : `${Number(approvedCount).toLocaleString()} of your signals are now model precedents`}
           </p>
-          <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+          <p className="mt-2 text-sm text-default">
             A content designer reviewed and approved them. The model
             reads these on every matching check, so they shape what
             ContentRX recommends to everyone using the platform.
@@ -154,11 +154,11 @@ export default async function ImpactPage() {
 
       {totalSignals === 0 && (
         <section className="rounded-lg border border-stone-200 bg-stone-50 p-5 dark:border-stone-800 dark:bg-stone-900">
-          <p className="text-sm text-stone-700 dark:text-stone-300">
+          <p className="text-sm text-default">
             No signals yet. Run a check on the dashboard to get
             started. Your contributions will show up here.
           </p>
-          <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+          <p className="mt-2 text-sm text-default">
             <Link
               href="/dashboard"
               className="underline underline-offset-2"
@@ -184,13 +184,13 @@ function ImpactStat({
 }) {
   return (
     <article className="rounded-lg border border-stone-200 bg-white p-5 dark:border-stone-800 dark:bg-stone-950">
-      <p className="text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <p className="text-xs font-medium uppercase tracking-wide text-quiet">
         {label}
       </p>
-      <p className="mt-2 text-3xl font-semibold tabular-nums text-stone-900 dark:text-stone-100">
+      <p className="mt-2 text-3xl font-semibold tabular-nums text-strong">
         {count.toLocaleString()}
       </p>
-      <p className="mt-2 text-xs text-stone-600 dark:text-stone-400">
+      <p className="mt-2 text-xs text-quiet">
         {caption}
       </p>
     </article>

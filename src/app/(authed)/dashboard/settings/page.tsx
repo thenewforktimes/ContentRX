@@ -100,11 +100,11 @@ function AccountPanel({ email }: { email: string }) {
     <section className="rounded-lg border border-stone-200 p-5 dark:border-stone-800">
       <header className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold">Account</h2>
-        <span className="text-xs text-stone-500 dark:text-stone-400">
+        <span className="text-xs text-quiet">
           Managed by Clerk
         </span>
       </header>
-      <p className="mb-3 text-sm text-stone-600 dark:text-stone-300">
+      <p className="mb-3 text-sm text-default">
         Signed in as <span className="font-medium">{email}</span>. Update
         your email, password, or two-factor authentication in your
         account profile.
@@ -126,11 +126,11 @@ function PrivacyPanel({ email }: { email: string }) {
     <section className="rounded-lg border border-stone-200 p-5 dark:border-stone-800">
       <header className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold">Privacy</h2>
-        <span className="text-xs text-stone-500 dark:text-stone-400">
+        <span className="text-xs text-quiet">
           See <Link href="/privacy" className="underline underline-offset-2">/privacy</Link>
         </span>
       </header>
-      <p className="mb-3 text-sm text-stone-600 dark:text-stone-300">
+      <p className="mb-3 text-sm text-default">
         Two rights baked into the product: see what we have on you, and
         ask us to delete it. We confirm receipt within two business days
         and complete the request within thirty.

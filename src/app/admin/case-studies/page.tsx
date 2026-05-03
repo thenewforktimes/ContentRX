@@ -27,10 +27,10 @@ export default function AdminCaseStudiesPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="text-2xl font-semibold text-strong">
           Case studies
         </h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-1 text-sm text-quiet">
           OSS product case studies — what the engine sees on real
           products, where it agrees with human judgment, where it
           doesn&apos;t. Working substrate; the published artifacts at
@@ -44,10 +44,10 @@ export default function AdminCaseStudiesPage() {
       {studies.length === 0 ? <EmptyState /> : <StudiesList studies={studies} />}
 
       <section className="rounded-md border border-stone-200 bg-white p-5 text-xs dark:border-stone-800 dark:bg-stone-900">
-        <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+        <h2 className="text-sm font-semibold text-strong">
           Workflow
         </h2>
-        <ol className="mt-3 flex list-decimal flex-col gap-2 pl-5 text-stone-700 dark:text-stone-300">
+        <ol className="mt-3 flex list-decimal flex-col gap-2 pl-5 text-default">
           <li>
             <span className="font-mono">
               python3 tools/case_study.py crawl --slug &lt;slug&gt; --repo
@@ -75,7 +75,7 @@ export default function AdminCaseStudiesPage() {
             Commit the artifacts. Vercel redeploys; this page refreshes.
           </li>
         </ol>
-        <p className="mt-3 text-stone-600 dark:text-stone-400">
+        <p className="mt-3 text-quiet">
           Vercel runtime is read-only — the loop runs locally on your
           checkout, the artifacts ship via git.
         </p>
@@ -113,11 +113,11 @@ function StudyRow({ study }: { study: CaseStudySummary }) {
           {study.slug}
         </Link>
         {study.description && (
-          <p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2">
+          <p className="text-xs text-quiet line-clamp-2">
             {study.description}
           </p>
         )}
-        <div className="flex flex-wrap items-baseline gap-3 text-[10px] text-stone-500 dark:text-stone-400">
+        <div className="flex flex-wrap items-baseline gap-3 text-[10px] text-quiet">
           {study.repo && (
             <span className="font-mono">
               {study.repo.replace(/^https?:\/\//, "")}
@@ -197,10 +197,10 @@ function Counter({
 function EmptyState() {
   return (
     <div className="rounded-lg border border-dashed border-stone-300 bg-white px-6 py-10 text-center dark:border-stone-700 dark:bg-stone-900">
-      <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+      <p className="text-sm font-semibold text-strong">
         No case studies yet.
       </p>
-      <p className="mt-2 text-xs text-stone-600 dark:text-stone-400">
+      <p className="mt-2 text-xs text-quiet">
         Run the workflow below from a local checkout to seed the first
         target. Artifacts under{" "}
         <code className="font-mono">evals/case-studies/&lt;slug&gt;/</code>

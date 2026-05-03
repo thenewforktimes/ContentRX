@@ -33,25 +33,25 @@ export function SiteHeader() {
         <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
           <Link
             href="/pricing"
-            className="text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+            className="text-stone-600 hover:text-default dark:hover:text-stone-100"
           >
             Pricing
           </Link>
           <Link
             href="/install"
-            className="text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+            className="text-stone-600 hover:text-default dark:hover:text-stone-100"
           >
             Install
           </Link>
           <Link
             href="/about"
-            className="text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+            className="text-stone-600 hover:text-default dark:hover:text-stone-100"
           >
             About
           </Link>
           <Link
             href="/sign-in"
-            className="text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+            className="text-stone-600 hover:text-default dark:hover:text-stone-100"
           >
             Sign in
           </Link>

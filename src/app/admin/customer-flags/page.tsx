@@ -137,20 +137,20 @@ export default async function AdminCustomerFlagsPage({
     <div className="space-y-6">
       <header className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+          <h1 className="text-2xl font-semibold text-strong">
             Customer flags
           </h1>
-          <p className="mt-1 max-w-2xl text-sm text-stone-600 dark:text-stone-400">
+          <p className="mt-1 max-w-2xl text-sm text-quiet">
             Cases customers consented to share for review. Plaintext is
             visible because every row carries explicit per-flag consent.
             Triage into corpus, taxonomy, patch, or not-actionable.
           </p>
         </div>
         <div className="text-right">
-          <p className="font-mono text-2xl font-semibold tabular-nums text-stone-900 dark:text-stone-100">
+          <p className="font-mono text-2xl font-semibold tabular-nums text-strong">
             {counts.open}
           </p>
-          <p className="text-xs text-stone-500 dark:text-stone-400">
+          <p className="text-xs text-quiet">
             open of {counts.total} total
           </p>
         </div>
@@ -195,25 +195,25 @@ export default async function AdminCustomerFlagsPage({
                   </Pill>
                   <Pill tone="neutral">{reasonLabel(row.flagReason)}</Pill>
                   {row.verdict && (
-                    <span className="text-stone-600 dark:text-stone-400">
+                    <span className="text-quiet">
                       verdict: {row.verdict}
                     </span>
                   )}
                   {row.contentType && (
-                    <span className="text-stone-500 dark:text-stone-500">
+                    <span className="text-quiet">
                       · {humanizeContentType(row.contentType)}
                     </span>
                   )}
                   {row.moment && (
-                    <span className="text-stone-500 dark:text-stone-500">
+                    <span className="text-quiet">
                       · {humanizeMoment(row.moment)}
                     </span>
                   )}
-                  <span className="text-stone-500 dark:text-stone-500">
+                  <span className="text-quiet">
                     · {row.source}
                   </span>
                 </div>
-                <div className="text-right text-xs text-stone-500 dark:text-stone-400">
+                <div className="text-right text-xs text-quiet">
                   <p>{row.userEmail ?? "(deleted user)"}</p>
                   <p>{formatRelative(row.createdAt)}</p>
                 </div>
@@ -237,7 +237,7 @@ export default async function AdminCustomerFlagsPage({
                 >
                   <input type="hidden" name="flagId" value={row.id} />
                   <label className="flex flex-col gap-1 text-xs">
-                    <span className="font-medium text-stone-700 dark:text-stone-300">
+                    <span className="font-medium text-default">
                       Resolution
                     </span>
                     <select
@@ -262,7 +262,7 @@ export default async function AdminCustomerFlagsPage({
                     </select>
                   </label>
                   <label className="flex-1 flex-col gap-1 text-xs">
-                    <span className="font-medium text-stone-700 dark:text-stone-300">
+                    <span className="font-medium text-default">
                       Notes (optional)
                     </span>
                     <input

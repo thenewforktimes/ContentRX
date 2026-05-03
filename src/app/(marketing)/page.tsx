@@ -42,7 +42,7 @@ export default function Home() {
         <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
           Staff-level content design review in every repo
         </h1>
-        <p className="mt-6 text-lg text-stone-700 dark:text-stone-300">
+        <p className="mt-6 text-lg text-default">
           ContentRX reads the strings you ship with the judgment of a
           staff content designer. Verdict, suggestion, rationale, in
           your pull request, your IDE, and your Figma file. Before the
@@ -164,10 +164,10 @@ export default function Home() {
       <Section eyebrow="Why it works" title="What ContentRX is great at.">
         <ul className="mt-2 grid gap-4 sm:grid-cols-3 sm:gap-3">
           <li className="rounded-lg border border-stone-200 bg-white p-5 dark:border-stone-800 dark:bg-stone-950">
-            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+            <p className="text-sm font-semibold text-strong">
               Calibrated judgment.
             </p>
-            <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+            <p className="mt-2 text-sm text-default">
               Content design discretion measured against a held-out
               golden set. Published kappa with a 95% confidence
               interval.{" "}
@@ -181,20 +181,20 @@ export default function Home() {
             </p>
           </li>
           <li className="rounded-lg border border-stone-200 bg-white p-5 dark:border-stone-800 dark:bg-stone-950">
-            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+            <p className="text-sm font-semibold text-strong">
               Style guides we maintain.
             </p>
-            <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+            <p className="mt-2 text-sm text-default">
               Stop chasing voice docs and ruleset PDFs. ContentRX
               holds the standards, watches the moment, and applies
               them where you&apos;re shipping copy.
             </p>
           </li>
           <li className="rounded-lg border border-stone-200 bg-white p-5 dark:border-stone-800 dark:bg-stone-950">
-            <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+            <p className="text-sm font-semibold text-strong">
               Custom rules in the moment.
             </p>
-            <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+            <p className="mt-2 text-sm text-default">
               Adjust ContentRX&apos;s recommendations with your
               team&apos;s own rules. No retraining, no pipeline
               changes, no waiting on a release.

@@ -46,17 +46,17 @@ export default async function AdminStandardDetailPage({
           </Link>
         </p>
         <div className="mt-2 flex flex-wrap items-baseline gap-3">
-          <h1 className="font-mono text-xl text-stone-900 dark:text-stone-100">
+          <h1 className="font-mono text-xl text-strong">
             {standard.id}
           </h1>
-          <span className="font-mono text-xs text-stone-500 dark:text-stone-400">
+          <span className="font-mono text-xs text-quiet">
             v{standard.version} · {standard.category_name} ({standard.category_id})
           </span>
           <Pill tone="neutral" size="xs" className="uppercase tracking-wide">
             {standard.rule_type}
           </Pill>
         </div>
-        <p className="mt-3 text-sm text-stone-800 dark:text-stone-200">
+        <p className="mt-3 text-sm text-default">
           {standard.rule}
         </p>
       </header>
@@ -68,7 +68,7 @@ export default async function AdminStandardDetailPage({
 
       {standard.relevant_content_types.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
             Relevant content types
           </h2>
           <ul className="flex flex-wrap gap-2">
@@ -83,7 +83,7 @@ export default async function AdminStandardDetailPage({
 
       {Object.keys(standard.content_type_notes).length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
             Content-type notes
           </h2>
           <dl className="space-y-3">
@@ -92,8 +92,8 @@ export default async function AdminStandardDetailPage({
                 key={ct}
                 className="rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900"
               >
-                <dt className="font-mono text-xs text-stone-500 dark:text-stone-400">{ct}</dt>
-                <dd className="mt-1 whitespace-pre-line text-sm text-stone-700 dark:text-stone-300">
+                <dt className="font-mono text-xs text-quiet">{ct}</dt>
+                <dd className="mt-1 whitespace-pre-line text-sm text-default">
                   {note}
                 </dd>
               </div>
@@ -104,7 +104,7 @@ export default async function AdminStandardDetailPage({
 
       {momentContexts.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
             Moment context ({momentContexts.length})
           </h2>
           <ul className="space-y-2">
@@ -134,7 +134,7 @@ export default async function AdminStandardDetailPage({
                     {weight.modifier}
                   </Pill>
                 </div>
-                <p className="mt-1 text-sm text-stone-700 dark:text-stone-300">
+                <p className="mt-1 text-sm text-default">
                   {weight.rationale}
                 </p>
               </li>
@@ -145,7 +145,7 @@ export default async function AdminStandardDetailPage({
 
       {standard.influences.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
             Influences
           </h2>
           <ul className="space-y-2">
@@ -155,15 +155,15 @@ export default async function AdminStandardDetailPage({
                 className="rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900"
               >
                 <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+                  <span className="text-sm font-semibold text-strong">
                     {inf.source}
                   </span>
-                  <span className="font-mono text-[10px] uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                  <span className="font-mono text-[10px] uppercase tracking-wide text-quiet">
                     {inf.direction}
                   </span>
                 </div>
                 {inf.note && (
-                  <p className="mt-1 text-sm text-stone-700 dark:text-stone-300">
+                  <p className="mt-1 text-sm text-default">
                     {inf.note}
                   </p>
                 )}
@@ -175,10 +175,10 @@ export default async function AdminStandardDetailPage({
 
       {standard.sources.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
             Sources
           </h2>
-          <ul className="list-disc space-y-1 pl-5 text-sm text-stone-700 dark:text-stone-300">
+          <ul className="list-disc space-y-1 pl-5 text-sm text-default">
             {standard.sources.map((src, i) => (
               <li key={`${src}-${i}`}>{src}</li>
             ))}
@@ -188,7 +188,7 @@ export default async function AdminStandardDetailPage({
 
       {standard.version_history.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
             Version history
           </h2>
           <ol className="space-y-2">
@@ -198,22 +198,22 @@ export default async function AdminStandardDetailPage({
                 className="rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900"
               >
                 <div className="flex items-baseline gap-2">
-                  <span className="font-mono text-xs text-stone-700 dark:text-stone-300">
+                  <span className="font-mono text-xs text-default">
                     v{entry.version}
                   </span>
                   {entry.date && (
-                    <span className="font-mono text-[10px] text-stone-500 dark:text-stone-400">
+                    <span className="font-mono text-[10px] text-quiet">
                       {entry.date}
                     </span>
                   )}
                 </div>
                 {entry.change && (
-                  <p className="mt-1 text-sm text-stone-700 dark:text-stone-300">
+                  <p className="mt-1 text-sm text-default">
                     {entry.change}
                   </p>
                 )}
                 {entry.notes && (
-                  <p className="mt-1 text-xs text-stone-500 dark:text-stone-500">
+                  <p className="mt-1 text-xs text-quiet">
                     {entry.notes}
                   </p>
                 )}
@@ -250,7 +250,7 @@ function ExampleBlock({
       >
         {label}
       </p>
-      <p className="mt-1 whitespace-pre-line text-sm text-stone-900 dark:text-stone-100">
+      <p className="mt-1 whitespace-pre-line text-sm text-strong">
         {text}
       </p>
     </div>

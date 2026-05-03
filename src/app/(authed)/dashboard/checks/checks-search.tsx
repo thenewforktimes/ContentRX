@@ -18,6 +18,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Input } from "@/components/ui/input";
 import { Pill } from "@/components/ui/pill";
 
 type SegmentType = "standard" | "document" | "surface";
@@ -146,20 +147,20 @@ export function ChecksSearch({
       <section className="flex flex-col gap-2">
         <label
           htmlFor="checks-search"
-          className="text-xs font-medium text-stone-700 dark:text-stone-300"
+          className="text-xs font-medium text-default"
         >
           Search across every check
         </label>
-        <input
+        <Input
           id="checks-search"
           type="text"
           value={localQuery}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Try a phrase you remember writing"
-          className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-base text-stone-900 placeholder:text-stone-400 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-neutral-500 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100 dark:placeholder:text-stone-500 dark:text-stone-400"
           autoComplete="off"
+          className="text-base"
         />
-        <p className="text-xs text-stone-500 dark:text-stone-400">
+        <p className="text-xs text-quiet">
           Substring match against the text you checked, plus the content
           type, moment, and source. Even a few words will find it.
         </p>
@@ -190,7 +191,7 @@ export function ChecksSearch({
         </div>
       </section>
 
-      <p className="text-xs text-stone-500 dark:text-stone-400">{summary}</p>
+      <p className="text-xs text-quiet">{summary}</p>
 
       {rows.length === 0 ? (
         <p className="rounded-lg border border-dashed border-stone-200 p-4 text-sm text-stone-500 dark:border-stone-800 dark:text-stone-400">
@@ -206,16 +207,16 @@ export function ChecksSearch({
               className="rounded-md border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-950"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-stone-600 dark:text-stone-400">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-quiet">
                   <Pill tone={toneFor(row.verdict)}>{row.verdictLabel}</Pill>
                   {row.violationCount > 0 && (
-                    <span className="text-stone-700 dark:text-stone-300">
+                    <span className="text-default">
                       {row.violationCount} finding
                       {row.violationCount === 1 ? "" : "s"}
                     </span>
                   )}
                 </div>
-                <div className="text-right text-xs text-stone-500 dark:text-stone-400">
+                <div className="text-right text-xs text-quiet">
                   <p>{formatRelative(new Date(row.createdAt))}</p>
                   <p>
                     {row.segmentType} · {row.unitsConsumed} unit
@@ -225,17 +226,17 @@ export function ChecksSearch({
                 </div>
               </div>
               {row.textPreview ? (
-                <p className="mt-2 whitespace-pre-wrap font-mono text-sm text-stone-800 dark:text-stone-200">
+                <p className="mt-2 whitespace-pre-wrap font-mono text-sm text-default">
                   {row.textPreview}
                   {row.textPreview.length >= 80 && "…"}
                 </p>
               ) : (
-                <p className="mt-2 text-xs italic text-stone-500 dark:text-stone-400">
+                <p className="mt-2 text-xs italic text-quiet">
                   Text not retained.
                 </p>
               )}
               {(row.contentType || row.moment) && (
-                <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                <p className="mt-1 text-xs text-quiet">
                   {row.contentType && <span>{row.contentType}</span>}
                   {row.contentType && row.moment && <span> · </span>}
                   {row.moment && <span>{row.moment}</span>}
@@ -254,20 +255,20 @@ export function ChecksSearch({
           {page > 1 ? (
             <Link
               href={buildPaginationHref(searchParams, pathname, page - 1)}
-              className="text-stone-700 underline underline-offset-2 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+              className="text-stone-700 underline underline-offset-2 hover:text-default dark:hover:text-stone-100"
             >
               ← Newer
             </Link>
           ) : (
             <span aria-hidden="true" />
           )}
-          <span className="text-xs text-stone-500 dark:text-stone-400">
+          <span className="text-xs text-quiet">
             Page {page}
           </span>
           {hasMore ? (
             <Link
               href={buildPaginationHref(searchParams, pathname, page + 1)}
-              className="text-stone-700 underline underline-offset-2 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+              className="text-stone-700 underline underline-offset-2 hover:text-default dark:hover:text-stone-100"
             >
               Older →
             </Link>
@@ -277,7 +278,7 @@ export function ChecksSearch({
         </nav>
       )}
 
-      <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-2 text-xs text-quiet">
         For runs from the GitHub Action,{" "}
         <Link href="/dashboard/runs" className="underline underline-offset-2">
           run history

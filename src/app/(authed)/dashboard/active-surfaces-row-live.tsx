@@ -120,15 +120,15 @@ function SurfaceCard({
           className={
             connected
               ? "inline-block h-2 w-2 rounded-full bg-emerald-500"
-              : "inline-block h-2 w-2 rounded-full border border-stone-300 dark:border-stone-700"
+              : "inline-block h-2 w-2 rounded-full border border-line-strong"
           }
         />
-        <span className="text-xs text-stone-600 dark:text-stone-300">
+        <span className="text-xs text-default">
           {connected && lastAt ? formatRelative(lastAt) : "Not connected"}
         </span>
       </div>
       {connected ? (
-        <p className="mt-1 text-xs tabular-nums text-stone-600 dark:text-stone-300">
+        <p className="mt-1 text-xs tabular-nums text-default">
           {count.toLocaleString()} {count === 1 ? "check" : "checks"}
         </p>
       ) : (

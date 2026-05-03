@@ -33,11 +33,11 @@ export default function PrivacyPage() {
       <header className="mb-12">
         <Eyebrow>Privacy</Eyebrow>
         <h1 className="mt-3 text-3xl font-semibold">Privacy policy</h1>
-        <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-3 text-sm text-quiet">
           Effective <time>{EFFECTIVE_DATE}</time>. Material changes get
           a new effective date and a note in the changelog.
         </p>
-        <p className="mt-4 text-lg text-stone-700 dark:text-stone-300">
+        <p className="mt-4 text-lg text-default">
           ContentRX is a content-design review tool. To do that job,
           we have to receive the strings you check, run them through
           our evaluation engine (which uses Anthropic&apos;s Claude
@@ -177,7 +177,7 @@ export default function PrivacyPage() {
               <th className="py-2">Data they see</th>
             </tr>
           </thead>
-          <tbody className="text-stone-700 dark:text-stone-300">
+          <tbody className="text-default">
             <SubprocessorRow
               name="Anthropic"
               purpose="LLM evaluation"
@@ -408,7 +408,7 @@ function SubprocessorRow({
 }) {
   return (
     <tr className="border-b border-stone-100 align-top dark:border-stone-900">
-      <td className="py-3 pr-4 font-medium text-stone-900 dark:text-stone-100">
+      <td className="py-3 pr-4 font-medium text-strong">
         {name}
       </td>
       <td className="py-3 pr-4 text-xs">{purpose}</td>

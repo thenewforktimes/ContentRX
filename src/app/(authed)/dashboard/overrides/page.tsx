@@ -47,7 +47,7 @@ export default async function OverridesPage() {
     return (
       <section className="flex flex-col items-start gap-3 rounded-lg border border-stone-200 p-6 dark:border-stone-800">
         <h1 className="text-lg font-semibold">Override report</h1>
-        <p className="text-sm text-stone-600 dark:text-stone-300">
+        <p className="text-sm text-default">
           Available on the Team plan. Surfaces the rules your team
           disagrees with most so you can disable or tune them in team
           rules.
@@ -183,11 +183,11 @@ export default async function OverridesPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           Last {RANGE_DAYS} days
         </p>
         <h1 className="mt-2 text-2xl font-semibold">Override report</h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-1 text-sm text-default">
           The rules your team dismisses most. Use this to decide which
           standards to disable or override in your{" "}
           <Link
@@ -234,7 +234,7 @@ export default async function OverridesPage() {
           {pushbacks.length > 0 && (
             <section>
               <h2 className="mb-1 text-sm font-semibold">Standard pushbacks</h2>
-              <p className="mb-3 text-xs text-stone-600 dark:text-stone-300">
+              <p className="mb-3 text-xs text-default">
                 Clusters of 3+ overrides on the same standard inside a
                 single session (scan, CI run, dashboard session).
                 Strongest signal that a rule needs a refinement-log look.
@@ -247,7 +247,7 @@ export default async function OverridesPage() {
                   >
                     <div>
                       <p className="font-mono text-xs">{p.standardId}</p>
-                      <p className="text-xs text-stone-600 dark:text-stone-300">
+                      <p className="text-xs text-default">
                         Session{" "}
                         <code className="font-mono">
                           {p.sessionKey.startsWith("pseudo:")
@@ -285,7 +285,7 @@ export default async function OverridesPage() {
                     className="border-b border-stone-100 dark:border-stone-900"
                   >
                     <td className="py-2 font-mono text-xs">{s.standard_id}</td>
-                    <td className="py-2 text-xs text-stone-600 dark:text-stone-300">
+                    <td className="py-2 text-xs text-default">
                       {s.moment ?? "n/a"}
                     </td>
                     <td className="py-2 text-right">
@@ -318,7 +318,7 @@ export default async function OverridesPage() {
             <h2 className="mb-1 text-sm font-semibold">
               How your team engaged
             </h2>
-            <p className="mb-3 text-xs text-stone-600 dark:text-stone-300">
+            <p className="mb-3 text-xs text-default">
               Each finding falls into one of four buckets, depending on
               whether your teammate read the rationale before deciding
               and whether they agreed or disagreed. Hover any row for
@@ -386,10 +386,10 @@ function Stat({
   const valueColor =
     tone === "warn"
       ? "text-amber-700 dark:text-amber-300"
-      : "text-stone-900 dark:text-stone-100";
+      : "text-strong";
   return (
     <div className="rounded-lg border border-stone-200 p-4 dark:border-stone-800">
-      <p className="text-xs uppercase tracking-wider text-stone-500 dark:text-stone-400">
+      <p className="text-xs uppercase tracking-wider text-quiet">
         {label}
       </p>
       <p className={`mt-1 text-2xl font-semibold ${valueColor}`}>{value}</p>

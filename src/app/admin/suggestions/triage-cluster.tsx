@@ -127,7 +127,7 @@ export function TriageCluster({
         <p className="font-mono text-xs text-emerald-700 dark:text-emerald-300">
           {momentLabel} · {contentTypeLabel} · {standardId ?? "—"}
         </p>
-        <p className="mt-1 text-stone-700 dark:text-stone-200">
+        <p className="mt-1 text-default">
           {resultLabel}
         </p>
       </article>
@@ -138,7 +138,7 @@ export function TriageCluster({
     <article className="rounded-md border border-stone-200 bg-white p-4 text-sm dark:border-stone-800 dark:bg-stone-900">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-2">
-          <p className="font-mono text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <p className="font-mono text-xs uppercase tracking-wide text-quiet">
             {momentLabel} · {contentTypeLabel} · {standardId ?? "—"}
           </p>
           <Pill tone="neutral" size="xs">
@@ -182,7 +182,7 @@ export function TriageCluster({
 
       {mode === "editing" && (
         <div className="mt-3">
-          <label className="block text-xs font-medium text-stone-700 dark:text-stone-300">
+          <label className="block text-xs font-medium text-default">
             Approved text
           </label>
           <textarea
@@ -200,19 +200,19 @@ export function TriageCluster({
             key={c.id}
             className="rounded border border-stone-200 bg-stone-50 px-3 py-2 dark:border-stone-800 dark:bg-stone-950"
           >
-            <p className="text-stone-900 dark:text-stone-100">
+            <p className="text-strong">
               {c.candidateText || (
-                <span className="italic text-stone-500 dark:text-stone-400">
+                <span className="italic text-quiet">
                   (no rewrite text)
                 </span>
               )}
             </p>
             {c.issueContext && (
-              <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+              <p className="mt-1 text-xs text-quiet">
                 Issue context: {c.issueContext}
               </p>
             )}
-            <p className="mt-1 font-mono text-[10px] text-stone-500 dark:text-stone-400">
+            <p className="mt-1 font-mono text-[10px] text-quiet">
               {c.source} · {c.createdAt.slice(0, 10)}
             </p>
           </li>

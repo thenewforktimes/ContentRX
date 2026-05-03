@@ -45,7 +45,7 @@ export default function AboutPage() {
         <h1 className="mt-3 text-3xl font-semibold">
           What a content designer sees
         </h1>
-        <p className="mt-4 text-lg text-stone-700 dark:text-stone-300">
+        <p className="mt-4 text-lg text-default">
           ContentRX is the content model that a working staff content
           designer would run on his own UI copy. The standards,
           the moments, the weighting system that says &ldquo;in a

@@ -135,13 +135,13 @@ export default async function AdminRuleReviewPage({ searchParams }: PageProps) {
   return (
     <div className="mx-auto max-w-5xl px-6 py-10 text-sm">
       <header className="mb-8">
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           Admin · rule-review queue
         </p>
         <h1 className="mt-2 text-2xl font-semibold">
           Standards teams override most
         </h1>
-        <p className="mt-2 max-w-prose text-stone-600 dark:text-stone-400">
+        <p className="mt-2 max-w-prose text-quiet">
           Rules with ≥{Math.round(minRate * 100)}% override rate on ≥
           {minTeams} distinct teams over the last {windowDays} days.
           Use this to justify content-model updates with data. The
@@ -166,7 +166,7 @@ export default async function AdminRuleReviewPage({ searchParams }: PageProps) {
 
       <section className="mt-8">
         {rows.length === 0 ? (
-          <p className="rounded-md border border-dashed border-stone-300 p-6 text-sm text-stone-500 dark:text-stone-400 dark:border-stone-700">
+          <p className="rounded-md border border-dashed border-stone-300 p-6 text-sm text-quiet dark:border-stone-700">
             No standards meet the thresholds in this window. Either
             the team population is too small or no standard is widely
             contested.
@@ -174,7 +174,7 @@ export default async function AdminRuleReviewPage({ searchParams }: PageProps) {
         ) : (
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-stone-200 text-left text-xs uppercase tracking-wider text-stone-500 dark:text-stone-400 dark:border-stone-800">
+              <tr className="border-b border-stone-200 text-left text-xs uppercase tracking-wider text-quiet dark:border-stone-800">
                 <th className="py-2">Standard</th>
                 <th className="py-2 text-right">Teams qualifying</th>
                 <th className="py-2 text-right">Teams with data</th>
@@ -201,7 +201,7 @@ export default async function AdminRuleReviewPage({ searchParams }: PageProps) {
                   <td className="py-2 text-right font-mono text-xs">
                     {r.teamsQualifying}
                   </td>
-                  <td className="py-2 text-right font-mono text-xs text-stone-500 dark:text-stone-400">
+                  <td className="py-2 text-right font-mono text-xs text-quiet">
                     {r.teamsWithData}
                   </td>
                   <td className="py-2 text-right font-mono text-xs">
@@ -283,7 +283,7 @@ function NumberInput({
   step?: number;
 }) {
   return (
-    <label className="flex flex-col text-xs text-stone-600 dark:text-stone-400">
+    <label className="flex flex-col text-xs text-quiet">
       {label}
       <input
         type="number"
@@ -301,7 +301,7 @@ function NumberInput({
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-stone-200 p-4 dark:border-stone-800">
-      <p className="text-xs uppercase tracking-wider text-stone-500 dark:text-stone-400">{label}</p>
+      <p className="text-xs uppercase tracking-wider text-quiet">{label}</p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
     </div>
   );

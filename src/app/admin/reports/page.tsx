@@ -67,10 +67,10 @@ export default function AdminReportsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="text-2xl font-semibold text-strong">
           Reports
         </h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-1 text-sm text-quiet">
           Preview-before-publish gate for the public credibility surface.
           Generated reports surface here before the docs site picks them up.
           Stale entries (older than the cadence threshold) are flagged so
@@ -91,11 +91,11 @@ export default function AdminReportsPage() {
               <div>
                 <h2
                   id={`section-${type}`}
-                  className="text-base font-semibold text-stone-900 dark:text-stone-100"
+                  className="text-base font-semibold text-strong"
                 >
                   {info.title}
                 </h2>
-                <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+                <p className="mt-1 text-xs text-quiet">
                   {info.description}
                 </p>
               </div>
@@ -105,7 +105,7 @@ export default function AdminReportsPage() {
             </header>
 
             {entries.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-stone-300 bg-white px-4 py-3 text-xs text-stone-500 dark:text-stone-400 dark:border-stone-700 dark:bg-stone-900">
+              <p className="rounded-lg border border-dashed border-stone-300 bg-white px-4 py-3 text-xs text-quiet dark:border-stone-700 dark:bg-stone-900">
                 {info.emptyHint}
               </p>
             ) : (
@@ -147,7 +147,7 @@ function ReportRow({ entry }: { entry: ReportEntry }) {
           </Pill>
         )}
       </div>
-      <div className="flex items-baseline gap-4 font-mono text-[10px] text-stone-500 dark:text-stone-400">
+      <div className="flex items-baseline gap-4 font-mono text-[10px] text-quiet">
         <span>{entry.size_bytes.toLocaleString()} bytes</span>
         <span>{formatDate(entry.modified_at)}</span>
         <ToggleReviewForm entry={entry} />
