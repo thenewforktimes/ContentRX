@@ -87,10 +87,10 @@ export default async function AdminCostsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="text-2xl font-semibold text-strong">
           Costs
         </h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-1 text-sm text-quiet">
           Per-user, per-day model spend over the last{" "}
           {ROLLUP_WINDOW_DAYS} days. Estimates use Anthropic list-price
           × logged tokens; cross-reference Anthropic billing for
@@ -111,10 +111,10 @@ export default async function AdminCostsPage() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-white px-3 py-2 dark:bg-stone-900"
               >
                 <div>
-                  <p className="font-medium text-stone-900 dark:text-stone-100">
+                  <p className="font-medium text-strong">
                     {user.email}
                   </p>
-                  <p className="text-xs text-stone-600 dark:text-stone-400">
+                  <p className="text-xs text-quiet">
                     Daily ${user.dailyThresholdUsd} · Monthly $
                     {user.monthlyThresholdUsd} · id {user.id}
                   </p>
@@ -130,17 +130,17 @@ export default async function AdminCostsPage() {
       )}
 
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600 dark:text-stone-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
           Spend by user
         </h2>
         {usersWithActivity.length === 0 ? (
-          <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+          <p className="mt-3 text-sm text-quiet">
             No checks logged in the last {ROLLUP_WINDOW_DAYS} days. The
             usage_events table is fresh post-launch; rows accumulate as
             pilots run.
           </p>
         ) : (
-          <div className="mt-3 overflow-x-auto rounded-lg border border-stone-200 dark:border-stone-800">
+          <div className="mt-3 overflow-x-auto rounded-lg border border-line">
             <table className="min-w-full divide-y divide-stone-200 text-sm dark:divide-stone-800">
               <thead className="bg-stone-50 text-left text-xs font-medium uppercase tracking-wide text-stone-600 dark:bg-stone-900 dark:text-stone-400">
                 <tr>
@@ -162,10 +162,10 @@ export default async function AdminCostsPage() {
                   return (
                     <tr key={user.id}>
                       <td className="px-4 py-2">
-                        <p className="font-medium text-stone-900 dark:text-stone-100">
+                        <p className="font-medium text-strong">
                           {user.email}
                         </p>
-                        <p className="text-xs text-stone-500 dark:text-stone-400">
+                        <p className="text-xs text-quiet">
                           {user.id}
                         </p>
                       </td>
@@ -175,10 +175,10 @@ export default async function AdminCostsPage() {
                       <td className="px-4 py-2 text-right tabular-nums">
                         {events.toLocaleString()}
                       </td>
-                      <td className="px-4 py-2 text-right tabular-nums text-stone-600 dark:text-stone-400">
+                      <td className="px-4 py-2 text-right tabular-nums text-quiet">
                         ${user.dailyThresholdUsd}
                       </td>
-                      <td className="px-4 py-2 text-right tabular-nums text-stone-600 dark:text-stone-400">
+                      <td className="px-4 py-2 text-right tabular-nums text-quiet">
                         ${user.monthlyThresholdUsd}
                       </td>
                     </tr>
@@ -191,15 +191,15 @@ export default async function AdminCostsPage() {
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600 dark:text-stone-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
           Daily breakdown
         </h2>
         {rollup.length === 0 ? (
-          <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
+          <p className="mt-3 text-sm text-quiet">
             No daily rollup yet.
           </p>
         ) : (
-          <div className="mt-3 overflow-x-auto rounded-lg border border-stone-200 dark:border-stone-800">
+          <div className="mt-3 overflow-x-auto rounded-lg border border-line">
             <table className="min-w-full divide-y divide-stone-200 text-sm dark:divide-stone-800">
               <thead className="bg-stone-50 text-left text-xs font-medium uppercase tracking-wide text-stone-600 dark:bg-stone-900 dark:text-stone-400">
                 <tr>

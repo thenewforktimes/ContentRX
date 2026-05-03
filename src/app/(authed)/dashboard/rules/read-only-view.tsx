@@ -45,10 +45,10 @@ export function ReadOnlyRulesView({
   return (
     <div className="flex flex-col gap-6">
       <section className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-sm dark:border-stone-800 dark:bg-stone-900">
-        <p className="font-medium text-stone-900 dark:text-stone-100">
+        <p className="font-medium text-strong">
           {totalActive} active patterns reviewing your content
         </p>
-        <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">
+        <p className="mt-1 text-xs text-default">
           {totalDisabled > 0 &&
             `${totalDisabled} disabled by your team. `}
           {customRuleCount > 0 &&
@@ -92,11 +92,11 @@ function RuleCard({ standard }: { standard: PublicStandard }) {
       className={`rounded-md border p-3 text-sm dark:border-stone-800 ${
         standard.disabled
           ? "border-stone-200 bg-stone-50 opacity-60 dark:bg-stone-900"
-          : "border-stone-200 bg-white dark:bg-stone-950"
+          : "border-stone-200 bg-raised"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="font-medium text-stone-900 dark:text-stone-100">
+        <p className="font-medium text-strong">
           {standard.rule}
         </p>
         {standard.disabled && (
@@ -105,7 +105,7 @@ function RuleCard({ standard }: { standard: PublicStandard }) {
           </Pill>
         )}
       </div>
-      <dl className="mt-2 grid grid-cols-1 gap-1 text-xs text-stone-600 dark:text-stone-400 sm:grid-cols-[80px_1fr]">
+      <dl className="mt-2 grid grid-cols-1 gap-1 text-xs text-quiet sm:grid-cols-[80px_1fr]">
         <dt className="font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
           Correct
         </dt>

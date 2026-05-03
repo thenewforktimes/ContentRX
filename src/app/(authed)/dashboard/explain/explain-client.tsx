@@ -212,13 +212,13 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <label
             htmlFor="explain-text"
-            className="block text-sm font-medium text-stone-700 dark:text-stone-300"
+            className="block text-sm font-medium text-default"
           >
             Text to evaluate
           </label>
           <fieldset className="flex items-center gap-2 text-xs">
             <legend className="sr-only">Check tier</legend>
-            <span className="text-stone-500 dark:text-stone-400">
+            <span className="text-quiet">
               Tier
             </span>
             <div
@@ -236,7 +236,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
                   className={`rounded-sm px-2 py-1 transition ${
                     tier === t
                       ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
-                      : "text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+                      : "text-stone-600 hover:text-default dark:hover:text-stone-100"
                   }`}
                   title={TIER_HINTS[t]}
                 >
@@ -265,7 +265,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
                 ? "text-rose-600 dark:text-rose-400"
                 : text.length > MAX_INPUT_CHARS * 0.9
                   ? "text-amber-600 dark:text-amber-400"
-                  : "text-stone-500 dark:text-stone-300"
+                  : "text-default"
             }`}
           >
             {text.length.toLocaleString()} characters
@@ -289,7 +289,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
               </Link>
             </span>
           ) : (
-            <span className="text-stone-500 dark:text-stone-300">
+            <span className="text-default">
               {TIER_HINTS[tier]}
             </span>
           )}
@@ -325,7 +325,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
             </ul>
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <p className="text-xs text-stone-500 dark:text-stone-300">
+            <p className="text-xs text-default">
               Evaluated in {response.latency_ms} ms.
             </p>
             <FlagForReview
@@ -388,16 +388,16 @@ function VerdictHeader({
         <Pill tone={tone}>{label}</Pill>
       </div>
       {showContext && (
-        <p className="text-xs text-stone-500 dark:text-stone-400">
+        <p className="text-xs text-quiet">
           Detected as{" "}
           {contentTypeLabel && (
-            <span className="font-medium text-stone-700 dark:text-stone-300">
+            <span className="font-medium text-default">
               {contentTypeLabel.toLowerCase()}
             </span>
           )}
           {contentTypeLabel && momentLabel && " · "}
           {momentLabel && (
-            <span className="font-medium text-stone-700 dark:text-stone-300">
+            <span className="font-medium text-default">
               {momentLabel.toLowerCase()}
             </span>
           )}
@@ -425,11 +425,11 @@ function DiffBlock({ before, after }: { before: string; after: string }) {
       <div className="flex items-start gap-2">
         <span
           aria-hidden="true"
-          className="select-none text-stone-400 dark:text-stone-500 dark:text-stone-400"
+          className="select-none text-stone-400 dark:text-quiet"
         >
           −
         </span>
-        <span className="break-words text-stone-700 dark:text-stone-300">
+        <span className="break-words text-default">
           {tokens
             .filter((t) => t.kind === "equal" || t.kind === "removed")
             .map((t, i) => (
@@ -440,11 +440,11 @@ function DiffBlock({ before, after }: { before: string; after: string }) {
       <div className="flex items-start gap-2">
         <span
           aria-hidden="true"
-          className="select-none text-stone-400 dark:text-stone-500 dark:text-stone-400"
+          className="select-none text-stone-400 dark:text-quiet"
         >
           +
         </span>
-        <span className="break-words text-stone-700 dark:text-stone-300">
+        <span className="break-words text-default">
           {tokens
             .filter((t) => t.kind === "equal" || t.kind === "added")
             .map((t, i) => (
@@ -644,7 +644,7 @@ function FindingCard({
           <MakeRuleButton plan={plan} onOpen={() => setMakeRuleOpen(true)} />
         </div>
       </div>
-      <p className="mt-2 text-stone-900 dark:text-stone-100">{finding.issue}</p>
+      <p className="mt-2 text-strong">{finding.issue}</p>
       {finding.suggestion && (
         <DiffBlock before={submittedText} after={finding.suggestion} />
       )}
@@ -654,7 +654,7 @@ function FindingCard({
           <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
             Your version
           </p>
-          <p className="mt-1 text-sm text-stone-900 dark:text-stone-100">
+          <p className="mt-1 text-sm text-strong">
             {savedState.rewriteText}
           </p>
         </div>

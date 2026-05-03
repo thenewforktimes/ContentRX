@@ -17,7 +17,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertDialog } from "@/components/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input, Textarea } from "@/components/ui/input";
 import { Pill } from "@/components/ui/pill";
 import type { CategorySummary } from "@/lib/standards";
 
@@ -484,34 +483,36 @@ function AddCustomRuleCard({
           <span className="mb-1 block text-default">
             Title
           </span>
-          <Input
+          <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="No 'revolutionary'"
+            className="w-full rounded-md border border-stone-300 bg-white px-2 py-1 text-sm dark:border-stone-700 dark:bg-stone-900"
           />
         </label>
         <label className="text-xs">
           <span className="mb-1 block text-default">
             Rule text (shown to anyone who trips this)
           </span>
-          <Textarea
+          <textarea
             rows={2}
             value={rule}
             onChange={(e) => setRule(e.target.value)}
             placeholder="Avoid the word 'revolutionary'. Describe what's new and why instead."
+            className="w-full rounded-md border border-stone-300 bg-white px-2 py-1 text-sm dark:border-stone-700 dark:bg-stone-900"
           />
         </label>
         <label className="text-xs">
           <span className="mb-1 block text-default">
             Regex pattern. Matched against the text being checked
           </span>
-          <Input
+          <input
             type="text"
             value={pattern}
             onChange={(e) => setPattern(e.target.value)}
             placeholder="\brevolutionary\b"
-            className="font-mono text-xs"
+            className="w-full rounded-md border border-stone-300 bg-white px-2 py-1 font-mono text-xs dark:border-stone-700 dark:bg-stone-900"
           />
         </label>
         <div className="flex flex-wrap items-center gap-4 text-xs">

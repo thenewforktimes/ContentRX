@@ -40,18 +40,18 @@ export default async function AdminEssayDraftPreviewPage({
             ← Back to essay drafts
           </Link>
         </p>
-        <h1 className="mt-2 font-mono text-xl text-stone-900 dark:text-stone-100">
+        <h1 className="mt-2 font-mono text-xl text-strong">
           {draft.filename}
         </h1>
-        <dl className="mt-3 flex flex-wrap gap-4 text-xs text-stone-600 dark:text-stone-400">
+        <dl className="mt-3 flex flex-wrap gap-4 text-xs text-quiet">
           <div>
-            <dt className="font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <dt className="font-semibold uppercase tracking-wide text-quiet">
               Path
             </dt>
             <dd className="font-mono">essays/drafts/{draft.filename}</dd>
           </div>
           <div>
-            <dt className="font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <dt className="font-semibold uppercase tracking-wide text-quiet">
               Modified
             </dt>
             <dd className="font-mono">
@@ -59,7 +59,7 @@ export default async function AdminEssayDraftPreviewPage({
             </dd>
           </div>
           <div>
-            <dt className="font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <dt className="font-semibold uppercase tracking-wide text-quiet">
               Size
             </dt>
             <dd className="font-mono">
@@ -70,19 +70,19 @@ export default async function AdminEssayDraftPreviewPage({
       </header>
 
       <div className="rounded-lg border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
-        <div className="border-b border-stone-200 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400 dark:border-stone-800">
+        <div className="border-b border-stone-200 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-quiet dark:border-stone-800">
           Raw contents
         </div>
-        <pre className="overflow-x-auto whitespace-pre-wrap break-words p-4 font-sans text-sm leading-relaxed text-stone-800 dark:text-stone-200">
+        <pre className="overflow-x-auto whitespace-pre-wrap break-words p-4 font-sans text-sm leading-relaxed text-default">
 {draft.contents}
         </pre>
       </div>
 
-      <p className="text-xs text-stone-500 dark:text-stone-400">
+      <p className="text-xs text-quiet">
         Edits live on the primary{" "}
         <Link
           href="/admin/essay-drafts"
-          className="text-stone-700 underline hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+          className="text-stone-700 underline hover:text-default dark:hover:text-stone-100"
         >
           /admin/essay-drafts
         </Link>{" "}

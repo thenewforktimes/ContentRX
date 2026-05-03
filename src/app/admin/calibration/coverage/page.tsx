@@ -209,13 +209,13 @@ export default async function CalibrationCoveragePage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
       <header className="mb-8">
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           Calibration → Coverage
         </p>
-        <h1 className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="mt-2 text-2xl font-semibold text-strong">
           Suggestion calibration coverage
         </h1>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-2 text-sm text-default">
           Precedents per bucket. Empty cells fall back to the
           universal voice rules at runtime; populated cells inject
           the approved precedent into the scan prompt.
@@ -258,7 +258,7 @@ export default async function CalibrationCoveragePage() {
       </header>
 
       <section className="mb-10">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
           Active buckets
         </h2>
         {activeBuckets.length === 0 ? (
@@ -270,21 +270,21 @@ export default async function CalibrationCoveragePage() {
         ) : (
           <table className="mt-3 w-full text-sm">
             <thead>
-              <tr className="border-b border-stone-200 dark:border-stone-800">
-                <th className="px-2 py-2 text-left font-semibold text-stone-700 dark:text-stone-300">
+              <tr className="border-b border-line">
+                <th className="px-2 py-2 text-left font-semibold text-default">
                   Moment
                 </th>
-                <th className="px-2 py-2 text-left font-semibold text-stone-700 dark:text-stone-300">
+                <th className="px-2 py-2 text-left font-semibold text-default">
                   Content type
                 </th>
-                <th className="px-2 py-2 text-right font-semibold text-stone-700 dark:text-stone-300">
+                <th className="px-2 py-2 text-right font-semibold text-default">
                   Precedents
                 </th>
-                <th className="px-2 py-2 text-right font-semibold text-stone-700 dark:text-stone-300">
+                <th className="px-2 py-2 text-right font-semibold text-default">
                   Pending
                 </th>
                 <th
-                  className="px-2 py-2 text-right font-semibold text-stone-700 dark:text-stone-300"
+                  className="px-2 py-2 text-right font-semibold text-default"
                   title="Rejected ÷ (rejected + merged). High = LLM is producing slop in this bucket."
                 >
                   Reject rate
@@ -297,16 +297,16 @@ export default async function CalibrationCoveragePage() {
                   key={key(b.moment, b.contentType)}
                   className="border-b border-stone-100 dark:border-stone-900"
                 >
-                  <td className="px-2 py-2 text-stone-900 dark:text-stone-100">
+                  <td className="px-2 py-2 text-strong">
                     {b.moment ? humanizeMoment(b.moment) : (
-                      <span className="italic text-stone-500 dark:text-stone-400">
+                      <span className="italic text-quiet">
                         (uncategorized)
                       </span>
                     )}
                   </td>
-                  <td className="px-2 py-2 text-stone-900 dark:text-stone-100">
+                  <td className="px-2 py-2 text-strong">
                     {b.contentType ? humanizeContentType(b.contentType) : (
-                      <span className="italic text-stone-500 dark:text-stone-400">
+                      <span className="italic text-quiet">
                         (uncategorized)
                       </span>
                     )}
@@ -317,7 +317,7 @@ export default async function CalibrationCoveragePage() {
                         {b.precedentCount}
                       </span>
                     ) : (
-                      <span className="text-stone-400 dark:text-stone-500">
+                      <span className="text-faint">
                         —
                       </span>
                     )}
@@ -328,7 +328,7 @@ export default async function CalibrationCoveragePage() {
                         {b.pendingCount}
                       </span>
                     ) : (
-                      <span className="text-stone-400 dark:text-stone-500">
+                      <span className="text-faint">
                         —
                       </span>
                     )}
@@ -349,12 +349,12 @@ export default async function CalibrationCoveragePage() {
 
       {(uncoveredMoments.length > 0 || uncoveredContentTypes.length > 0) && (
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
             Coverage gap
           </h2>
           {uncoveredMoments.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-stone-700 dark:text-stone-300">
+              <p className="text-xs font-medium text-default">
                 Moments with no precedents or pending candidates ({uncoveredMoments.length})
               </p>
               <ul className="mt-2 flex flex-wrap gap-2">
@@ -371,7 +371,7 @@ export default async function CalibrationCoveragePage() {
           )}
           {uncoveredContentTypes.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-stone-700 dark:text-stone-300">
+              <p className="text-xs font-medium text-default">
                 Content types with no precedents or pending candidates ({uncoveredContentTypes.length})
               </p>
               <ul className="mt-2 flex flex-wrap gap-2">
@@ -438,7 +438,7 @@ function RejectRateCell({
 }) {
   if (rate === null) {
     return (
-      <span className="text-stone-400 dark:text-stone-500" title="No reviewed candidates yet">
+      <span className="text-faint" title="No reviewed candidates yet">
         —
       </span>
     );
@@ -449,7 +449,7 @@ function RejectRateCell({
       ? "text-rose-700 dark:text-rose-300"
       : rate >= 0.25
         ? "text-amber-700 dark:text-amber-300"
-        : "text-stone-700 dark:text-stone-300";
+        : "text-default";
   return (
     <span
       className={`font-semibold ${toneClass}`}

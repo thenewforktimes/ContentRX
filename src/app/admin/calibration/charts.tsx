@@ -54,7 +54,7 @@ export function SystemKappaTrendChart({
 
   if (points.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-stone-500 dark:text-stone-400 dark:border-stone-700 dark:bg-stone-900">
+      <div className="rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-quiet dark:border-stone-700 dark:bg-stone-900">
         No weekly κ measurements available yet. The chart populates as
         per-standard κ accumulates across multiple weeks.
       </div>
@@ -101,7 +101,7 @@ export function SystemKappaTrendChart({
                 y1={y}
                 y2={y}
                 stroke="currentColor"
-                className="text-stone-200 dark:text-stone-800"
+                className="text-faint"
                 strokeDasharray="3 3"
               />
               <text
@@ -158,7 +158,7 @@ export function SystemKappaTrendChart({
           points={polyline}
           fill="none"
           stroke="currentColor"
-          className="text-stone-800 dark:text-stone-100"
+          className="text-strong"
           strokeWidth={2}
         />
         {points.map((p, i) => {
@@ -186,7 +186,7 @@ export function SystemKappaTrendChart({
                 cy={cy}
                 r={isHovered ? 5 : 3}
                 fill="currentColor"
-                className="text-stone-800 dark:text-stone-100"
+                className="text-strong"
               />
             </g>
           );

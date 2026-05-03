@@ -61,24 +61,24 @@ export default async function AdminReportPreviewPage({
             ← Back to reports
           </Link>
         </p>
-        <h1 className="mt-2 font-mono text-xl text-stone-900 dark:text-stone-100">
+        <h1 className="mt-2 font-mono text-xl text-strong">
           {filename}
         </h1>
-        <dl className="mt-3 flex flex-wrap gap-4 text-xs text-stone-600 dark:text-stone-400">
+        <dl className="mt-3 flex flex-wrap gap-4 text-xs text-quiet">
           <div>
-            <dt className="font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <dt className="font-semibold uppercase tracking-wide text-quiet">
               Type
             </dt>
             <dd className="font-mono">{typeRaw}</dd>
           </div>
           <div>
-            <dt className="font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <dt className="font-semibold uppercase tracking-wide text-quiet">
               Modified
             </dt>
             <dd className="font-mono">{report.modified_at.replace("T", " ").slice(0, 16)}</dd>
           </div>
           <div>
-            <dt className="font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <dt className="font-semibold uppercase tracking-wide text-quiet">
               Size
             </dt>
             <dd className="font-mono">{report.size_bytes.toLocaleString()} bytes</dd>
@@ -127,15 +127,15 @@ export default async function AdminReportPreviewPage({
       </header>
 
       <div className="rounded-lg border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
-        <div className="border-b border-stone-200 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400 dark:border-stone-800">
+        <div className="border-b border-stone-200 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-quiet dark:border-stone-800">
           Raw contents
         </div>
-        <pre className="overflow-x-auto whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-stone-800 dark:text-stone-200">
+        <pre className="overflow-x-auto whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-default">
 {formatted}
         </pre>
       </div>
 
-      <p className="text-xs text-stone-500 dark:text-stone-400">
+      <p className="text-xs text-quiet">
         Marking reviewed writes a sentinel at{" "}
         <code className="font-mono">
           reports/{typeRaw}/.{filename}.reviewed

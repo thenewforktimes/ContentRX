@@ -51,7 +51,7 @@ export function LogRefinementButton({ defaults }: { defaults: Defaults }) {
       action={addRefinement}
       className="mt-3 space-y-3 rounded-md border border-stone-300 bg-stone-50 p-3 text-xs dark:border-stone-700 dark:bg-stone-900"
     >
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
         New open refinement
       </p>
 
@@ -99,7 +99,7 @@ export function LogRefinementButton({ defaults }: { defaults: Defaults }) {
       />
 
       <details>
-        <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-wide text-quiet">
           Triggering case (auto-generated, hidden)
         </summary>
         <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words rounded bg-white p-2 font-sans text-[11px] text-stone-700 dark:bg-stone-950 dark:text-stone-300">
@@ -121,7 +121,7 @@ export function LogRefinementButton({ defaults }: { defaults: Defaults }) {
         >
           Cancel
         </button>
-        <span className="ml-auto text-[10px] text-stone-500 dark:text-stone-400">
+        <span className="ml-auto text-[10px] text-quiet">
           Vercel runtime is read-only — saves only land in local checkouts.
         </span>
       </div>
@@ -144,7 +144,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
         {label}
         {required && <span className="ml-0.5 text-rose-500">*</span>}
       </span>
@@ -175,7 +175,7 @@ function FieldTextarea({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
         {label}
         {required && <span className="ml-0.5 text-rose-500">*</span>}
       </span>

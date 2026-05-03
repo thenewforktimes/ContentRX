@@ -52,11 +52,11 @@ export default function SourcesPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <header className="mb-12">
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           Attribution surface
         </p>
         <h1 className="mt-3 text-3xl font-semibold">Sources</h1>
-        <p className="mt-4 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-4 text-sm text-quiet">
           Every public source that informs ContentRX (design systems,
           style guides, OSS repositories) listed with its role, license,
           and opt-out path. This page is the accountability surface for{" "}
@@ -81,7 +81,7 @@ export default function SourcesPage() {
         <h2 className="text-xl font-semibold">
           Design systems and style guides
         </h2>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-2 text-sm text-quiet">
           Each system below informs the ContentRX content model. Role
           badges show how: <em>standard influences</em> means the system
           is cited on one or more standards;{" "}
@@ -99,7 +99,7 @@ export default function SourcesPage() {
 
       <section className="mt-16">
         <h2 className="text-xl font-semibold">Open-source repositories</h2>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-2 text-sm text-quiet">
           {data.oss_repos.length} public repositories on the ContentRX
           content-mining allow-list. The miner extracts before/after
           pairs from commit history. See{" "}
@@ -121,7 +121,7 @@ export default function SourcesPage() {
       </section>
 
       <section className="mt-12 rounded-md border border-stone-200 bg-white p-4 text-sm dark:border-stone-800 dark:bg-stone-950">
-        <p className="text-stone-700 dark:text-stone-300">
+        <p className="text-default">
           The other half of ContentRX&apos;s accountability surface is{" "}
           <Link href="/accuracy" className="underline underline-offset-2">
             /accuracy
@@ -133,7 +133,7 @@ export default function SourcesPage() {
 
       <section className="mt-6 rounded-lg border border-stone-300 bg-stone-50 p-6 text-sm dark:border-stone-700 dark:bg-stone-900">
         <h2 className="text-base font-semibold">How to opt out</h2>
-        <p className="mt-2 text-stone-700 dark:text-stone-300">
+        <p className="mt-2 text-default">
           If you maintain one of the sources above and don&apos;t want
           ContentRX to continue using it, email{" "}
           <a
@@ -154,7 +154,7 @@ export default function SourcesPage() {
         </p>
       </section>
 
-      <footer className="mt-16 text-xs text-stone-500 dark:text-stone-400">
+      <footer className="mt-16 text-xs text-quiet">
         <p>
           Generated {formatDate(data.generated_at)} from committed
           attribution metadata. Source:{" "}
@@ -174,7 +174,7 @@ export default function SourcesPage() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3 dark:border-stone-800 dark:bg-stone-900">
-      <dt className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <dt className="text-xs uppercase tracking-wide text-quiet">
         {label}
       </dt>
       <dd className="mt-1 text-lg font-semibold tabular-nums">{value}</dd>
@@ -206,9 +206,9 @@ function StyleGuideCard({ source }: { source: StyleGuideSource }) {
         ))}
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-stone-700 dark:text-stone-300">
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-default">
         <div>
-          <dt className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <dt className="text-xs uppercase tracking-wide text-quiet">
             Standards influenced
           </dt>
           <dd className="mt-0.5 tabular-nums">
@@ -216,7 +216,7 @@ function StyleGuideCard({ source }: { source: StyleGuideSource }) {
           </dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <dt className="text-xs uppercase tracking-wide text-quiet">
             Example pairs
           </dt>
           <dd className="mt-0.5 tabular-nums">
@@ -225,7 +225,7 @@ function StyleGuideCard({ source }: { source: StyleGuideSource }) {
         </div>
       </dl>
 
-      <p className="mt-4 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-4 text-xs text-quiet">
         <a
           href={optOutMailto(source.name)}
           className="underline underline-offset-2"
@@ -261,13 +261,13 @@ function OSSRepoCard({ repo }: { repo: OSSRepoSource }) {
         </span>
       </div>
 
-      <p className="mt-3 text-sm text-stone-700 dark:text-stone-300">
+      <p className="mt-3 text-sm text-default">
         {repo.reason}
       </p>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-stone-700 dark:text-stone-300">
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-default">
         <div>
-          <dt className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <dt className="text-xs uppercase tracking-wide text-quiet">
             Quality signals
           </dt>
           <dd className="mt-0.5 text-xs">
@@ -275,7 +275,7 @@ function OSSRepoCard({ repo }: { repo: OSSRepoSource }) {
           </dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          <dt className="text-xs uppercase tracking-wide text-quiet">
             Last crawl
           </dt>
           <dd className="mt-0.5 text-xs tabular-nums">
@@ -286,7 +286,7 @@ function OSSRepoCard({ repo }: { repo: OSSRepoSource }) {
         </div>
       </dl>
 
-      <p className="mt-4 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-4 text-xs text-quiet">
         <a
           href={optOutMailto(`${repo.owner}/${repo.name}`)}
           className="underline underline-offset-2"

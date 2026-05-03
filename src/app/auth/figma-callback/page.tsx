@@ -185,7 +185,7 @@ export default async function FigmaCallbackPage({ searchParams }: PageProps) {
             Revoke existing key and sign in to plugin
           </button>
         </form>
-        <p className="text-xs text-stone-600 dark:text-stone-400">
+        <p className="text-xs text-quiet">
           Revoking will immediately break any CLI or GitHub Action sessions
           using the old key. Prefer to rotate manually?{" "}
           <a href="/dashboard" className="underline">

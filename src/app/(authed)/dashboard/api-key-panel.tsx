@@ -110,7 +110,7 @@ export function ApiKeyPanel({ initialPrefix, initialCreatedAt }: Props) {
     <section className="rounded-lg border border-stone-200 p-5 dark:border-stone-800">
       <header className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold">API key</h2>
-        <span className="text-xs text-stone-500 dark:text-stone-400">
+        <span className="text-xs text-quiet">
           Used by the Figma plugin, CLI, and GitHub Action
         </span>
       </header>
@@ -153,7 +153,7 @@ export function ApiKeyPanel({ initialPrefix, initialCreatedAt }: Props) {
               {prefix}…
             </code>
             {createdAt && (
-              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              <p className="mt-1 text-xs text-quiet">
                 Created {formatDate(createdAt)}
               </p>
             )}
@@ -179,7 +179,7 @@ export function ApiKeyPanel({ initialPrefix, initialCreatedAt }: Props) {
         </div>
       ) : (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-stone-600 dark:text-stone-300">
+          <p className="text-sm text-default">
             No active API key. Generate one to sign in from the Figma plugin
             or the CLI.
           </p>

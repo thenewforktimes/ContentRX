@@ -37,13 +37,13 @@ export default function AccuracyPage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
       <header className="mb-10">
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           Accountability surface
         </p>
         <h1 className="mt-2 text-3xl font-semibold">
           Accuracy, reported honestly
         </h1>
-        <p className="mt-4 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-4 text-sm text-quiet">
           Three numbers govern how ContentRX evaluates its own calibration.
           They are kept separate on purpose. A single &ldquo;accuracy score&rdquo;
           would obscure the self-drift ceiling and misrepresent what the
@@ -51,7 +51,7 @@ export default function AccuracyPage() {
           et al., 2019) guidance on honest metric reporting with
           intervals.
         </p>
-        <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">
+        <p className="mt-3 text-xs text-quiet">
           {snap.generated_at
             ? `Snapshot generated ${formatIso(snap.generated_at)}.`
             : "Snapshot pending. The nightly generator has not run yet."}
@@ -85,7 +85,7 @@ export default function AccuracyPage() {
 
       <section className="mt-10">
         <h2 className="text-lg font-semibold">Coverage</h2>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-2 text-sm text-quiet">
           ContentRX evaluates against {snap.standards_total} standards. As
           standards accumulate enough labelled data, they graduate up the
           ladder: every verdict reviewed → sampled review → no per-verdict
@@ -106,7 +106,7 @@ export default function AccuracyPage() {
             count={snap.by_level.autonomous}
           />
         </dl>
-        <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">
+        <p className="mt-3 text-xs text-quiet">
           {snap.standards_measured} of {snap.standards_total} standards have
           completed the weekly κ series.
         </p>
@@ -114,7 +114,7 @@ export default function AccuracyPage() {
 
       <section className="mt-10 rounded-lg border border-stone-300 bg-stone-50 p-6 dark:border-stone-700 dark:bg-stone-900">
         <h2 className="text-lg font-semibold">How these numbers come to be</h2>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-2 text-sm text-quiet">
           Each weekday the engine evaluates strings against the standards
           library and a held-out golden set Robert maintains. The measured
           system κ is the agreement between what the engine says and what
@@ -124,12 +124,12 @@ export default function AccuracyPage() {
           exceed the labeller&apos;s agreement with themselves. The 0.90
           design target is a stated assumption, not a measurement.
         </p>
-        <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-3 text-sm text-quiet">
           Pending cells render as &ldquo;pending&rdquo;: never zero, never
           filled from the design target. Honest reporting of a
           measurement-in-progress is the whole point of the page.
         </p>
-        <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-3 text-sm text-quiet">
           The weekly{" "}
           <Link href="/calibration" className="underline underline-offset-2">
             calibration log
@@ -139,7 +139,7 @@ export default function AccuracyPage() {
         </p>
       </section>
 
-      <footer className="mt-16 text-xs text-stone-500 dark:text-stone-400">
+      <footer className="mt-16 text-xs text-quiet">
         <p>
           Public snapshot at{" "}
           <a
@@ -176,10 +176,10 @@ function MetricBlock({
           : "border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-950"
       }`}
     >
-      <p className="text-xs font-mono uppercase tracking-wider text-stone-500 dark:text-stone-400">
+      <p className="text-xs font-mono uppercase tracking-wider text-quiet">
         {label}
       </p>
-      <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+      <p className="mt-1 text-xs text-quiet">
         {sublabel}
       </p>
       <div className="mt-3">
@@ -189,7 +189,7 @@ function MetricBlock({
               {kappa.value.toFixed(3)}
             </p>
             {isTarget ? (
-              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              <p className="mt-1 text-xs text-quiet">
                 Design assumption · stated separately from measurements
               </p>
             ) : (
@@ -201,10 +201,10 @@ function MetricBlock({
           </>
         ) : (
           <>
-            <p className="font-mono text-2xl font-semibold text-stone-500 dark:text-stone-400">
+            <p className="font-mono text-2xl font-semibold text-quiet">
               pending
             </p>
-            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{kappa.reason}</p>
+            <p className="mt-1 text-xs text-quiet">{kappa.reason}</p>
           </>
         )}
       </div>
@@ -221,7 +221,7 @@ function LadderCell({
 }) {
   return (
     <div className="rounded-md border border-stone-200 bg-white px-4 py-3 dark:border-stone-800 dark:bg-stone-950">
-      <dt className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <dt className="text-xs uppercase tracking-wide text-quiet">
         <code className="font-mono">{label}</code>
       </dt>
       <dd className="mt-1 text-lg font-semibold tabular-nums">{count}</dd>

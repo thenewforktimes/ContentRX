@@ -11,6 +11,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Pill, type PillTone } from "@/components/ui/pill";
 import type { Plan } from "@/lib/quotas";
 
@@ -115,7 +116,7 @@ function UpgradeCard() {
     <section className="rounded-lg border border-stone-200 p-5 dark:border-stone-800">
       <header className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold">Upgrade</h2>
-        <span className="text-xs text-stone-500 dark:text-stone-400">
+        <span className="text-xs text-quiet">
           Billed monthly or annually. Cancel anytime.
         </span>
       </header>
@@ -145,8 +146,8 @@ function UpgradeCard() {
         <IntervalToggle value={interval} onChange={setInterval} />
         {selectedPlan === "team" && (
           <label className="flex items-center gap-2 text-sm">
-            <span className="text-stone-600 dark:text-stone-300">Seats</span>
-            <input
+            <span className="text-default">Seats</span>
+            <Input
               type="number"
               min={TEAM_MIN_SEATS}
               max={500}
@@ -154,7 +155,7 @@ function UpgradeCard() {
               onChange={(e) =>
                 setSeats(Math.max(TEAM_MIN_SEATS, Number(e.target.value) || TEAM_MIN_SEATS))
               }
-              className="w-20 rounded-md border border-stone-300 bg-white px-2 py-1 text-sm dark:border-stone-700 dark:bg-stone-900"
+              className="w-20"
             />
           </label>
         )}
@@ -229,7 +230,7 @@ function PaidCard({
     <section className="rounded-lg border border-stone-200 p-5 dark:border-stone-800">
       <header className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold">Subscription</h2>
-        <span className="text-xs text-stone-500 dark:text-stone-400">
+        <span className="text-xs text-quiet">
           Billing handled by Stripe
         </span>
       </header>
@@ -242,7 +243,7 @@ function PaidCard({
         )}
       </p>
       {currentPeriodEnd && (
-        <p className="mb-3 text-xs text-stone-500 dark:text-stone-400">
+        <p className="mb-3 text-xs text-quiet">
           Renews {formatDate(currentPeriodEnd)}
         </p>
       )}
@@ -288,9 +289,9 @@ function PlanOption({
     >
       <div className="mb-1 flex items-baseline justify-between">
         <span className="text-sm font-semibold">{name}</span>
-        <span className="text-xs text-stone-500 dark:text-stone-400">{price}</span>
+        <span className="text-xs text-quiet">{price}</span>
       </div>
-      <p className="text-xs text-stone-600 dark:text-stone-300">
+      <p className="text-xs text-default">
         {description}
       </p>
     </button>
@@ -320,7 +321,7 @@ function IntervalToggle({
           className={`rounded-[5px] px-3 py-1 text-xs font-medium transition ${
             value === opt
               ? "bg-black text-white dark:bg-white dark:text-black"
-              : "text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+              : "text-stone-600 hover:text-default dark:hover:text-stone-100"
           }`}
         >
           {opt === "monthly" ? "Monthly" : "Annual"}

@@ -27,11 +27,11 @@ export default function CalibrationIndexPage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
       <header className="mb-10">
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           Calibration log
         </p>
         <h1 className="mt-2 text-3xl font-semibold">Weekly calibration log</h1>
-        <p className="mt-4 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-4 text-sm text-quiet">
           Every Monday, the substrate-to-report pipeline emits a
           calibration log entry. Each entry covers the previous week&apos;s
           measured κ movement, drift signals, override counts, and active
@@ -39,7 +39,7 @@ export default function CalibrationIndexPage() {
           purpose: consistency week to week is what makes drift in the
           writing detectable.
         </p>
-        <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-3 text-sm text-quiet">
           See{" "}
           <Link href="/accuracy" className="underline underline-offset-2">
             /accuracy
@@ -65,11 +65,11 @@ export default function CalibrationIndexPage() {
                   <h2 className="font-mono text-base font-semibold">
                     Week {entry.week}
                   </h2>
-                  <span className="font-mono text-[10px] text-stone-500 dark:text-stone-400">
+                  <span className="font-mono text-[10px] text-quiet">
                     {formatIso(entry.modified_at)}
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-stone-600 dark:text-stone-400">
+                <p className="mt-2 text-xs text-quiet">
                   {extractHeadline(entry.contents)}
                 </p>
               </Link>

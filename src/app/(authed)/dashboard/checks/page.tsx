@@ -192,13 +192,13 @@ export default async function DashboardChecksPage({ searchParams }: PageProps) {
       <header>
         <Link
           href="/dashboard"
-          className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+          className="text-xs text-quiet hover:text-stone-900 dark:hover:text-stone-100"
         >
           ← Back to dashboard
         </Link>
         <Eyebrow>Check history</Eyebrow>
         <h1 className="mt-2 text-2xl font-semibold">Recent checks</h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-1 text-sm text-default">
           Search across every check your team has run. Try a phrase you
           remember writing. Even a few words will find it.
         </p>

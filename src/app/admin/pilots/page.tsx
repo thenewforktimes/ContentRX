@@ -61,10 +61,10 @@ export default async function AdminPilotsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="text-2xl font-semibold text-strong">
           Pilot tracker
         </h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-1 text-sm text-quiet">
           Engagement across every user. Sorted by most recent activity;
           dormant users at the end.
         </p>
@@ -103,7 +103,7 @@ function PilotTable({ rows }: { rows: PilotRow[] }) {
     );
   }
   return (
-    <div className="overflow-x-auto rounded-lg border border-stone-200 dark:border-stone-800">
+    <div className="overflow-x-auto rounded-lg border border-line">
       <table className="min-w-full divide-y divide-stone-200 text-sm dark:divide-stone-800">
         <thead className="bg-stone-50 text-left text-xs font-medium uppercase tracking-wide text-stone-600 dark:bg-stone-900 dark:text-stone-400">
           <tr>
@@ -130,15 +130,15 @@ function PilotTable({ rows }: { rows: PilotRow[] }) {
                 )}
               </td>
               <td className="px-4 py-2">
-                <p className="font-medium text-stone-900 dark:text-stone-100">
+                <p className="font-medium text-strong">
                   {row.email}
                 </p>
-                <p className="text-xs text-stone-500 dark:text-stone-400">
+                <p className="text-xs text-quiet">
                   {row.userId}
                 </p>
               </td>
               <td className="px-4 py-2 capitalize">{row.plan}</td>
-              <td className="px-4 py-2 text-stone-600 dark:text-stone-400">
+              <td className="px-4 py-2 text-quiet">
                 {row.lastCheckAt
                   ? formatRelative(row.lastCheckAt)
                   : "Never"}
@@ -168,10 +168,10 @@ function TriggerSidebar({
   return (
     <aside className="space-y-3">
       <header>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600 dark:text-stone-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
           Conversation triggers
         </h2>
-        <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+        <p className="mt-1 text-xs text-quiet">
           What to talk to which pilot about, today.
         </p>
       </header>
@@ -188,20 +188,20 @@ function TriggerSidebar({
             >
               {trigger.kind === "debrief_50_checks" ? (
                 <>
-                  <p className="font-medium text-stone-900 dark:text-stone-100">
+                  <p className="font-medium text-strong">
                     Schedule a debrief
                   </p>
-                  <p className="mt-1 text-stone-600 dark:text-stone-400">
+                  <p className="mt-1 text-quiet">
                     {trigger.email} ran {trigger.checks7d} checks in the
                     last 7 days.
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="font-medium text-stone-900 dark:text-stone-100">
+                  <p className="font-medium text-strong">
                     At-risk pilot
                   </p>
-                  <p className="mt-1 text-stone-600 dark:text-stone-400">
+                  <p className="mt-1 text-quiet">
                     {trigger.email} ({trigger.plan}) hasn&rsquo;t run a
                     check in {trigger.daysIdle} days.
                   </p>
@@ -229,11 +229,11 @@ function SummaryCard({
     : "neutral";
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
-      <p className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <p className="text-xs uppercase tracking-wide text-quiet">
         {label}
       </p>
       <p className="mt-1 flex items-baseline gap-2">
-        <span className="text-2xl font-semibold tabular-nums text-stone-900 dark:text-stone-100">
+        <span className="text-2xl font-semibold tabular-nums text-strong">
           {value}
         </span>
         {tone && value > 0 && <Pill tone={pillTone}>{label}</Pill>}

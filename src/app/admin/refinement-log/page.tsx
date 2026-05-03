@@ -77,10 +77,10 @@ export default function AdminRefinementLogPage() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+          <h1 className="text-2xl font-semibold text-strong">
             Refinement log
           </h1>
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+          <p className="mt-1 text-sm text-quiet">
             Granularity gaps in the content type taxonomy, surfaced through
             real-world triage. The decision criterion lives at the top of
             <code className="mx-1 font-mono text-xs">taxonomy_refinement_log.md</code>
@@ -88,7 +88,7 @@ export default function AdminRefinementLogPage() {
             standards fire, how they&apos;re weighted, or whether a violation flags.
           </p>
         </div>
-        <dl className="flex flex-wrap gap-3 text-xs text-stone-700 dark:text-stone-300">
+        <dl className="flex flex-wrap gap-3 text-xs text-default">
           <Stat label="Open" value={totals.open} />
           <Stat label="Auto-detected" value={totals.auto_detected} />
           <Stat label="Approved" value={totals.approved} />
@@ -97,10 +97,10 @@ export default function AdminRefinementLogPage() {
       </header>
 
       <details className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900">
-        <summary className="cursor-pointer text-sm font-semibold text-stone-900 dark:text-stone-100">
+        <summary className="cursor-pointer text-sm font-semibold text-strong">
           Add a refinement candidate
         </summary>
-        <p className="mt-2 text-xs text-stone-600 dark:text-stone-400">
+        <p className="mt-2 text-xs text-quiet">
           Adds a structured entry to the <code className="font-mono">## Open refinements</code>{" "}
           section of the markdown log. The next REF-NNN id is assigned automatically.
           The action writes the file in place — works in local dev, fails in the
@@ -118,16 +118,16 @@ export default function AdminRefinementLogPage() {
           <header>
             <h2
               id={`section-${section.status}`}
-              className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400"
+              className="text-sm font-semibold uppercase tracking-wide text-quiet"
             >
               {section.title} ({log.byStatus[section.status].length})
             </h2>
-            <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+            <p className="mt-1 text-xs text-quiet">
               {section.description}
             </p>
           </header>
           {log.byStatus[section.status].length === 0 ? (
-            <p className="rounded-lg border border-dashed border-stone-300 bg-white px-4 py-3 text-xs text-stone-500 dark:text-stone-400 dark:border-stone-700 dark:bg-stone-900">
+            <p className="rounded-lg border border-dashed border-stone-300 bg-white px-4 py-3 text-xs text-quiet dark:border-stone-700 dark:bg-stone-900">
               {section.empty}
             </p>
           ) : (
@@ -147,16 +147,16 @@ function RefinementCard({ entry }: { entry: RefinementEntry }) {
   return (
     <li className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900">
       <header className="flex flex-wrap items-baseline gap-2">
-        <span className="font-mono text-xs text-stone-700 dark:text-stone-300">
+        <span className="font-mono text-xs text-default">
           {entry.id}
         </span>
         {entry.title && (
-          <span className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+          <span className="text-sm font-semibold text-strong">
             {entry.title}
           </span>
         )}
         {entry.date_logged && (
-          <span className="ml-auto font-mono text-[10px] text-stone-500 dark:text-stone-400">
+          <span className="ml-auto font-mono text-[10px] text-quiet">
             {entry.date_logged}
           </span>
         )}
@@ -193,7 +193,7 @@ function Field({
   if (!value) return null;
   return (
     <div>
-      <dt className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <dt className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
         {label}
       </dt>
       <dd
@@ -202,7 +202,7 @@ function Field({
         } ${
           highlight
             ? "rounded bg-amber-50 px-2 py-1 text-amber-900 dark:bg-amber-950 dark:text-amber-200"
-            : "text-stone-700 dark:text-stone-300"
+            : "text-default"
         }`}
       >
         {value}
@@ -284,7 +284,7 @@ function FormField({
     "mt-1 block w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100";
   return (
     <label className="block text-xs">
-      <span className="font-semibold text-stone-700 dark:text-stone-300">
+      <span className="font-semibold text-default">
         {label}
         {required && <span className="ml-1 text-rose-500">*</span>}
       </span>
@@ -318,10 +318,10 @@ function todayIso(): string {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg border border-stone-200 bg-white px-3 py-2 dark:border-stone-800 dark:bg-stone-900">
-      <dt className="text-[10px] uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <dt className="text-[10px] uppercase tracking-wide text-quiet">
         {label}
       </dt>
-      <dd className="font-mono text-base font-semibold text-stone-900 dark:text-stone-100">
+      <dd className="font-mono text-base font-semibold text-strong">
         {value}
       </dd>
     </div>

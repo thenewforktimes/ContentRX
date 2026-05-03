@@ -54,7 +54,7 @@ export default async function CustomExamplesPage() {
     return (
       <section className="flex flex-col items-start gap-3 rounded-lg border border-stone-200 p-6 dark:border-stone-800">
         <h1 className="text-lg font-semibold">Custom examples</h1>
-        <p className="text-sm text-stone-600 dark:text-stone-300">
+        <p className="text-sm text-default">
           Available on the Team plan. Mark specific strings as correct
           (or known-bad) for your product&apos;s voice. ContentRX
           short-circuits those strings on every subsequent check
@@ -77,17 +77,17 @@ export default async function CustomExamplesPage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <header className="mb-6 flex flex-col gap-2">
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           Team plan · audit view
         </p>
         <h1 className="text-2xl font-semibold">Custom examples</h1>
-        <p className="text-sm text-stone-600 dark:text-stone-300">
+        <p className="text-sm text-default">
           {entries.length} of {CUSTOM_EXAMPLES_CAP_PER_TEAM}. Each
           entry short-circuits <code>/api/check</code> for your team:
           matching strings skip the LLM entirely and return the
           stored verdict. The core model stays untouched.
         </p>
-        <p className="text-sm text-stone-600 dark:text-stone-300">
+        <p className="text-sm text-default">
           <strong>Ingestion lives in MCP + CLI</strong> (not here).
           Add entries via <code>custom_example_add</code> from Claude
           Code / Cursor, or <code>contentrx example add</code> from
@@ -105,7 +105,7 @@ export default async function CustomExamplesPage() {
 
       {entries.length === 0 ? (
         <section className="rounded-md border border-dashed border-stone-300 bg-stone-50 p-6 text-sm dark:border-stone-700 dark:bg-stone-900">
-          <p className="text-stone-700 dark:text-stone-300">
+          <p className="text-default">
             Nothing here yet. Your team hasn&apos;t added a custom example.
             From the terminal:{" "}
             <code className="rounded bg-white px-1 py-0.5 dark:bg-stone-950">
@@ -143,7 +143,7 @@ export default async function CustomExamplesPage() {
                   <td className="max-w-[280px] truncate py-2 pr-4 font-mono text-xs">
                     <span title={e.text}>{e.text}</span>
                     {e.notes && (
-                      <p className="mt-1 text-[11px] font-normal text-stone-500 dark:text-stone-400">
+                      <p className="mt-1 text-[11px] font-normal text-quiet">
                         {e.notes}
                       </p>
                     )}
@@ -155,21 +155,21 @@ export default async function CustomExamplesPage() {
                     {e.moment ? (
                       <code className="font-mono">{e.moment}</code>
                     ) : (
-                      <span className="text-stone-500 dark:text-stone-400">any</span>
+                      <span className="text-quiet">any</span>
                     )}
                   </td>
                   <td className="py-2 pr-4 text-xs">
                     {e.contentType ? (
                       <code className="font-mono">{e.contentType}</code>
                     ) : (
-                      <span className="text-stone-500 dark:text-stone-400">any</span>
+                      <span className="text-quiet">any</span>
                     )}
                   </td>
                   <td className="py-2 pr-4 text-xs">
                     {e.standardId ? (
                       <code className="font-mono">{e.standardId}</code>
                     ) : (
-                      <span className="text-stone-500 dark:text-stone-400">none</span>
+                      <span className="text-quiet">none</span>
                     )}
                   </td>
                   <td className="py-2 pr-4 text-xs">

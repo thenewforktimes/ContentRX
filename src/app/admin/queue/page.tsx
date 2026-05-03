@@ -167,10 +167,10 @@ export default async function AdminQueuePage({
     <div className="space-y-6">
       <header className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+          <h1 className="text-2xl font-semibold text-strong">
             Review queue
           </h1>
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+          <p className="mt-1 text-sm text-quiet">
             Cases the engine flagged for review in the last {windowDays} days.
             Filter by subtype to focus the daily 15-minute review rhythm.
             Click <strong>Agree</strong> to confirm the engine&apos;s
@@ -179,7 +179,7 @@ export default async function AdminQueuePage({
             Decisions persist into the override stream for calibration.
           </p>
         </div>
-        <div className="text-sm text-stone-700 dark:text-stone-300">
+        <div className="text-sm text-default">
           <span className="font-mono text-lg font-semibold">{totalQueue}</span>{" "}
           pending
         </div>
@@ -207,13 +207,13 @@ export default async function AdminQueuePage({
       </nav>
 
       {activeSubtype && (
-        <p className="text-xs text-stone-600 dark:text-stone-400">
+        <p className="text-xs text-quiet">
           {SUBTYPE_DESCRIPTION[activeSubtype]}
         </p>
       )}
 
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-stone-500 dark:text-stone-400 dark:border-stone-700 dark:bg-stone-900">
+        <p className="rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-quiet dark:border-stone-700 dark:bg-stone-900">
           No pending cases in this window.
         </p>
       ) : (
@@ -228,7 +228,7 @@ export default async function AdminQueuePage({
         </ul>
       )}
 
-      <p className="text-xs text-stone-500 dark:text-stone-400">
+      <p className="text-xs text-quiet">
         Showing up to {MAX_ROWS_PER_SUBTYPE} most recent cases. Older cases
         require widening the window (`?window=180`) or clustering rollups
         (Phase B5 — calibration).
@@ -299,7 +299,7 @@ function QueueRow({
               {row.standardId}
             </Link>
           ) : (
-            <span className="font-mono text-xs text-stone-500 dark:text-stone-400">—</span>
+            <span className="font-mono text-xs text-quiet">—</span>
           )}
           {row.severity && (
             <span
@@ -331,14 +331,14 @@ function QueueRow({
             </span>
           )}
         </div>
-        <span className="font-mono text-[10px] text-stone-500 dark:text-stone-400">
+        <span className="font-mono text-[10px] text-quiet">
           {row.createdAt.toISOString().slice(0, 16).replace("T", " ")}
         </span>
       </div>
-      <dl className="mt-2 grid grid-cols-3 gap-2 text-xs text-stone-600 dark:text-stone-400">
+      <dl className="mt-2 grid grid-cols-3 gap-2 text-xs text-quiet">
         {row.contentType && (
           <div>
-            <dt className="font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <dt className="font-medium uppercase tracking-wide text-quiet">
               Content type
             </dt>
             <dd>{humanizeContentType(row.contentType)}</dd>
@@ -346,7 +346,7 @@ function QueueRow({
         )}
         {row.moment && (
           <div>
-            <dt className="font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <dt className="font-medium uppercase tracking-wide text-quiet">
               Moment
             </dt>
             <dd>{humanizeMoment(row.moment)}</dd>
@@ -354,14 +354,14 @@ function QueueRow({
         )}
         {row.source && (
           <div>
-            <dt className="font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <dt className="font-medium uppercase tracking-wide text-quiet">
               Source
             </dt>
             <dd className="font-mono">{row.source}</dd>
           </div>
         )}
       </dl>
-      <p className="mt-2 truncate font-mono text-[10px] text-stone-500 dark:text-stone-400">
+      <p className="mt-2 truncate font-mono text-[10px] text-quiet">
         text_hash · {row.textHash.slice(0, 16)}…
       </p>
       {!isDecided && (

@@ -57,10 +57,10 @@ export default async function AdminMomentDetailPage({
             ← Back to model
           </Link>
         </p>
-        <h1 className="mt-2 font-mono text-xl text-stone-900 dark:text-stone-100">
+        <h1 className="mt-2 font-mono text-xl text-strong">
           {moment.id}
         </h1>
-        <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+        <p className="mt-2 text-sm text-default">
           {moment.description}
         </p>
         {moment.situation_property && (
@@ -77,7 +77,7 @@ export default async function AdminMomentDetailPage({
         if (!entries || entries.length === 0) return null;
         return (
           <section key={modifier} className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
               {modifier} ({entries.length})
             </h2>
             <ul className="space-y-2">

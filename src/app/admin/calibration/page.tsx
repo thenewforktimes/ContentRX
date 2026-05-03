@@ -46,10 +46,10 @@ export default async function AdminCalibrationPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="text-2xl font-semibold text-strong">
           Calibration
         </h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-1 text-sm text-quiet">
           Substrate metrics that produce the public <code className="font-mono text-xs">/accuracy</code>{" "}
           page and the weekly calibration log. The three κ numbers below stay
           visually distinct on purpose — never combine them into a composite
@@ -74,11 +74,11 @@ export default async function AdminCalibrationPage() {
       <section aria-labelledby="trend" className="space-y-2">
         <h2
           id="trend"
-          className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400"
+          className="text-sm font-semibold uppercase tracking-wide text-quiet"
         >
           System κ trend
         </h2>
-        <p className="text-xs text-stone-600 dark:text-stone-400">
+        <p className="text-xs text-quiet">
           Weekly κ aggregated across all standards with measured weekly
           values. Reference lines mark the autonomous threshold and the
           0.90 design target.
@@ -93,7 +93,7 @@ export default async function AdminCalibrationPage() {
       <section aria-labelledby="thresholds" className="space-y-2">
         <h2
           id="thresholds"
-          className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400"
+          className="text-sm font-semibold uppercase tracking-wide text-quiet"
         >
           Graduation thresholds
         </h2>
@@ -120,12 +120,12 @@ export default async function AdminCalibrationPage() {
       <section aria-labelledby="standards-table" className="space-y-3">
         <h2
           id="standards-table"
-          className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400"
+          className="text-sm font-semibold uppercase tracking-wide text-quiet"
         >
           Per-standard kappa
         </h2>
         {snapshot.standards.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-stone-500 dark:text-stone-400 dark:border-stone-700 dark:bg-stone-900">
+          <p className="rounded-lg border border-dashed border-stone-300 bg-white p-6 text-center text-sm text-quiet dark:border-stone-700 dark:bg-stone-900">
             No per-standard kappa available yet. Run{" "}
             <code className="font-mono text-xs">tools/graduation_metrics.py</code>{" "}
             and commit{" "}
@@ -134,7 +134,7 @@ export default async function AdminCalibrationPage() {
         ) : (
           <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
             <table className="min-w-full divide-y divide-stone-200 text-sm dark:divide-stone-800">
-              <thead className="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              <thead className="text-xs uppercase tracking-wide text-quiet">
                 <tr>
                   <th scope="col" className="px-3 py-2 text-left">Standard</th>
                   <th scope="col" className="px-3 py-2 text-left">Level</th>
@@ -172,30 +172,30 @@ function KappaCard({
 }) {
   return (
     <article className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
         {label}
       </p>
-      <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+      <p className="mt-1 text-xs text-quiet">
         {subtitle}
       </p>
       <p className="mt-3">
         {kappa.state === "measured" ? (
           <>
-            <span className="font-mono text-2xl font-semibold text-stone-900 dark:text-stone-100">
+            <span className="font-mono text-2xl font-semibold text-strong">
               {kappa.value.toFixed(3)}
             </span>
-            <span className="ml-2 font-mono text-xs text-stone-500 dark:text-stone-400">
+            <span className="ml-2 font-mono text-xs text-quiet">
               [{kappa.ci_low.toFixed(3)}, {kappa.ci_high.toFixed(3)}]
             </span>
           </>
         ) : (
-          <span className="text-sm italic text-stone-500 dark:text-stone-400">
+          <span className="text-sm italic text-quiet">
             pending — {kappa.reason}
           </span>
         )}
       </p>
       {kappa.state === "measured" && (
-        <p className="mt-1 font-mono text-[10px] text-stone-500 dark:text-stone-400">
+        <p className="mt-1 font-mono text-[10px] text-quiet">
           n = {kappa.sample_size}
         </p>
       )}
@@ -206,14 +206,14 @@ function KappaCard({
 function DesignTargetCard({ target }: { target: number }) {
   return (
     <article className="rounded-lg border-2 border-dashed border-stone-300 bg-stone-50 p-4 dark:border-stone-700 dark:bg-stone-950">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
         Design target
       </p>
-      <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+      <p className="mt-1 text-xs text-quiet">
         Locked. A design assumption, not a measurement.
       </p>
       <p className="mt-3">
-        <span className="font-mono text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <span className="font-mono text-2xl font-semibold text-strong">
           {target.toFixed(2)}
         </span>
       </p>
@@ -235,20 +235,20 @@ function ThresholdCard({
   return (
     <article className="rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
           {label}
         </span>
-        <span className="font-mono text-xs text-stone-700 dark:text-stone-300">
+        <span className="font-mono text-xs text-default">
           {count} standard{count === 1 ? "" : "s"}
         </span>
       </div>
       {value !== null && (
-        <p className="mt-2 font-mono text-sm text-stone-900 dark:text-stone-100">
+        <p className="mt-2 font-mono text-sm text-strong">
           κ ≥ {value.toFixed(3)}
         </p>
       )}
       {note && (
-        <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+        <p className="mt-1 text-xs text-quiet">
           {note}
         </p>
       )}
@@ -274,28 +274,28 @@ function StandardRow({
           {standard.standard_id}
         </Link>
       </td>
-      <td className="px-3 py-2 text-xs text-stone-700 dark:text-stone-300">
+      <td className="px-3 py-2 text-xs text-default">
         {standard.level.replace(/_/g, " ")}
       </td>
       <td className="px-3 py-2 font-mono text-xs">
         {k.state === "measured" ? (
           <span>
             {k.value.toFixed(3)}
-            <span className="ml-1 text-[10px] text-stone-500 dark:text-stone-400">
+            <span className="ml-1 text-[10px] text-quiet">
               [{k.ci_low.toFixed(3)}, {k.ci_high.toFixed(3)}]
             </span>
           </span>
         ) : (
-          <span className="italic text-stone-500 dark:text-stone-400">pending</span>
+          <span className="italic text-quiet">pending</span>
         )}
       </td>
       <td className="px-3 py-2 font-mono text-xs">
         <Sparkline values={standard.weekly_kappa} />
       </td>
-      <td className="px-3 py-2 text-right font-mono text-xs text-stone-700 dark:text-stone-300">
+      <td className="px-3 py-2 text-right font-mono text-xs text-default">
         {overrideCount}
       </td>
-      <td className="px-3 py-2 text-right font-mono text-xs text-stone-700 dark:text-stone-300">
+      <td className="px-3 py-2 text-right font-mono text-xs text-default">
         {standard.prevalence === null ? "—" : standard.prevalence.toFixed(3)}
       </td>
     </tr>
@@ -309,15 +309,15 @@ function StandardRow({
  */
 function Sparkline({ values }: { values: Array<number | null> }) {
   if (values.length === 0) {
-    return <span className="text-stone-500 dark:text-stone-400">—</span>;
+    return <span className="text-quiet">—</span>;
   }
   const blocks = ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
   return (
-    <span className="font-mono text-base leading-none tracking-tight text-stone-700 dark:text-stone-300">
+    <span className="font-mono text-base leading-none tracking-tight text-default">
       {values.map((v, i) => {
         if (v === null) {
           return (
-            <span key={i} className="text-stone-300 dark:text-stone-600">
+            <span key={i} className="text-faint">
               ·
             </span>
           );

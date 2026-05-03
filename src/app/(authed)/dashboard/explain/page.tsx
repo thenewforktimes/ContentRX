@@ -29,18 +29,18 @@ export default async function ExplainPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
       <header className="mb-8">
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           Live demo
         </p>
         <h1 className="mt-2 text-2xl font-semibold">Explain a verdict</h1>
-        <p className="mt-3 text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-3 text-sm text-default">
           Paste a button label, error message, or paragraph. The
           evaluator surfaces the detected moment first, then returns a
           three-state verdict plus the full rationale chain: moment
           detected, standards applied, confidence at every hop.
           Misdetections route back to the review queue with one click.
         </p>
-        <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">
+        <p className="mt-3 text-xs text-quiet">
           Each check counts against your{" "}
           <Link href="/dashboard" className="underline underline-offset-2">
             monthly quota

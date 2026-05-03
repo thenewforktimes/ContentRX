@@ -74,14 +74,14 @@ export default async function DashboardRulesPage() {
       <header>
         <Link
           href="/dashboard"
-          className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+          className="text-xs text-quiet hover:text-stone-900 dark:hover:text-stone-100"
         >
           ← Back to dashboard
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">
           {isTeamPlan ? "Team rules" : "What your team's rules check for"}
         </h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-1 text-sm text-default">
           {isTeamPlan
             ? "Disable standards, override the wording shown to your team, or add custom rules as regex patterns. Changes apply to every evaluation your team runs."
             : "The patterns ContentRX checks every string against. Plain-language summary so you know what's being reviewed before you ship copy. Team-plan owners can disable individual standards or override their wording."}

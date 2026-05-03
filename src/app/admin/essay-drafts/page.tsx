@@ -85,10 +85,10 @@ export default async function AdminEssayDraftsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-100">
+        <h1 className="text-2xl font-semibold text-strong">
           Essay drafts
         </h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+        <p className="mt-1 text-sm text-quiet">
           Cold-start scaffold drawn from the latest accuracy snapshot, the
           most recent calibration log entry, and open refinement-log
           candidates. The scaffold is the floor; you write the essay.
@@ -101,7 +101,7 @@ export default async function AdminEssayDraftsPage() {
       >
         <h2
           id="inputs-heading"
-          className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400"
+          className="text-sm font-semibold uppercase tracking-wide text-quiet"
         >
           Inputs
         </h2>
@@ -151,10 +151,10 @@ export default async function AdminEssayDraftsPage() {
       <section className="space-y-3">
         <header className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-quiet">
               Draft
             </h2>
-            <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+            <p className="mt-1 text-xs text-quiet">
               Saving writes to{" "}
               <code className="font-mono">
                 essays/drafts/{draftFilename}
@@ -191,7 +191,7 @@ export default async function AdminEssayDraftsPage() {
             >
               Save draft
             </button>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
+            <p className="text-xs text-quiet">
               Vercel is read-only — saves only land in local checkouts. Commit
               the file alongside the calibration log entry it anchors to.
             </p>
@@ -206,11 +206,11 @@ export default async function AdminEssayDraftsPage() {
         <header>
           <h2
             id="drafts-heading"
-            className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400"
+            className="text-sm font-semibold uppercase tracking-wide text-quiet"
           >
             All drafts
           </h2>
-          <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
+          <p className="mt-1 text-xs text-quiet">
             Files under{" "}
             <code className="font-mono">essays/drafts/</code>. Move a draft
             into <code className="font-mono">contentrx-docs/essays/</code> to
@@ -218,7 +218,7 @@ export default async function AdminEssayDraftsPage() {
           </p>
         </header>
         {allDrafts.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-stone-300 bg-white px-4 py-3 text-xs text-stone-500 dark:text-stone-400 dark:border-stone-700 dark:bg-stone-900">
+          <p className="rounded-lg border border-dashed border-stone-300 bg-white px-4 py-3 text-xs text-quiet dark:border-stone-700 dark:bg-stone-900">
             No drafts yet. The first save creates one.
           </p>
         ) : (
@@ -234,7 +234,7 @@ export default async function AdminEssayDraftsPage() {
         )}
       </section>
 
-      <p className="text-xs text-stone-500 dark:text-stone-400">
+      <p className="text-xs text-quiet">
         Voice prompt: open with a specific decision the κ moved this week,
         not the metric itself. The metric is evidence; the decision is the
         story.
@@ -265,7 +265,7 @@ function DraftRow({
           </Pill>
         )}
       </div>
-      <div className="flex items-baseline gap-4 font-mono text-[10px] text-stone-500 dark:text-stone-400">
+      <div className="flex items-baseline gap-4 font-mono text-[10px] text-quiet">
         <span>{entry.size_bytes.toLocaleString()} bytes</span>
         <span>{formatDate(entry.modified_at)}</span>
       </div>
@@ -284,13 +284,13 @@ function Input({
 }) {
   return (
     <div>
-      <dt className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <dt className="text-[10px] font-semibold uppercase tracking-wide text-quiet">
         {label}
       </dt>
       <dd
         className={`mt-1 ${
           mono ? "font-mono text-xs" : "text-sm"
-        } text-stone-800 dark:text-stone-200`}
+        } text-default`}
       >
         {value}
       </dd>

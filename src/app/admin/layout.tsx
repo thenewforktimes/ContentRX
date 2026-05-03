@@ -59,7 +59,7 @@ export default async function AdminLayout({
         <aside className="hidden w-60 shrink-0 border-r border-stone-200 bg-white px-4 py-6 md:block dark:border-stone-800 dark:bg-stone-900">
           <Link
             href="/admin"
-            className="block px-2 text-sm font-semibold text-stone-900 dark:text-stone-100"
+            className="block px-2 text-sm font-semibold text-strong"
           >
             ContentRX · Admin
           </Link>
@@ -115,7 +115,7 @@ function NavGroup({
 }) {
   return (
     <div>
-      <p className="px-2 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <p className="px-2 text-xs font-semibold uppercase tracking-wide text-quiet">
         {label}
       </p>
       <ul className="mt-2 space-y-0.5">{children}</ul>
@@ -136,7 +136,7 @@ function NavLink({
     <li>
       <Link
         href={href}
-        className="flex items-center justify-between rounded-md px-2 py-1 text-stone-700 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+        className="flex items-center justify-between rounded-md px-2 py-1 text-stone-700 hover:bg-stone-100 hover:text-default dark:hover:bg-stone-800 dark:hover:text-stone-100"
       >
         <span>{children}</span>
         {badge && badge > 0 ? (

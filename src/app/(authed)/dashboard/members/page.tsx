@@ -44,7 +44,7 @@ export default async function MembersPage() {
     return (
       <section className="flex flex-col items-start gap-3 rounded-lg border border-stone-200 p-6 dark:border-stone-800">
         <h1 className="text-lg font-semibold">Members</h1>
-        <p className="text-sm text-stone-600 dark:text-stone-300">
+        <p className="text-sm text-default">
           Available on the Team plan. Invite teammates to share your
           monthly check limit, custom rules, and custom examples.
         </p>
@@ -65,11 +65,11 @@ export default async function MembersPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <p className="text-xs font-mono uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-mono uppercase tracking-widest text-quiet">
           Team
         </p>
         <h1 className="mt-2 text-2xl font-semibold">Members</h1>
-        <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+        <p className="mt-1 text-sm text-default">
           {seats.used} of {seats.capacity} seats used
           {seats.pendingInviteCount > 0 && (
             <>
