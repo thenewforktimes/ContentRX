@@ -1,29 +1,32 @@
 "use client";
 
 /**
- * HowItWorksDiagram — story-based pipeline animation, v4.
+ * HowItWorksDiagram — story-based pipeline animation, v5.
  *
- * v4 (2026-04-29): cut the traveling pill + progress track.
- * Robert's call: the cards transitioning to emerald carry the
- * story; the horizontal pill was extending past the visible work
- * and reading as redundant. The cards do the work.
+ * v5 (2026-05-03): customer-shaped rewrite. Pipeline-stage labels
+ * (Classify / Filter / Review / Verdict) leaked engineer-speak onto
+ * a marketing surface — same shape ADR 2026-04-25 forbids for
+ * taxonomy names. Replaced with five short imperatives that name
+ * the *customer's* arc through the loop:
  *
- * v3 kept: variable per-stage timing (1s setup, 2s Review,
- * 2.5s Verdict), framer-motion-driven verdict-card spring,
- * Tailwind data-state transitions on the cards.
+ *   1. Choose a surface          ← customer action
+ *   2. Check your string         ← customer action
+ *   3. We do the hard eval work  ← our promise
+ *   4. We report and suggest     ← our output
+ *   5. You decide                ← customer agency (ADR 2026-04-28)
  *
- * Loop shape: 5 stages with variable durations + 1 reset tick.
- *   tick 0 (1.0s): "Your string"
- *   tick 1 (1.0s): "Classify" → button label
- *   tick 2 (1.0s): "Filter" → standards narrowed
- *   tick 3 (2.0s): "Review" → thinking dots
- *   tick 4 (2.5s): "Verdict" → suggestion + severity + confidence
- *   tick 5 (1.0s): reset (all pending)
- * Total ~8.5s loop.
+ * Same v5 pass also: normalized container shape (fixed heights,
+ * drop translate-y + shadow on active state — color + content
+ * reveal alone do the work); migrated raw emerald-* shades to the
+ * affirm tokens so the diagram inherits the teal palette refresh
+ * (#331); tightened the loop to ~5.5s with uniform 1s pacing
+ * (was 8.5s with variable per-stage durations).
+ *
+ * v4 (2026-04-29) cut the traveling pill + progress track.
  *
  * Accessibility:
  *   - The whole thing is an ordered list; screen readers walk the
- *     stages in order with their static labels + captions.
+ *     stages in order with their static labels.
  *   - prefers-reduced-motion: animation is disabled (the cycle
  *     stops, all stages render fully revealed).
  *
@@ -36,47 +39,40 @@ import { useEffect, useState } from "react";
 import { Pill } from "@/components/ui/pill";
 
 interface Stage {
-  /** Short stage label. */
+  /** Short imperative — one full thought per stage. */
   label: string;
-  /** One-line description below the label, always visible. */
-  caption: string;
-  /** What the stage outputs once active/complete. */
+  /** What the stage outputs once active/complete. Single inline element. */
   output: React.ReactNode;
 }
 
 const STAGES: ReadonlyArray<Stage> = [
   {
-    label: "Your string",
-    caption: "What gets shipped",
-    output: <code className="font-mono text-xs">&quot;Click here&quot;</code>,
+    label: "Choose a surface",
+    output: <SurfaceChip />,
   },
   {
-    label: "Classify",
-    caption: "Recognise the moment",
-    output: <span className="text-xs">button label</span>,
+    label: "Check your string",
+    output: <code className="font-mono text-xs text-default">&quot;Click here&quot;</code>,
   },
   {
-    label: "Filter",
-    caption: "Narrow the standards",
-    output: <span className="text-xs">standards narrowed</span>,
-  },
-  {
-    label: "Review",
-    caption: "Apply the judgment",
+    label: "We do the hard eval work",
     output: <ThinkingDots />,
   },
   {
-    label: "Verdict",
-    caption: "Issue, suggestion, severity",
-    output: <VerdictCard />,
+    label: "We report and suggest",
+    output: <SuggestionChip />,
+  },
+  {
+    label: "You decide",
+    output: <DecisionChip />,
   },
 ];
 
-/** Setup stages tick fast; Review + Verdict linger so the payoff reads. */
+/** Uniform 1s per stage; Verdict gets a touch longer to let the eye rest. */
 const STAGE_DURATIONS_MS: ReadonlyArray<number> = [
-  1000, 1000, 1000, 2000, 2500,
+  1000, 1000, 1000, 1000, 1500,
 ];
-const RESET_PAUSE_MS = 1000;
+const RESET_PAUSE_MS = 500;
 const RESET_TICK = STAGE_DURATIONS_MS.length;
 
 type StageState = "pending" | "active" | "complete";
@@ -171,11 +167,13 @@ function StageCard({
     <div
       data-state={state}
       className={[
-        "flex flex-1 flex-col rounded-lg border px-4 py-3",
-        "transition-all duration-500 ease-out",
-        "border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-950",
-        "data-[state=active]:-translate-y-0.5 data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-50 data-[state=active]:shadow-sm data-[state=active]:dark:border-emerald-500 data-[state=active]:dark:bg-emerald-950/40",
-        "data-[state=complete]:border-emerald-200 data-[state=complete]:bg-emerald-50/50 data-[state=complete]:dark:border-emerald-900 data-[state=complete]:dark:bg-emerald-950/20",
+        // Fixed height keeps every card identical so the row never
+        // grows when content reveals on the active card.
+        "flex h-32 flex-1 flex-col rounded-lg border px-4 py-3",
+        "transition-colors duration-500 ease-out",
+        "border-line bg-raised",
+        "data-[state=active]:border-accent-affirm-border data-[state=active]:bg-accent-affirm-soft",
+        "data-[state=complete]:border-accent-affirm-border/60 data-[state=complete]:bg-accent-affirm-soft/40",
       ].join(" ")}
     >
       <p className="text-[10px] font-semibold uppercase tracking-widest text-quiet">
@@ -184,15 +182,12 @@ function StageCard({
       <p className="mt-1 text-sm font-semibold text-strong">
         {stage.label}
       </p>
-      <p className="mt-1 text-xs text-default">
-        {stage.caption}
-      </p>
       <div
         className={[
-          "mt-3 min-h-[2.25rem] transition-opacity duration-500",
-          state === "pending"
-            ? "opacity-0"
-            : "opacity-100 text-default",
+          // Fixed-height output slot. Every stage's visual fits in
+          // a single ~28px line so cards never grow on activation.
+          "mt-auto flex h-7 items-center transition-opacity duration-500",
+          state === "pending" ? "opacity-0" : "opacity-100",
         ].join(" ")}
         aria-hidden={state === "pending"}
       >
@@ -206,7 +201,7 @@ function Connector({ active }: { active: boolean }) {
   return (
     <div
       data-active={active ? "true" : "false"}
-      className="flex shrink-0 items-center justify-center self-center text-stone-300 transition-colors duration-500 data-[active=true]:text-emerald-500 dark:text-stone-500 data-[active=true]:dark:text-emerald-400 sm:self-auto sm:py-1"
+      className="flex shrink-0 items-center justify-center self-center text-line transition-colors duration-500 data-[active=true]:text-accent-affirm sm:self-auto sm:py-1"
       aria-hidden
     >
       <svg
@@ -234,31 +229,40 @@ function ThinkingDots() {
   );
 }
 
-/**
- * VerdictCard — the payoff. Pops in with a small spring when the
- * Verdict stage activates. Framer Motion's `key` reset on
- * activation triggers the entrance animation each loop.
- */
-function VerdictCard() {
+/** Stage 1 — one of the surfaces a customer can plug into. */
+function SurfaceChip() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 4, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-      className="space-y-1 text-[11px] leading-tight"
+    <Pill tone="neutral" size="xs">
+      Dashboard
+    </Pill>
+  );
+}
+
+/**
+ * Stage 4 — the engine's suggestion. Single inline pill so the card
+ * stays uniform with stage 1's surface chip. Pops in with a small
+ * spring when the stage activates.
+ */
+function SuggestionChip() {
+  return (
+    <motion.span
+      initial={{ opacity: 0, y: 2 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      className="inline-flex"
     >
-      <p>
-        <span className="font-mono text-quiet">
-          suggestion:
-        </span>{" "}
-        <span className="font-medium text-strong">
-          &ldquo;View pricing&rdquo;
-        </span>
-      </p>
-      <div className="flex gap-1">
-        <Pill tone="amber" size="xs">high</Pill>
-        <Pill tone="neutral" size="xs" className="font-mono">0.96</Pill>
-      </div>
-    </motion.div>
+      <Pill tone="amber" size="xs" className="font-mono">
+        &ldquo;View pricing&rdquo;
+      </Pill>
+    </motion.span>
+  );
+}
+
+/** Stage 5 — the customer's call. Affirm tone reinforces the agency. */
+function DecisionChip() {
+  return (
+    <Pill tone="emerald" size="xs">
+      Apply
+    </Pill>
   );
 }
