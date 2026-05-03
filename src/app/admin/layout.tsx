@@ -64,6 +64,12 @@ export default async function AdminLayout({
           >
             ContentRX · Admin
           </Link>
+          <Link
+            href="/dashboard"
+            className="mt-1 block px-2 text-xs text-quiet hover:text-strong"
+          >
+            ← Dashboard
+          </Link>
 
           <div className="mt-4 px-2">
             <CommandPalette />
