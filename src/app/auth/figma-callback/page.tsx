@@ -16,6 +16,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { buttonStyles } from "@/components/ui/button";
 import { getDb, schema } from "@/db";
@@ -235,13 +236,32 @@ function CallbackShell({
   children: React.ReactNode;
 }) {
   const accentBorder =
-    tone === "ok" ? "border-t-green-600" : "border-t-red-600";
+    tone === "ok" ? "border-t-accent-affirm" : "border-t-accent-concern";
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
+    <main className="flex min-h-screen flex-col items-center justify-center p-6">
+      <Link
+        href="/"
+        className="mb-6 text-sm font-semibold tracking-tight text-strong"
+        aria-label="ContentRX home"
+      >
+        ContentRX
+      </Link>
       <div
-        className={`w-full max-w-md rounded-lg border-t-4 bg-white px-7 py-6 leading-relaxed text-stone-800 shadow-sm dark:bg-stone-950 dark:text-stone-200 ${accentBorder}`}
+        className={`w-full max-w-md rounded-lg border-t-4 bg-raised px-7 py-6 leading-relaxed text-default shadow-sm ${accentBorder}`}
       >
         {children}
+        {tone === "error" && (
+          <p className="mt-4 border-t border-line pt-4 text-xs text-quiet">
+            Stuck?{" "}
+            <Link
+              href="/dashboard"
+              className="underline underline-offset-2 hover:text-strong"
+            >
+              Go to your dashboard
+            </Link>
+            . You can rotate keys and re-trigger plugin sign-in from there.
+          </p>
+        )}
       </div>
     </main>
   );

@@ -1,12 +1,23 @@
 import Link from "next/link";
 import { SignOutButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { SiteFooter } from "@/components/site-footer";
+import { isContentRXAdmin } from "@/lib/graduation";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Founders see an "Admin" link in the chrome alongside Dashboard /
+  // Settings — they routinely switch between the customer-facing
+  // dashboard and the founder admin surface, and forcing them to
+  // type the URL was a real friction point. The check is a cheap
+  // string comparison against CONTENTRX_ADMIN_CLERK_IDS; non-founders
+  // never see the link, never know /admin exists from this surface.
+  const { userId } = await auth();
+  const isFounder = userId ? isContentRXAdmin(userId) : false;
+
   return (
     <div className="flex min-h-screen flex-col bg-raised">
       <header className="border-b border-line">
@@ -21,6 +32,11 @@ export default function DashboardLayout({
             >
               Dashboard
             </Link>
+            {isFounder && (
+              <Link href="/admin" className="text-quiet hover:text-strong">
+                Admin
+              </Link>
+            )}
             <Link
               href="/dashboard/settings"
               className="text-quiet hover:text-strong"
