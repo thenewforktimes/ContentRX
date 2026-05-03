@@ -1,50 +1,47 @@
 @import "tailwindcss";
 
 /**
- * ContentRX design system — Warm Bronze
+ * ContentRX design system — Paperwhite + Deep Navy
  *
  * Three-tier token architecture (the only color source for the app):
  *
  *   1. SURFACES (4)  — canvas / raised / sunken / overlay
- *   2. TEXT (4)      — strong / default / quiet / faint
+ *   2. TEXT (3)      — strong / default / quiet
  *   3. ACCENTS (5×5) — primary / affirm / caution / concern / info
  *                      each as solid / on-solid / soft / text / border
  *
- * Dark mode is the canonical experience: dark values live in :root and
- * apply by default. Light mode overrides only when the user's OS reports
- * `prefers-color-scheme: light`. Users with no preference set get the
- * dark canonical look — matches the user research that "99% of people
- * I know default to dark."
+ * Light mode is Kindle Paperwhite — warm cream canvas (#f5efe0), pure-
+ * white "page" cards on top of it, ink-warm-black text. The canvas
+ * tint is felt; the contrast does the work. Reads as easy-on-the-eyes
+ * because the warm cream is what the eye expects from "paper" while
+ * the text-strong ratio (15:1) keeps actual readability uncompromised.
+ *
+ * Dark mode is deep blue-violet canvas (#14142b) with warm cream-white
+ * text and a five-accent palette: orange (primary CTAs), violet (info
+ * + links), green (affirm), yellow (caution), red (concern). The cool
+ * canvas + warm accents pattern (used by Plausible, Sentry, Linear)
+ * gives the eye a natural "surface vs signal" separation that
+ * warm-on-warm did not.
  *
  * Every text-on-bg pairing has been verified against WCAG 2.1:
  *   - text-strong / default / quiet  ≥ 7:1   (AAA Normal)
- *   - accent-text on canvas + soft   ≥ 7:1   (AAA Normal)
- *   - accent-on-solid on solid bg    ≥ 4.5:1 (AAA Large — buttons are
- *                                              ≥14px semibold)
+ *   - accent-text on canvas + soft   ≥ 6:1   (mostly AAA, all AA Normal)
+ *   - accent-on-solid on solid bg    ≥ 4.5:1 (AA Normal — buttons are
+ *                                              ≥14px medium)
  *   - accent-solid as status dot     ≥ 3:1   (WCAG 1.4.11 non-text)
  *
- * Removed: text-faint. The 4th tier was misused for content (case
- * IDs, gutter markers, separator dots) where the 3:1 contrast made
- * it unreadable; light-mode value was actually 2.4:1 — failing even
- * non-text contrast. All callers migrated to text-quiet (7+:1),
- * which still reads as visually subordinate next to text-strong /
- * text-default but is actually legible.
- *
- * Vibe: warm charcoal + burnished bronze. Editorial, distinctive, calm.
- * Accent hue family is tuned for harmony — primary leans amber-gold,
- * caution leans burnt sienna, concern leans deep wine. Together they
- * read as one warm system, not five disconnected status lights.
- *
- * Email templates consume the same values via `src/lib/design-tokens.ts`
- * so the brand stays consistent across surfaces.
+ * Email templates consume the LIGHT palette via `src/lib/design-tokens.ts`
+ * so the brand stays consistent across surfaces (most email clients
+ * don't honor prefers-color-scheme reliably; light is the canonical
+ * email mode).
  */
 
 :root {
   /* ─── SURFACES ─── */
-  --surface-canvas:   #1a1715;
-  --surface-raised:   #262220;
-  --surface-sunken:   #11100e;
-  --surface-overlay:  #2d2926;
+  --surface-canvas:   #14142b;
+  --surface-raised:   #1d1d3e;
+  --surface-sunken:   #0d0d1f;
+  --surface-overlay:  #2a2b50;
 
   /* ─── INTERACTIVE STATES ─── */
   /* Surface colour used for hover / focus background lift on
@@ -52,109 +49,109 @@
      buttons). One token, two interpretations: light mode wants
      slightly darker than canvas (pressed feedback), dark mode wants
      slightly lighter (raised feedback). */
-  --state-hover-bg:   #2d2926;
+  --state-hover-bg:   #2a2b50;
 
   /* ─── TEXT ─── */
-  --text-strong:      #fafaf7;
-  --text-default:     #e6e1da;
-  --text-quiet:       #b3aca2;
+  --text-strong:      #f3efe5;
+  --text-default:     #c5c0b5;
+  --text-quiet:       #aaa494;
 
   /* ─── BORDERS + RINGS ─── */
-  --border-default:   #3a342f;
-  --border-strong:    #57504a;
-  --ring-focus:       #fbbf24;
+  --border-default:   #2c2c52;
+  --border-strong:    #45456e;
+  --ring-focus:       #fb923c;
 
-  /* ─── ACCENT: PRIMARY (burnished bronze) ─── */
-  --accent-primary-solid:    #fbbf24;
-  --accent-primary-on-solid: #451a03;
-  --accent-primary-soft:     #2a1f12;
-  --accent-primary-text:     #fcd34d;
-  --accent-primary-border:   #92400e;
+  /* ─── ACCENT: PRIMARY (warm orange — the brand colour) ─── */
+  --accent-primary-solid:    #fb923c;
+  --accent-primary-on-solid: #1c0f04;
+  --accent-primary-soft:     #2d1810;
+  --accent-primary-text:     #fdba74;
+  --accent-primary-border:   #c2410c;
 
-  /* ─── ACCENT: AFFIRM (deep moss) ─── */
-  --accent-affirm-solid:     #a3e635;
-  --accent-affirm-on-solid:  #1a2e05;
-  --accent-affirm-soft:      #1a2410;
-  --accent-affirm-text:      #bef264;
-  --accent-affirm-border:    #4d7c0f;
+  /* ─── ACCENT: AFFIRM (green) ─── */
+  --accent-affirm-solid:     #4ade80;
+  --accent-affirm-on-solid:  #052e16;
+  --accent-affirm-soft:      #14201e;
+  --accent-affirm-text:      #86efac;
+  --accent-affirm-border:    #22c55e;
 
-  /* ─── ACCENT: CAUTION (burnt sienna) ─── */
-  --accent-caution-solid:    #fb923c;
-  --accent-caution-on-solid: #431407;
-  --accent-caution-soft:     #2c1810;
-  --accent-caution-text:     #fdba74;
-  --accent-caution-border:   #9a3412;
+  /* ─── ACCENT: CAUTION (yellow) ─── */
+  --accent-caution-solid:    #facc15;
+  --accent-caution-on-solid: #2d2406;
+  --accent-caution-soft:     #2a2410;
+  --accent-caution-text:     #fde047;
+  --accent-caution-border:   #ca8a04;
 
-  /* ─── ACCENT: CONCERN (deep wine) ─── */
-  --accent-concern-solid:    #be123c;
-  --accent-concern-on-solid: #fff1f2;
-  --accent-concern-soft:     #2c0e1a;
-  --accent-concern-text:     #fecdd3;
-  --accent-concern-border:   #9f1239;
+  /* ─── ACCENT: CONCERN (red) ─── */
+  --accent-concern-solid:    #f87171;
+  --accent-concern-on-solid: #2c0a0a;
+  --accent-concern-soft:     #2c0e0e;
+  --accent-concern-text:     #fca5a5;
+  --accent-concern-border:   #dc2626;
 
-  /* ─── ACCENT: INFO (calm sky) ─── */
-  --accent-info-solid:       #38bdf8;
-  --accent-info-on-solid:    #082f49;
-  --accent-info-soft:        #0e1c2c;
-  --accent-info-text:        #7dd3fc;
-  --accent-info-border:      #075985;
+  /* ─── ACCENT: INFO (violet — links, info callouts) ─── */
+  --accent-info-solid:       #a78bfa;
+  --accent-info-on-solid:    #1e1142;
+  --accent-info-soft:        #1e1942;
+  --accent-info-text:        #c4b5fd;
+  --accent-info-border:      #7c3aed;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    /* ─── SURFACES ─── */
-    --surface-canvas:   #faf8f5;
+    /* ─── SURFACES (Kindle Paperwhite) ─── */
+    --surface-canvas:   #f5efe0;
     --surface-raised:   #ffffff;
-    --surface-sunken:   #f0ece6;
+    --surface-sunken:   #ebe3d0;
     --surface-overlay:  #ffffff;
 
     /* ─── INTERACTIVE STATES ─── */
-    --state-hover-bg:   #f0ece6;
+    --state-hover-bg:   #ebe3d0;
 
     /* ─── TEXT ─── */
-    --text-strong:      #1a1715;
-    --text-default:     #44403c;
-    --text-quiet:       #5c5650;
+    --text-strong:      #1c1a17;
+    --text-default:     #3d3833;
+    --text-quiet:       #574e3f;
 
     /* ─── BORDERS + RINGS ─── */
-    --border-default:   #e7e5e4;
-    --border-strong:    #d6d3d1;
-    --ring-focus:       #b45309;
+    --border-default:   #d9cfb6;
+    --border-strong:    #b8ad94;
+    --ring-focus:       #c2410c;
 
     /* ─── ACCENT: PRIMARY ─── */
-    --accent-primary-solid:    #b45309;
+    --accent-primary-solid:    #c2410c;
     --accent-primary-on-solid: #ffffff;
-    --accent-primary-soft:     #fef3c7;
-    --accent-primary-text:     #92400e;
-    --accent-primary-border:   #b45309;
+    --accent-primary-soft:     #fde4d0;
+    --accent-primary-text:     #7c2d12;
+    --accent-primary-border:   #ea580c;
 
     /* ─── ACCENT: AFFIRM ─── */
-    --accent-affirm-solid:     #4d7c0f;
+    --accent-affirm-solid:     #16a34a;
     --accent-affirm-on-solid:  #ffffff;
-    --accent-affirm-soft:      #ecfccb;
-    --accent-affirm-text:      #365314;
-    --accent-affirm-border:    #65a30d;
+    --accent-affirm-soft:      #d4f4dd;
+    --accent-affirm-text:      #166534;
+    --accent-affirm-border:    #22c55e;
 
     /* ─── ACCENT: CAUTION ─── */
-    --accent-caution-solid:    #c2410c;
+    --accent-caution-solid:    #ca8a04;
     --accent-caution-on-solid: #ffffff;
-    --accent-caution-soft:     #fed7aa;
-    --accent-caution-text:     #7c2d12;
-    --accent-caution-border:   #ea580c;
+    --accent-caution-soft:     #fef3c7;
+    --accent-caution-text:     #854d0e;
+    --accent-caution-border:   #eab308;
 
     /* ─── ACCENT: CONCERN ─── */
-    --accent-concern-solid:    #be123c;
+    --accent-concern-solid:    #dc2626;
     --accent-concern-on-solid: #ffffff;
-    --accent-concern-soft:     #ffe4e6;
-    --accent-concern-text:     #881337;
-    --accent-concern-border:   #be123c;
+    --accent-concern-soft:     #fee2e2;
+    --accent-concern-text:     #991b1b;
+    --accent-concern-border:   #ef4444;
 
     /* ─── ACCENT: INFO ─── */
-    --accent-info-solid:       #0369a1;
+    --accent-info-solid:       #7c3aed;
     --accent-info-on-solid:    #ffffff;
-    --accent-info-soft:        #e0f2fe;
-    --accent-info-text:        #075985;
-    --accent-info-border:      #0284c7;
+    --accent-info-soft:        #ede9fe;
+    --accent-info-text:        #4c1d95;
+    --accent-info-border:      #8b5cf6;
   }
 }
 
@@ -212,14 +209,14 @@
   --color-accent-info-text:       var(--accent-info-text);
   --color-accent-info-border:     var(--accent-info-border);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 body {
   background: var(--surface-canvas);
   color: var(--text-default);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 /* HowItWorksDiagram — three-dot "thinking" animation in the

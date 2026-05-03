@@ -9,131 +9,135 @@
  *
  * Keep these values in lockstep with `globals.css`. Both files reference
  * the same WCAG-verified palette; if you change a hex here, change it
- * there (and re-verify contrast ratios). The `verify-tokens.test.ts`
- * snapshot keeps them honest.
+ * there (and re-verify contrast ratios).
  *
- * Email design choice: emails always use the LIGHT palette regardless
- * of recipient OS preference, because most email clients (Gmail web,
- * Outlook desktop) don't reliably support dark-mode media queries inside
- * the email shell. A consistent light email reads predictably; a dark
- * email that breaks on Outlook reads broken.
+ * Email design choice: emails always use the LIGHT palette (Kindle
+ * Paperwhite — warm cream canvas, ink-warm-black text) regardless of
+ * recipient OS preference, because most email clients (Gmail web,
+ * Outlook desktop) don't reliably support dark-mode media queries
+ * inside the email shell. A consistent light email reads predictably;
+ * a dark email that breaks on Outlook reads broken.
  */
 
 export const tokens = {
   /**
    * Light palette — the only palette emails should use.
+   * Kindle Paperwhite: warm cream canvas, ink-warm-black text,
+   * pure-white "page" cards stacked on the cream.
    */
   light: {
     surface: {
-      canvas: "#faf8f5",
+      canvas: "#f5efe0",
       raised: "#ffffff",
-      sunken: "#f0ece6",
+      sunken: "#ebe3d0",
       overlay: "#ffffff",
     },
     text: {
-      strong: "#1a1715",
-      default: "#44403c",
-      quiet: "#5c5650",
+      strong: "#1c1a17",
+      default: "#3d3833",
+      quiet: "#574e3f",
     },
     border: {
-      default: "#e7e5e4",
-      strong: "#d6d3d1",
+      default: "#d9cfb6",
+      strong: "#b8ad94",
     },
     accent: {
       primary: {
-        solid: "#b45309",
-        onSolid: "#ffffff",
-        soft: "#fef3c7",
-        text: "#92400e",
-        border: "#b45309",
-      },
-      affirm: {
-        solid: "#4d7c0f",
-        onSolid: "#ffffff",
-        soft: "#ecfccb",
-        text: "#365314",
-        border: "#65a30d",
-      },
-      caution: {
         solid: "#c2410c",
         onSolid: "#ffffff",
-        soft: "#fed7aa",
+        soft: "#fde4d0",
         text: "#7c2d12",
         border: "#ea580c",
       },
-      concern: {
-        solid: "#be123c",
+      affirm: {
+        solid: "#16a34a",
         onSolid: "#ffffff",
-        soft: "#ffe4e6",
-        text: "#881337",
-        border: "#be123c",
+        soft: "#d4f4dd",
+        text: "#166534",
+        border: "#22c55e",
+      },
+      caution: {
+        solid: "#ca8a04",
+        onSolid: "#ffffff",
+        soft: "#fef3c7",
+        text: "#854d0e",
+        border: "#eab308",
+      },
+      concern: {
+        solid: "#dc2626",
+        onSolid: "#ffffff",
+        soft: "#fee2e2",
+        text: "#991b1b",
+        border: "#ef4444",
       },
       info: {
-        solid: "#0369a1",
+        solid: "#7c3aed",
         onSolid: "#ffffff",
-        soft: "#e0f2fe",
-        text: "#075985",
-        border: "#0284c7",
+        soft: "#ede9fe",
+        text: "#4c1d95",
+        border: "#8b5cf6",
       },
     },
   },
 
   /**
    * Dark palette — the canonical web experience. Not used in email.
-   * Exposed here so future surfaces (a possible Storybook, a settings
-   * preview swatch grid) can read the dark values directly.
+   * Deep blue-violet canvas with warm cream-white text and a five-
+   * accent palette: orange (primary), violet (info), green (affirm),
+   * yellow (caution), red (concern). The cool canvas + warm accents
+   * pattern gives the eye natural surface-vs-signal separation.
    */
   dark: {
     surface: {
-      canvas: "#1a1715",
-      raised: "#262220",
-      sunken: "#11100e",
-      overlay: "#2d2926",
+      canvas: "#14142b",
+      raised: "#1d1d3e",
+      sunken: "#0d0d1f",
+      overlay: "#2a2b50",
     },
     text: {
-      strong: "#fafaf7",
-      default: "#e6e1da",
-      quiet: "#b3aca2",
+      strong: "#f3efe5",
+      default: "#c5c0b5",
+      quiet: "#aaa494",
     },
     border: {
-      default: "#3a342f",
-      strong: "#57504a",
+      default: "#2c2c52",
+      strong: "#45456e",
     },
     accent: {
       primary: {
-        solid: "#fbbf24",
-        onSolid: "#451a03",
-        soft: "#2a1f12",
-        text: "#fcd34d",
-        border: "#92400e",
+        solid: "#fb923c",
+        onSolid: "#1c0f04",
+        soft: "#2d1810",
+        text: "#fdba74",
+        border: "#c2410c",
       },
       affirm: {
-        solid: "#a3e635",
-        onSolid: "#1a2e05",
-        soft: "#1a2410",
-        text: "#bef264",
-        border: "#4d7c0f",
+        solid: "#4ade80",
+        onSolid: "#052e16",
+        soft: "#14201e",
+        text: "#86efac",
+        border: "#22c55e",
       },
       caution: {
-        solid: "#fb923c",
-        onSolid: "#431407",
-        soft: "#2c1810",
-        text: "#fdba74",
-        border: "#9a3412",
+        solid: "#facc15",
+        onSolid: "#2d2406",
+        soft: "#2a2410",
+        text: "#fde047",
+        border: "#ca8a04",
       },
       concern: {
-        solid: "#be123c",
-        onSolid: "#fff1f2",
-        soft: "#2c0e1a",
-        text: "#fecdd3",
-        border: "#9f1239",
+        solid: "#f87171",
+        onSolid: "#2c0a0a",
+        soft: "#2c0e0e",
+        text: "#fca5a5",
+        border: "#dc2626",
       },
       info: {
-        solid: "#38bdf8",
-        onSolid: "#082f49",
-        soft: "#0e1c2c",
-        text: "#7dd3fc",
-        border: "#075985",
+        solid: "#a78bfa",
+        onSolid: "#1e1142",
+        soft: "#1e1942",
+        text: "#c4b5fd",
+        border: "#7c3aed",
       },
     },
   },

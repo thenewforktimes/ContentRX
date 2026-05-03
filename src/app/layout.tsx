@@ -1,15 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Inter is the body-reading font — designed by Rasmus Andersson
+// specifically for screen readability at body sizes (13–16px). Wide
+// apertures and open counters give the same easy-on-the-eyes feel
+// as a Kindle Paperwhite while keeping the modern SaaS aesthetic.
+// Geist Sans (the previous default) is geometric + slightly condensed
+// — beautiful for display but fights you at body sizes.
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
+// Geist Mono stays — it's actually great at code, IDs, hashes, and
+// timestamps. The font-mono token in @theme inline points here.
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -33,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${geistMono.variable} antialiased`}
       >
         {children}
         {plausibleDomain && (
