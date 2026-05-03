@@ -187,6 +187,14 @@ function SubtypeFilterPills({
   );
 }
 
+// Filter buttons (PR #305 precedent: "tabs are not pills" — these are
+// rounded-full interactive controls, not status tags). Both Preset and
+// Subtype share the same shell geometry so the row reads as one
+// consistent set of buttons regardless of which is active. Inactive
+// gets a quiet border + ghost bg; active gets a solid bg + strong text.
+const FILTER_BASE =
+  "inline-flex h-7 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition";
+
 function PresetPill({
   label,
   active,
@@ -199,11 +207,12 @@ function PresetPill({
   return (
     <Link
       href={href}
-      className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+      className={[
+        FILTER_BASE,
         active
-          ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
-          : "border border-stone-300 text-stone-700 hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
-      }`}
+          ? "border-strong bg-strong text-canvas"
+          : "border-line text-quiet hover:border-line-strong hover:text-strong",
+      ].join(" ")}
     >
       {label}
     </Link>
@@ -227,13 +236,14 @@ function SubtypePill({
     <Link
       href={href}
       title={tooltip}
-      className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+      className={[
+        FILTER_BASE,
         active
-          ? "bg-stone-200 text-stone-900 dark:bg-stone-700 dark:text-stone-100"
-          : "text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
-      }`}
+          ? "border-line-strong bg-overlay text-strong"
+          : "border-line text-quiet hover:border-line-strong hover:text-strong",
+      ].join(" ")}
     >
-      {label}{" "}
+      <span>{label}</span>
       <span className="font-mono tabular-nums opacity-70">· {count}</span>
     </Link>
   );
