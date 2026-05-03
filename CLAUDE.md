@@ -232,6 +232,65 @@ internal helper.
   `/api/check`.
 - Don't edit `src/content_checker/` and forget to run the engine tests
   (`python3 -m pytest tests/`). The Next.js app calls this code in prod.
+- Don't use raw Tailwind shade classes (`text-stone-700`, `bg-stone-50`,
+  `border-stone-200`, `bg-emerald-700`, etc.) outside `src/components/ui/`.
+  See "Design system" below — the shades are the underlying material;
+  callers reach for semantic tokens (`text-default`, `bg-raised`,
+  `border-line`, `<Button>`, `<Pill>`). The ESLint rule warns on
+  violations.
+
+## Design system — token-based UI
+
+The web app uses a three-tier semantic token system defined in
+`src/app/globals.css` and mirrored in `src/lib/design-tokens.ts` (for
+emails). Dark mode is the canonical experience. Every token pairing is
+WCAG 2.1 AAA verified. See ADR-tier history in PRs #308, #309, #310,
+#311, #312, #313, and #314 for the rationale.
+
+**Tokens (the only colors callers should reach for):**
+
+```
+Surfaces:  bg-canvas / bg-raised / bg-sunken / bg-overlay
+Text:      text-strong / text-default / text-quiet / text-faint
+Borders:   border-line / border-line-strong
+Focus:     focus-visible:ring-ring
+Accents:   {bg|text|border}-accent-{primary|affirm|caution|concern|info}-{solid|on|soft|text|border}
+```
+
+Every accent has a `solid` (filled button bg), `on` (text on solid),
+`soft` (subtle alert bg), `text` (text on canvas/soft), and `border`
+slot. So `bg-accent-caution-soft text-accent-caution-text border-accent-caution-border`
+makes a warm-orange callout that meets AAA in both modes automatically.
+
+**Primitives (use these instead of inlining classes):**
+
+| Primitive | Path | Use for |
+|---|---|---|
+| `<Button>`, `buttonStyles()` | `src/components/ui/button.tsx` | All buttons; `buttonStyles()` for `<Link>` styled-as-button |
+| `<Pill>` | `src/components/ui/pill.tsx` | Status tags, badges with semantic tone |
+| `<Card>` | `src/components/ui/card.tsx` | Bordered card containers |
+| `<Alert>` | `src/components/ui/alert.tsx` | Callout boxes (caution/concern/info/affirm) |
+| `<Input>`, `<Textarea>`, `<Select>` | `src/components/ui/input.tsx` | All form fields |
+| `<Heading level={1|2|3|4}>` | `src/components/ui/heading.tsx` | Page/section/subsection titles |
+| `<Eyebrow>` | `src/components/ui/eyebrow.tsx` | Mono uppercase pre-heading |
+| `<Section>` | `src/components/ui/section.tsx` | Eyebrow + h2 + body block |
+| `<Divider>` | `src/components/ui/divider.tsx` | Horizontal rule (semantic `<hr>` or decorative) |
+
+**The rule:** if you find yourself writing `text-stone-X dark:text-stone-Y`
+or `bg-{color}-{X} dark:bg-{color}-{Y}`, stop and ask whether a token
+or primitive covers it. Almost always one does.
+
+**The ESLint rule** (`no-restricted-syntax` in `eslint.config.mjs`)
+warns on raw `(bg|text|border|ring|...)-stone-N` outside
+`src/components/ui/` and `src/emails/`. Existing warnings represent
+incremental cleanup work, not a build-failure gate. New code should
+ship token-clean.
+
+**Email templates** (`src/emails/`) use `src/lib/design-tokens.ts`
+directly because Resend renders to inline-styled HTML — Tailwind classes
+don't reach the recipient. Shared style primitives live in `_shell.tsx`
+(`primaryButton`, `headingStyle`, `bodyStyle`, `cautionBox`, etc.) so
+templates compose, never inline hex.
 
 ## Running locally
 
