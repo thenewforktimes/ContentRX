@@ -17,13 +17,13 @@ export default function DashboardLayout({
           <nav className="flex items-center gap-5 text-xs">
             <Link
               href="/dashboard"
-              className="text-stone-600 hover:text-default dark:hover:text-stone-100"
+              className="text-quiet hover:text-strong"
             >
               Dashboard
             </Link>
             <Link
               href="/dashboard/settings"
-              className="text-stone-600 hover:text-default dark:hover:text-stone-100"
+              className="text-quiet hover:text-strong"
             >
               Settings
             </Link>
