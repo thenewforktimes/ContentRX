@@ -43,5 +43,14 @@ jobs:
         # JSON standards loader pointed at the in-tree library.
         run: pip install -e .
 
+      - name: Fetch substrate
+        # parity_check.py loads the standards library to drive the
+        # preprocessor comparison. Substrate lives in a private repo
+        # per ADR 2026-04-25; the script is the same one Vercel runs
+        # in `prebuild` (package.json).
+        env:
+          SUBSTRATE_TOKEN: ${{ secrets.SUBSTRATE_TOKEN }}
+        run: scripts/fetch-substrate.sh
+
       - name: Run parity gate
         run: python3 tools/parity_check.py

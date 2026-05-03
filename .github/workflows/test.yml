@@ -20,5 +20,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Fetch substrate
+        # vitest exercises code paths that load the standards library
+        # at import time. The substrate lives in a private repo per
+        # ADR 2026-04-25; the same scripts/fetch-substrate.sh that
+        # Vercel runs in `prebuild` (package.json) also runs here.
+        env:
+          SUBSTRATE_TOKEN: ${{ secrets.SUBSTRATE_TOKEN }}
+        run: scripts/fetch-substrate.sh
+
       - name: Run vitest
         run: npm test
