@@ -156,7 +156,7 @@ export default async function AdminSuggestionsPage() {
         <h1 className="text-2xl font-semibold text-strong">
           Suggestion calibration
         </h1>
-        <p className="mt-2 text-sm text-default">
+        <p className="mt-2 text-sm text-quiet">
           Customer rewrites that opted into upstream sharing. Approve to
           promote the cluster to a single precedent the runtime scan
           prompt reads. Reject for slop.

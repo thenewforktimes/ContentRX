@@ -136,13 +136,10 @@ export default async function AdminRuleReviewPage({ searchParams }: PageProps) {
   return (
     <div className="mx-auto max-w-5xl px-6 py-10 text-sm">
       <header className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-quiet">
-          Admin · rule-review queue
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold">
+        <h1 className="text-2xl font-semibold text-strong">
           Standards teams override most
         </h1>
-        <p className="mt-2 max-w-prose text-quiet">
+        <p className="mt-1 max-w-prose text-sm text-quiet">
           Rules with ≥{Math.round(minRate * 100)}% override rate on ≥
           {minTeams} distinct teams over the last {windowDays} days.
           Use this to justify content-model updates with data. The
