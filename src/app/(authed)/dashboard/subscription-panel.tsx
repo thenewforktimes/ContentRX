@@ -321,7 +321,7 @@ function IntervalToggle({
           className={`rounded-[5px] px-3 py-1 text-xs font-medium transition ${
             value === opt
               ? "bg-black text-white dark:bg-white dark:text-black"
-              : "text-stone-600 hover:text-default dark:hover:text-stone-100"
+              : "text-quiet hover:text-strong"
           }`}
         >
           {opt === "monthly" ? "Monthly" : "Annual"}

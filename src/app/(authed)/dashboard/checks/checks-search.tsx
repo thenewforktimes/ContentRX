@@ -255,7 +255,7 @@ export function ChecksSearch({
           {page > 1 ? (
             <Link
               href={buildPaginationHref(searchParams, pathname, page - 1)}
-              className="text-stone-700 underline underline-offset-2 hover:text-default dark:hover:text-stone-100"
+              className="text-quiet underline underline-offset-2 hover:text-strong"
             >
               ← Newer
             </Link>
@@ -268,7 +268,7 @@ export function ChecksSearch({
           {hasMore ? (
             <Link
               href={buildPaginationHref(searchParams, pathname, page + 1)}
-              className="text-stone-700 underline underline-offset-2 hover:text-default dark:hover:text-stone-100"
+              className="text-quiet underline underline-offset-2 hover:text-strong"
             >
               Older →
             </Link>

@@ -46,7 +46,7 @@ const companyLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line bg-stone-50 dark:bg-stone-950">
+    <footer className="border-t border-line bg-sunken">
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           <div>
@@ -97,14 +97,14 @@ function FooterColumn({
             {link.external ? (
               <a
                 href={link.href}
-                className="text-stone-700 hover:text-default dark:hover:text-stone-50"
+                className="text-quiet hover:text-strong"
               >
                 {link.label}
               </a>
             ) : (
               <Link
                 href={link.href}
-                className="text-stone-700 hover:text-default dark:hover:text-stone-50"
+                className="text-quiet hover:text-strong"
               >
                 {link.label}
               </Link>

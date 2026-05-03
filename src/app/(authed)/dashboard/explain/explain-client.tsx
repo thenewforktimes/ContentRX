@@ -236,7 +236,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
                   className={`rounded-sm px-2 py-1 transition ${
                     tier === t
                       ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
-                      : "text-stone-600 hover:text-default dark:hover:text-stone-100"
+                      : "text-quiet hover:text-strong"
                   }`}
                   title={TIER_HINTS[t]}
                 >
@@ -425,7 +425,7 @@ function DiffBlock({ before, after }: { before: string; after: string }) {
       <div className="flex items-start gap-2">
         <span
           aria-hidden="true"
-          className="select-none text-stone-400 dark:text-quiet"
+          className="select-none text-faint"
         >
           −
         </span>
@@ -440,7 +440,7 @@ function DiffBlock({ before, after }: { before: string; after: string }) {
       <div className="flex items-start gap-2">
         <span
           aria-hidden="true"
-          className="select-none text-stone-400 dark:text-quiet"
+          className="select-none text-faint"
         >
           +
         </span>
