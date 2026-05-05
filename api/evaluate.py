@@ -153,6 +153,41 @@ class handler(BaseHTTPRequestHandler):
                 },
             )
 
+        # Document rewrite mode: produces a holistic clean version of
+        # the input in the ContentRX house voice. The dashboard's
+        # Document tier calls this in parallel with the regular check
+        # so the customer sees both findings AND a suggested rewrite.
+        # See rewrite_document.py for the prompt + output contract.
+        if mode == "rewrite_document":
+            from content_checker.rewrite_document import (  # noqa: PLC0415
+                rewrite_document,
+            )
+            try:
+                result = rewrite_document(text=text)
+            except PromptInjectionError as exc:
+                return self._respond(400, {"error": str(exc)})
+            except RateLimitedError as exc:
+                return self._respond(503, {"error": str(exc)}, retry_after=30)
+            except RequestTimeoutError as exc:
+                return self._respond(504, {"error": str(exc)})
+            except Exception:  # noqa: BLE001
+                traceback.print_exc()
+                return self._respond(500, {"error": "Rewrite failed"})
+
+            return self._respond(
+                200,
+                {
+                    "result": {"rewritten": result.rewritten},
+                    "latency_ms": result.latency_ms,
+                    "tokens": {
+                        "input": result.input_tokens,
+                        "output": result.output_tokens,
+                        "cache_creation_input": result.cache_creation_input_tokens,
+                        "cache_read_input": result.cache_read_input_tokens,
+                    },
+                },
+            )
+
         # Classify-only mode: cheap (~1 LLM call) helper used by the MCP
         # server's classify_moment tool. Skips the full check pipeline
         # so MCP clients can plan content without burning a quota slot

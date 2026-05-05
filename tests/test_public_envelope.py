@@ -46,6 +46,10 @@ SUBSTRATE_ONLY_VIOLATION_FIELDS = frozenset({
 PUBLIC_ENVELOPE_TOP_LEVEL_FIELDS = frozenset({
     "schema_version", "violations", "verdict", "review_reason",
     "warnings", "content_type", "moment",
+    # 2.3.0 — additive holistic rewrite for tier=document calls.
+    # Always present in the envelope (null on standard/surface
+    # tiers; null on clean documents).
+    "suggested_rewrite",
 })
 
 SUBSTRATE_TOP_LEVEL_FIELDS = frozenset({
@@ -211,10 +215,11 @@ class TestCheckResultPublicEnvelope:
 
         assert set(envelope.keys()) == PUBLIC_ENVELOPE_TOP_LEVEL_FIELDS
         assert envelope["schema_version"] == SCHEMA_VERSION
-        # 2.2.0 added content_type + moment as customer-grounding
-        # fields. Both are nullable in the contract, present here
-        # because make_check_result populates them.
-        assert envelope["schema_version"] == "2.2.0"
+        # 2.2.0 added content_type + moment as customer-grounding fields.
+        # 2.3.0 added suggested_rewrite (defaulted to None when not
+        # populated by the caller). Both content_type and moment are
+        # populated here because make_check_result sets them.
+        assert envelope["schema_version"] == "2.3.0"
         assert envelope["content_type"] == "error"
         assert envelope["moment"] == "destructive_action"
 

@@ -86,7 +86,16 @@ from content_checker.config import is_public_taxonomy_enabled
 #         propagates them to live check responses so surfaces can
 #         display the same context inline. Additive — old clients
 #         ignoring unknown fields continue to work.
-SCHEMA_VERSION = "2.2.0"
+# 2.3.0 — Document-tier holistic rewrite. Adds `suggested_rewrite`
+#         (string | null) at the top level of the public envelope.
+#         Populated only for tier="document" calls when the regular
+#         check finds something worth rewriting (verdict in
+#         {violation, review_recommended}); null otherwise. The
+#         engine produces it via a parallel rewrite_document mode on
+#         /api/evaluate; see api/evaluate.py and
+#         src/content_checker/rewrite_document.py. Additive — clients
+#         that don't read the field continue to work unchanged.
+SCHEMA_VERSION = "2.3.0"
 
 
 # Ambiguity-flag vocabulary (human-eval build plan Session 1).
@@ -616,36 +625,38 @@ class CheckResult:
         """
         return self.to_substrate_dict()
 
-    def to_public_envelope(self, *, warnings: list[str] | None = None) -> dict:
+    def to_public_envelope(
+        self,
+        *,
+        warnings: list[str] | None = None,
+        suggested_rewrite: str | None = None,
+    ) -> dict:
         """Public-facing envelope.
 
-        Top-level shape (schema 2.2.0):
+        Top-level shape (schema 2.3.0):
 
             {
-                "schema_version": "2.2.0",
+                "schema_version": "2.3.0",
                 "violations": [...public violations...],
                 "verdict": "...",
                 "review_reason": "..." | None,
                 "warnings": [...],
                 "content_type": "..." | None,
                 "moment": "..." | None,
+                "suggested_rewrite": "..." | None,
             }
 
-        The customer web dashboard, MCP, CLI, Figma plugin, GitHub
-        Action, LSP, and editor extensions all consume this shape
-        directly. The TS layer at `/api/check` may add API-usage
-        siblings (`latency_ms`, `tokens`, `usage`) at the top level —
-        those are about request metadata, not taxonomy, so they live
-        alongside this envelope rather than inside it.
+        Schema 2.2.0 added `content_type` and `moment` — both nullable
+        and describing the engine's classification of the customer's
+        own input back to them.
 
-        Schema 2.2.0 additions: `content_type` and `moment` describe
-        the engine's classification of the customer's own input back
-        to them. They ground recommendations in the customer's
-        specific situation ("Detected as a button label · destructive
-        confirmation"). Both nullable when classification was
-        inconclusive. They're not substrate-only — the customer was
-        always going to see them on /dashboard/checks; this surfaces
-        them on the live response too.
+        Schema 2.3.0 added `suggested_rewrite` — only populated by the
+        Document-tier check path when the regular check finds
+        something worth rewriting. Null on standard/surface tiers and
+        on clean documents. The rewrite is produced by the
+        `rewrite_document` mode on `/api/evaluate` and is
+        always-present in the envelope so wire-format clients can rely
+        on the key existing.
 
         `passes`, `pipeline`, `rationale_chain`, `audience`,
         `summary`, and the legacy `overall_verdict` are still OMITTED.
@@ -660,6 +671,7 @@ class CheckResult:
             "warnings": list(warnings) if warnings else [],
             "content_type": self.content_type or None,
             "moment": self.moment or None,
+            "suggested_rewrite": suggested_rewrite,
         }
 
 
