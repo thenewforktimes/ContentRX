@@ -1,23 +1,32 @@
 """Content audience signal for the content standards checker.
 
-Defines the two audience modes and their effects on the pipeline:
+Defines the audience modes and their effects on the pipeline:
 
-    product_ui  — Default. Full standards enforcement. The content is
-                  user-facing product UI (buttons, labels, error messages,
-                  tooltips, onboarding flows). Every standard applies.
+    product_ui    — Default. Full standards enforcement. The content is
+                    user-facing product UI (buttons, labels, error
+                    messages, tooltips, onboarding flows). Every standard
+                    applies.
 
-    general     — Relaxed. The content is a presentation, internal doc,
-                  marketing page, or other non-UI context. UI-specific
-                  standards are suppressed; universal quality standards
-                  (grammar, proofing, clarity, inclusion) still apply.
+    native_mobile — Native mobile UI (iOS / Android). Full standards
+                    enforcement EXCEPT device-specific verbs (ACC-08):
+                    "tap" / "touch" / "swipe" are appropriate to the
+                    platform's input model and don't carry the
+                    web-vs-mobile assumption ACC-08 guards against.
+
+    general       — Relaxed. The content is a presentation, internal
+                    doc, marketing page, or other non-UI context.
+                    UI-specific standards are suppressed; universal
+                    quality standards (grammar, proofing, clarity,
+                    inclusion) still apply.
 
 The audience signal propagates through the pipeline via a simple string
 parameter. Each stage that needs it checks the value and adjusts behavior:
 
-    filter   → excludes product_ui-only standards in general mode
-    preprocess → ACT-01 returns PASS unconditionally in general mode
-    pipeline → threads audience into the system prompt for LLM context
-    export   → includes audience in triage metadata for evaluation tracking
+    filter     → excludes product_ui-only standards in general mode
+    preprocess → ACT-01 returns PASS unconditionally in general mode;
+                 ACC-08 returns PASS unconditionally in native_mobile mode
+    pipeline   → threads audience into the system prompt for LLM context
+    export     → includes audience in triage metadata for evaluation tracking
 
 Design decisions:
     - The filter gatekeeps, not the standards library. UI-specific standard
@@ -51,6 +60,7 @@ class Audience(str, Enum):
     """
 
     PRODUCT_UI = "product_ui"
+    NATIVE_MOBILE = "native_mobile"
     GENERAL = "general"
 
     @classmethod
@@ -99,6 +109,15 @@ _AUDIENCE_PROMPT_CONTEXT: Final[dict[Audience, str]] = {
         "error messages, tooltips, and in-product flows. Apply all "
         "content standards with full rigor."
     ),
+    Audience.NATIVE_MOBILE: (
+        "This content is **native mobile UI** — iOS or Android product "
+        "copy. Apply all content standards with full rigor, with one "
+        "exception: device-specific verbs ('tap', 'touch', 'swipe') are "
+        "appropriate to the platform's input model and should NOT be "
+        "flagged as device-specific. The platform implies the input "
+        "method, so 'Tap to continue' on a native mobile screen reads "
+        "naturally rather than carrying a cross-platform assumption."
+    ),
     Audience.GENERAL: (
         "This content is **general written content** — a presentation, "
         "document, marketing page, or internal material. It is NOT "
@@ -127,8 +146,12 @@ def is_standard_active(standard_id: str, audience: Audience) -> bool:
 
     Returns True for all standards in product_ui mode.
     Returns False for UI-specific standards in general mode.
+    Returns False for ACC-08 in native_mobile mode (device-specific verbs
+    are platform-appropriate on native mobile).
     Universal standards always return True.
     """
+    if audience == Audience.NATIVE_MOBILE:
+        return standard_id != "ACC-08"
     if audience == Audience.PRODUCT_UI:
         return True
     return standard_id not in UI_SPECIFIC_STANDARDS

@@ -29,7 +29,11 @@ import {
 } from "@/lib/custom-examples";
 import { appUrl as emailAppUrl, sendEmail } from "@/lib/email";
 import { AUDIENCES, CONTENT_TYPES, MOMENTS } from "@/lib/engine-taxonomy";
-import { evaluate, type EvaluateResponse } from "@/lib/evaluate";
+import {
+  evaluate,
+  rewriteDocument,
+  type EvaluateResponse,
+} from "@/lib/evaluate";
 import { hashText, logViolations } from "@/lib/log-violations";
 import {
   MAX_INPUT_CHARS,
@@ -332,6 +336,11 @@ export async function POST(req: Request) {
   }
 
   let evalResponse: EvaluateResponse;
+  // Schema 2.3.0: holistic rewrite for tier="document". Populated
+  // alongside the evalResponse below; null on standard/surface tiers,
+  // null on clean documents (no findings to rewrite around), and null
+  // when the rewrite call fails (best-effort, non-fatal).
+  let suggestedRewrite: string | null = null;
 
   if (customExampleResult) {
     const sc = shortCircuitFromExample(customExampleResult);
@@ -372,26 +381,69 @@ export async function POST(req: Request) {
       logSafeError("precedent retrieval failed", err);
     }
 
-    try {
-      evalResponse = await evaluate({
-        text,
-        content_type,
-        audience,
-        moment,
-        precedents: precedents.map((p) => ({
-          approved_text: p.approvedText,
-          sample_size: p.sampleSize,
-        })),
-      });
-    } catch (err) {
-      // Log detail to stderr (Sentry ingests via Vercel). Return an opaque
-      // message to the caller — the Python-side error can include file paths,
-      // model names, Anthropic error bodies, or a truncated LLM response.
-      logSafeError("evaluate() failed", err);
+    // Schema 2.3.0: the dashboard's Document tier wants both findings
+    // AND a holistic rewrite in the ContentRX house voice. Fire the
+    // rewrite call IN PARALLEL with the regular evaluate so wall time
+    // is one round-trip, not two. The rewrite is best-effort — if it
+    // fails, we still return the check results with `suggested_rewrite:
+    // null` so the surface degrades gracefully.
+    const wantsRewrite = segment_type === "document";
+    const evaluatePromise = evaluate({
+      text,
+      content_type,
+      audience,
+      moment,
+      precedents: precedents.map((p) => ({
+        approved_text: p.approvedText,
+        sample_size: p.sampleSize,
+      })),
+    });
+    const rewritePromise: Promise<
+      Awaited<ReturnType<typeof rewriteDocument>> | null
+    > = wantsRewrite
+      ? rewriteDocument(text).catch((err) => {
+          logSafeError("rewriteDocument() failed; returning null", err);
+          return null;
+        })
+      : Promise.resolve(null);
+
+    const [evalSettled, rewriteSettled] = await Promise.allSettled([
+      evaluatePromise,
+      rewritePromise,
+    ]);
+
+    if (evalSettled.status === "rejected") {
+      logSafeError("evaluate() failed", evalSettled.reason);
       return json(
         { error: "Evaluation service unavailable" },
         { status: 502 },
       );
+    }
+    evalResponse = evalSettled.value;
+    if (rewriteSettled.status === "fulfilled" && rewriteSettled.value) {
+      // Stash the rewrite into the response shape so we can attach to
+      // the public envelope below. Keeps the substrate evalResponse
+      // shape intact for downstream code paths.
+      const rewriteResp = rewriteSettled.value;
+      // Extend tokens with the rewrite call's usage so cost telemetry
+      // stays accurate. The rewrite is real LLM work the customer
+      // paid for via the document tier's flat 8-unit rate.
+      evalResponse = {
+        ...evalResponse,
+        latency_ms:
+          evalResponse.latency_ms + rewriteResp.latency_ms,
+        tokens: {
+          input: evalResponse.tokens.input + rewriteResp.tokens.input,
+          output: evalResponse.tokens.output + rewriteResp.tokens.output,
+          cache_creation_input:
+            (evalResponse.tokens.cache_creation_input ?? 0) +
+            (rewriteResp.tokens.cache_creation_input ?? 0),
+          cache_read_input:
+            (evalResponse.tokens.cache_read_input ?? 0) +
+            (rewriteResp.tokens.cache_read_input ?? 0),
+        },
+      };
+      suggestedRewrite = rewriteResp.result.rewritten;
     }
   }
 
@@ -509,8 +561,19 @@ export async function POST(req: Request) {
   // reversibility — see `decisions/2026-04-25-private-taxonomy-pivot.md`.
   // API-usage telemetry (`latency_ms`, `tokens`, `usage`) is request
   // metadata, not taxonomy, and lives alongside the envelope.
+  // Suppress the rewrite for clean documents. The LLM was instructed
+  // to return the original largely unchanged when nothing's wrong, so
+  // surfacing a near-identical "rewrite" is noise. Only show when the
+  // post-team-rules verdict has something to act on.
+  const finalSuggestedRewrite =
+    suggestedRewrite !== null && result.verdict !== "pass"
+      ? suggestedRewrite
+      : null;
+
   return json({
-    ...publicCheckEnvelope(result),
+    ...publicCheckEnvelope(result, {
+      suggestedRewrite: finalSuggestedRewrite,
+    }),
     latency_ms: evalResponse.latency_ms,
     tokens: evalResponse.tokens,
     // Schema 2.1.0: top-level metering block with the tier billed

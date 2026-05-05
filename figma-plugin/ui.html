@@ -1439,12 +1439,24 @@ const COMMON_ABBREVIATIONS = new Set([
   "USB", "GPS", "Wi-Fi", "WIFI", "SaaS", "AI", "IT", "UI", "UX", "DNS",
   "HTTP", "HTTPS", "FTP", "SQL", "CMS", "CDN", "RAM", "CPU", "GPU",
   "SSD", "OS", "iOS", "VPN", "SSL", "TLS", "SSO", "OTP",
+  // Tech additions (v4.7.1 — house-style P0 seed)
+  "JSON", "XML", "YAML", "CSV", "REST", "CRUD", "IDE",
   "CEO", "CTO", "CFO", "COO", "HR", "LLC", "IRS", "FAQ", "FAQs",
   "ID", "PIN", "ATM", "IPO", "ROI", "KPI", "B2B", "B2C", "PR", "QA",
   "R&D", "VP", "SVP", "EVP", "MBA", "CPA", "ESG",
   "TTY", "ADA", "HIPAA", "ER", "ICU", "RN", "MD", "OTC", "Rx",
   "CPR", "EHR", "EMR", "FDA",
+  // Healthcare additions (v4.7.1)
+  "PCP", "PPO", "HMO", "EOB", "COBRA", "COPD", "ADHD", "BMI",
+  "DOB", "MRI", "PTSD", "GLP-1",
   "ACH", "FDIC", "FICO", "APR", "APY", "ETF", "IRA",
+  // Finance additions (v4.7.1)
+  "HSA", "FSA", "FICA", "ESPP", "RSU", "GAAP", "SEP",
+  // Auth and security (v4.7.1)
+  "2FA", "MFA", "JWT", "OIDC", "SAML", "TOTP",
+  // Timezones (v4.7.1)
+  "EST", "EDT", "PST", "PDT", "CST", "CDT", "MST", "MDT",
+  "GMT", "UTC", "BST",
   "ZIP", "RSVP", "TV", "DVD", "AC", "AM", "PM", "USA", "UK", "EU",
   "UN", "NATO", "NASA", "ASAP", "ETA", "FYI", "DIY", "JPEG",
   "PNG", "GIF", "MP3", "MP4", "W-2", "W-9", "1099", "401k",
@@ -1463,12 +1475,17 @@ const AMPERSAND_BODY_TYPES = new Set([
 // Expansion protocol: ≥2 confirmed false positives from triage → add + test.
 const CON02_SAFE_PHRASES = new Set([
   "see all", "view all", "show all", "browse all",
-  "show more", "load more", "view more",
+  "show more", "load more", "view more", "see more", "load all",
   "sign in", "sign up", "sign out", "log in", "log out",
   "add new", "create new",
   "go back", "go home",
   "opt in", "opt out",
   "get started", "try free",
+  // P0 seed (v4.7.1) — common UI phrasal patterns rendered title-case-ish:
+  "set up", "back up", "follow up", "check in",
+  "buy now", "shop now", "save now", "pay now", "send now",
+  "free trial", "free plan", "pro plan", "team plan",
+  "learn more", "find out",
 ]);
 
 // Binary response buttons that don't need a leading verb (ACT-01 pass-only).
@@ -1501,8 +1518,10 @@ function runPreprocessor(text, contentType) {
     checkGrm04Ampersands(text, contentType),
     checkGrm05Numerals(text),
     checkGrm06CompoundModifiers(text),
+    checkGrm07EmDashes(text),
     checkCon03DateFormats(text),
     checkCon02SentenceCase(text),
+    checkCon02StrictHeadings(text, contentType),
     checkAct01BinaryResponses(text),
     checkPrf01DoubleSpaces(text),
     checkPrf02RepeatedWords(text),
@@ -1512,6 +1531,7 @@ function runPreprocessor(text, contentType) {
     checkPrf06LeadingTrailingWhitespace(text),
     checkPrf07SpaceBeforePunctuation(text),
     checkAcc01VagueLinkText(text),
+    checkAcc08DeviceVerbs(text),
     checkPrf10LatinAbbreviations(text, contentType),
     checkPrf11DismissiveLanguage(text, contentType),
     // Phase 2 checks (v4.2.0)
@@ -1519,6 +1539,7 @@ function runPreprocessor(text, contentType) {
     checkPrf09AllCaps(text),
     checkClr01RedundantPhrases(text),
     checkClr01BannedWords(text),
+    checkClr03SentenceLength(text, contentType),
     checkInc01GenderedLanguage(text),
     checkInc02NonInclusiveTech(text),
   ];
@@ -1702,6 +1723,22 @@ function checkGrm05Numerals(text) {
 }
 
 
+// GRM-07: Em or en dashes in copy. House style: never (v4.7.1).
+// Factual detection at confidence 1.0. Mirrors Python
+// check_grm07_em_dashes in src/content_checker/preprocess.py.
+function checkGrm07EmDashes(text) {
+  if (text.includes("—") || text.includes("–")) {
+    return {
+      standardId: "GRM-07",
+      outcome: "violation",
+      issue: "Em or en dash in copy. House style: never.",
+      suggestion: "Use a period, comma, colon, parens, or sentence break.",
+    };
+  }
+  return { standardId: "GRM-07", outcome: "pass" };
+}
+
+
 function checkCon03DateFormats(text) {
   const match = text.match(/\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})\b/);
   if (match) {
@@ -1761,6 +1798,44 @@ function checkCon02SentenceCase(text) {
 
   // Every word after the first is lowercase or an acronym.
   // Definitively sentence case — suppress any LLM CON-02 violation.
+  return { standardId: "CON-02", outcome: "pass" };
+}
+
+
+// CON-02 strict-headings sibling (v4.7.1, house-style P0).
+// Shape detection at confidence 0.65 — emits VIOLATION but routes
+// through derive_verdict to `review_recommended`, not a hard
+// `violation`. Soft-guidance voice in issue/suggestion text.
+//
+// Sibling to checkCon02SentenceCase (PASS-only). Both functions vote
+// on CON-02; the merge logic handles the combined output.
+function checkCon02StrictHeadings(text, contentType) {
+  if (contentType !== "heading" && contentType !== "button_cta" && contentType !== "ui_label") {
+    return { standardId: "CON-02", outcome: "defer" };
+  }
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length <= 1) {
+    return { standardId: "CON-02", outcome: "defer" };
+  }
+  const normalized = text.trim().toLowerCase();
+  if (CON02_SAFE_PHRASES.has(normalized)) {
+    return { standardId: "CON-02", outcome: "defer" };
+  }
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    if (!word) continue;
+    const firstChar = word[0];
+    if (!(firstChar >= "A" && firstChar <= "Z")) continue;
+    const stripped = word.replace(/[.,;:!?]$/, "");
+    if (stripped === stripped.toUpperCase()) continue;
+    if (COMMON_ABBREVIATIONS.has(stripped)) continue;
+    return {
+      standardId: "CON-02",
+      outcome: "violation",
+      issue: `ContentRX noticed an unusual capitalization on '${stripped}' — could be a proper noun, an acronym, or your team's standard rendering. If that's intentional, keep it.`,
+      suggestion: "If you wanted sentence case, lowercase any non-first words that aren't proper nouns, acronyms, or your team's standard rendering.",
+    };
+  }
   return { standardId: "CON-02", outcome: "pass" };
 }
 
@@ -1944,6 +2019,32 @@ function checkAcc01VagueLinkText(text) {
   }
 
   return { standardId: "ACC-01", outcome: "defer" };
+}
+
+
+// ACC-08: Device-specific verbs (touch, tap, click, hover, swipe).
+// Shape detection at confidence 0.65 → routes to review_recommended
+// with soft-guidance voice. Mirrors Python check_acc08_device_verbs
+// for the PRODUCT_UI audience default (the parity gate runs without
+// an audience parameter, equivalent to Python's PRODUCT_UI default).
+// ACC-01 owns the literal "click here"/"tap here" patterns.
+const ACC08_DEVICE_VERB_RE = /\b(touch|tap|click|hover|swipe)(ed|ing|s|es)?\b/i;
+function checkAcc08DeviceVerbs(text) {
+  const lower = text.toLowerCase();
+  if (lower.includes("click here") || lower.includes("tap here")) {
+    return { standardId: "ACC-08", outcome: "defer" };
+  }
+  const match = ACC08_DEVICE_VERB_RE.exec(text);
+  if (match) {
+    const verb = match[0];
+    return {
+      standardId: "ACC-08",
+      outcome: "violation",
+      issue: `ContentRX noticed '${verb}' here — could be intentional for a platform-specific surface or a button name. If it is, keep it.`,
+      suggestion: `If you wanted device-neutral copy, try 'select' or 'open' instead of '${verb}'.`,
+    };
+  }
+  return { standardId: "ACC-08", outcome: "defer" };
 }
 
 
@@ -2212,6 +2313,37 @@ function checkClr01BannedWords(text) {
   }
 
   return { standardId: "CLR-01", outcome: "defer" };
+}
+
+
+// CLR-03: Sentence-length thresholds (v4.7.1).
+// Factual detection at confidence 1.0. Mirrors Python
+// check_clr03_sentence_length thresholds:
+//   - short_ui_copy / tooltip_microcopy / error_message → 20 words
+//   - long_form_copy and others → 25 words
+//   - heading-style content (button_cta, ui_label, heading,
+//     confirmation) is exempt
+const CLR03_SHORT_TYPES = new Set(["short_ui_copy", "tooltip_microcopy", "error_message"]);
+const CLR03_EXEMPT_TYPES = new Set(["button_cta", "ui_label", "heading", "confirmation"]);
+function checkClr03SentenceLength(text, contentType) {
+  if (CLR03_EXEMPT_TYPES.has(contentType)) {
+    return { standardId: "CLR-03", outcome: "defer" };
+  }
+  const threshold = CLR03_SHORT_TYPES.has(contentType) ? 20 : 25;
+  const sentences = text.trim().split(/(?<=[.!?])\s+/);
+  for (const sentence of sentences) {
+    const words = sentence.split(/\s+/).filter(Boolean);
+    if (words.length > threshold) {
+      const friendlyType = contentType.replace(/_/g, " ");
+      return {
+        standardId: "CLR-03",
+        outcome: "violation",
+        issue: `Sentence is ${words.length} words. House style: keep sentences under ${threshold} words for ${friendlyType}.`,
+        suggestion: "Split into shorter sentences. Look for natural breaks after coordinating conjunctions ('and', 'but', 'because') or before a new clause.",
+      };
+    }
+  }
+  return { standardId: "CLR-03", outcome: "pass" };
 }
 
 

@@ -39,7 +39,9 @@ class TestSchemaVersionBump:
         # 2.1.0 — additive metering block (TS-side only).
         # 2.2.0 — additive content_type + moment on the public
         # envelope (customer-grounding fields).
-        assert SCHEMA_VERSION == "2.2.0"
+        # 2.3.0 — additive `suggested_rewrite` for tier=document
+        # holistic rewrite output.
+        assert SCHEMA_VERSION == "2.3.0"
 
 
 class TestVerdictConstants:

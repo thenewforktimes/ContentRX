@@ -3,12 +3,25 @@
 Handles mechanical, binary checks that the LLM consistently misses or
 over-applies. Runs at zero API cost in under a millisecond.
 
-Design principle: the preprocessor only makes calls it cannot get wrong.
-If there is any judgment involved, the check goes to the LLM. The default
-outcome is always "can't tell" → defer to LLM.
+Design principle: the preprocessor makes calls of two kinds —
+
+    Factual detections (em dash present, sentence over 25 words, Latin
+    abbreviation in copy). The text either has the pattern or it doesn't;
+    no context changes the answer. These ship at confidence 1.0.
+
+    Shape detections (a capitalized non-first word that looks like title
+    case, a device-specific verb that looks like a click instruction).
+    The space of valid abbreviations, proper nouns, brand names, and
+    industry vocabulary is unbounded — no allowlist will ever be
+    exhaustive. The preprocessor is qualified to flag the SHAPE, not to
+    render the verdict. These ship at confidence 0.65, which routes
+    through `derive_verdict` to `review_recommended` (soft surface) and
+    use soft-guidance voice in issue/suggestion text. The override
+    stream + refinement-log loop is the real curation mechanism for
+    growing the allowlists over time.
 
 Three outcomes per check:
-    VIOLATION  — definite problem, no context changes the answer
+    VIOLATION  — pattern detected (factual at conf 1.0; shape at conf 0.65)
     PASS       — definitely fine, suppress any LLM violation for this standard
     DEFER      — can't tell, send to LLM
 
@@ -16,11 +29,13 @@ Post-processing suppression: when the preprocessor returns PASS for a
 standard, that pass is authoritative. If the LLM later flags a violation
 for the same standard, the merge stage suppresses it.
 
-Check inventory (25 checks):
+Check inventory (29 checks):
     Standards-based: GRM-01, GRM-02, GRM-03, GRM-04, GRM-05, GRM-06,
-                     CON-02, CON-03, ACT-01, ACC-01
+                     GRM-07, CON-02 (sentence case + strict headings),
+                     CON-03, ACT-01, ACC-01, ACC-08
     Proofing:        PRF-01 through PRF-11
-    Clarity:         CLR-01 (redundant phrases + banned words)
+    Clarity:         CLR-01 (redundant phrases + banned words),
+                     CLR-03 (sentence length)
     Inclusion:       INC-01, INC-02
 """
 
@@ -30,6 +45,8 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
+from content_checker.audience import Audience
+
 # ---------------------------------------------------------------------------
 # Standard IDs the preprocessor can produce
 # ---------------------------------------------------------------------------
@@ -38,15 +55,16 @@ from enum import Enum
 # Used by test fixtures to verify library coverage without depending
 # on magic input strings. Update when adding or removing checks.
 PREPROCESSOR_STANDARD_IDS: frozenset[str] = frozenset({
-    # Grammar (6)
+    # Grammar (7)
     "GRM-01",  # Oxford comma
     "GRM-02",  # Abbreviation allowlist (pass-only)
     "GRM-03",  # Exclamation points
     "GRM-04",  # Ampersands (content-type-aware)
     "GRM-05",  # Numerals (unicode hyphen normalization)
     "GRM-06",  # Compound modifier hyphenation
+    "GRM-07",  # Em dashes (v4.7.1 — house-style P0)
     # Convention (2)
-    "CON-02",  # Sentence case (pass-only, 20-phrase allowlist)
+    "CON-02",  # Sentence case (pass-only sentence_case + strict_headings sibling)
     "CON-03",  # Date formats
     # Action (1)
     "ACT-01",  # Binary response buttons (pass-only)
@@ -62,15 +80,18 @@ PREPROCESSOR_STANDARD_IDS: frozenset[str] = frozenset({
     "PRF-09",  # All caps
     "PRF-10",  # Latin abbreviations
     "PRF-11",  # Dismissive language
-    # Clarity (1)
+    # Clarity (2)
     "CLR-01",  # Redundant phrases + banned words
-    # Accessibility (1)
+    "CLR-03",  # Sentence length (v4.7.1 — house-style P0)
+    # Accessibility (2)
     "ACC-01",  # Vague link text
+    "ACC-08",  # Device-specific verbs (v4.7.1 — house-style P0)
     # Inclusion (2)
     "INC-01",  # Gendered language
     "INC-02",  # Non-inclusive tech terminology
 })
-# 24 unique IDs across 25 check functions (CLR-01 has two detection paths)
+# 27 unique IDs across 29 check functions (CLR-01 + CON-02 each have two
+# detection paths)
 
 # ---------------------------------------------------------------------------
 # Outcome model
@@ -84,12 +105,21 @@ class Outcome(Enum):
 
 @dataclass
 class PreprocessResult:
-    """Result of a single preprocessor check."""
+    """Result of a single preprocessor check.
+
+    `confidence` defaults to 1.0 for factual detections (em dash present,
+    sentence over threshold, Latin abbreviation in copy). Shape detections
+    (CON-02 strict headings, ACC-08 device verbs) emit at 0.65 to reflect
+    that the preprocessor is sure about the SHAPE but not the VIOLATION;
+    the 0.65 confidence routes through `derive_verdict` to
+    `review_recommended` rather than a hard `violation` verdict.
+    """
 
     standard_id: str
     outcome: Outcome
     issue: str | None = None
     suggestion: str | None = None
+    confidence: float = 1.0
 
     @property
     def is_violation(self) -> bool:
@@ -114,6 +144,8 @@ COMMON_ABBREVIATIONS = frozenset({
     "USB", "GPS", "Wi-Fi", "WIFI", "SaaS", "AI", "IT", "UI", "UX",
     "DNS", "HTTP", "HTTPS", "FTP", "SQL", "CMS", "CDN", "RAM", "CPU",
     "GPU", "SSD", "OS", "iOS", "VPN", "SSL", "TLS", "SSO", "OTP",
+    # Tech additions (v4.7.1 — house-style P0 seed)
+    "JSON", "XML", "YAML", "CSV", "REST", "CRUD", "IDE",
 
     # Business and government
     "CEO", "CTO", "CFO", "COO", "HR", "LLC", "IRS", "FAQ", "FAQs",
@@ -123,10 +155,22 @@ COMMON_ABBREVIATIONS = frozenset({
     # Healthcare and accessibility
     "TTY", "ADA", "HIPAA", "ER", "ICU", "RN", "MD", "OTC", "Rx",
     "CPR", "EHR", "EMR", "FDA",
+    # Healthcare additions (v4.7.1 — Kaiser/MEDVi beta seed)
+    "PCP", "PPO", "HMO", "EOB", "COBRA", "COPD", "ADHD", "BMI",
+    "DOB", "MRI", "PTSD", "GLP-1",
 
     # Finance
     "ACH", "FDIC", "FICO", "APR", "APY", "ETF", "IRA", "401k",
     "W-2", "W-9", "1099",
+    # Finance additions (v4.7.1 — Stripe/Wells Fargo/Robinhood beta seed)
+    "HSA", "FSA", "FICA", "ESPP", "RSU", "GAAP", "SEP",
+
+    # Auth and security (v4.7.1 — house-style P0 seed)
+    "2FA", "MFA", "JWT", "OIDC", "SAML", "TOTP",
+
+    # Timezones (v4.7.1 — house-style P0 seed)
+    "EST", "EDT", "PST", "PDT", "CST", "CDT", "MST", "MDT",
+    "GMT", "UTC", "BST",
 
     # Common
     "ZIP", "RSVP", "TV", "DVD", "AC", "AM", "PM", "USA", "UK", "EU",
@@ -220,12 +264,17 @@ AMPERSAND_FORBIDDEN_TYPES = frozenset({
 
 CON02_SAFE_PHRASES = frozenset({
     "see all", "view all", "show all", "browse all",
-    "show more", "load more", "view more",
+    "show more", "load more", "view more", "see more", "load all",
     "sign in", "sign up", "sign out", "log in", "log out",
     "add new", "create new",
     "go back", "go home",
     "opt in", "opt out",
     "get started", "try free",
+    # P0 seed (v4.7.1) — common UI phrasal patterns rendered title-case-ish:
+    "set up", "back up", "follow up", "check in",
+    "buy now", "shop now", "save now", "pay now", "send now",
+    "free trial", "free plan", "pro plan", "team plan",
+    "learn more", "find out",
 })
 
 
@@ -502,6 +551,28 @@ def check_grm06_compound_modifiers(text: str) -> PreprocessResult:
     return PreprocessResult(standard_id="GRM-06", outcome=Outcome.DEFER)
 
 
+def check_grm07_em_dashes(text: str) -> PreprocessResult:
+    """GRM-07: Flag em or en dashes in copy. House style: never use them.
+
+    Factual detection at confidence 1.0. The slop screen at
+    suggestion_quality.py separately ensures LLM-generated suggestions
+    don't reintroduce em dashes — and bypasses its echo exception when
+    GRM-07 fires on the input, so the suggestion never keeps an em dash
+    even if the original input had one.
+    """
+    if "—" in text or "–" in text:  # em dash + en dash
+        return PreprocessResult(
+            standard_id="GRM-07",
+            outcome=Outcome.VIOLATION,
+            issue="Em or en dash in copy. House style: never.",
+            suggestion=(
+                "Use a period, comma, colon, parens, or sentence break."
+            ),
+            confidence=1.0,
+        )
+    return PreprocessResult(standard_id="GRM-07", outcome=Outcome.PASS)
+
+
 def check_con03_date_formats(text: str) -> PreprocessResult:
     """CON-03: Flag numeric-only date formats."""
     numeric_date = re.compile(r"\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})\b")
@@ -574,6 +645,70 @@ def check_con02_sentence_case(text: str) -> PreprocessResult:
             return PreprocessResult(standard_id="CON-02", outcome=Outcome.DEFER)
 
     # Every word after the first is lowercase or an acronym → sentence case
+    return PreprocessResult(standard_id="CON-02", outcome=Outcome.PASS)
+
+
+def check_con02_strict_headings(
+    text: str, content_type: str,
+) -> PreprocessResult:
+    """CON-02 sibling: detect title-case shape on heading-style content.
+
+    Shape detection at confidence 0.65 — emits VIOLATION but routes
+    through derive_verdict to `review_recommended` (not a hard
+    `violation`). Soft-guidance voice in issue/suggestion text.
+
+    Sibling to check_con02_sentence_case (PASS-only by design — see
+    that function's docstring). Both functions vote on CON-02:
+        - When the text is genuinely sentence case, both PASS and the
+          merge stage adds CON-02 to suppressed_ids, suppressing any
+          LLM CON-02 finding.
+        - When a non-allowlisted capitalized non-first word is present,
+          sentence_case DEFERs and strict_headings flags VIOLATION at
+          0.65 — the violation surfaces as `review_recommended`.
+
+    The COMMON_ABBREVIATIONS + CON02_SAFE_PHRASES allowlists are a
+    SEED, not exhaustive enumeration. The override stream + refinement
+    log is the real curation mechanism for the unbounded space of
+    valid renderings.
+    """
+    if content_type not in ("heading", "button_cta", "ui_label"):
+        return PreprocessResult(standard_id="CON-02", outcome=Outcome.DEFER)
+
+    words = text.split()
+    if len(words) <= 1:
+        return PreprocessResult(standard_id="CON-02", outcome=Outcome.DEFER)
+
+    if text.strip().lower() in CON02_SAFE_PHRASES:
+        return PreprocessResult(standard_id="CON-02", outcome=Outcome.DEFER)
+
+    for word in words[1:]:
+        if not word:
+            continue
+        first_char = word[0]
+        if not first_char.isupper():
+            continue
+        stripped = re.sub(r"[.,;:!?]$", "", word)
+        if stripped == stripped.upper():
+            continue
+        if stripped in COMMON_ABBREVIATIONS:
+            continue
+        # Found a capitalized non-first word not explained by an allowlist.
+        return PreprocessResult(
+            standard_id="CON-02",
+            outcome=Outcome.VIOLATION,
+            issue=(
+                f"ContentRX noticed an unusual capitalization on "
+                f"'{stripped}' — could be a proper noun, an acronym, "
+                f"or your team's standard rendering. If that's "
+                f"intentional, keep it."
+            ),
+            suggestion=(
+                "If you wanted sentence case, lowercase any non-first "
+                "words that aren't proper nouns, acronyms, or your "
+                "team's standard rendering."
+            ),
+            confidence=0.65,
+        )
     return PreprocessResult(standard_id="CON-02", outcome=Outcome.PASS)
 
 
@@ -852,6 +987,62 @@ def check_prf11_dismissive_language(text: str, content_type: str) -> PreprocessR
 # Accessibility and clarity checks
 # ═══════════════════════════════════════════════════════════════════════
 
+# ---------------------------------------------------------------------------
+# ACC-08: Device-specific verbs (v4.7.1) — shape detection at conf 0.65
+# ---------------------------------------------------------------------------
+#
+# Detects "touch", "tap", "click", "hover", "swipe" (and common
+# inflections) as candidates for device-neutral rewrites. Audience-aware:
+# native_mobile audience PASSes unconditionally because device-specific
+# verbs are appropriate to the platform's input model. ACC-01 owns the
+# literal "click here" / "tap here" link-text patterns (Conflict 5),
+# so ACC-08 DEFERs when those substrings are present.
+
+_ACC08_DEVICE_VERB_RE = re.compile(
+    r"\b(touch|tap|click|hover|swipe)(ed|ing|s|es)?\b",
+    re.IGNORECASE,
+)
+
+
+def check_acc08_device_verbs(
+    text: str, audience: Audience,
+) -> PreprocessResult:
+    """ACC-08: Detect device-specific verbs that imply an input method.
+
+    Shape detection at confidence 0.65. Routes through derive_verdict
+    to `review_recommended` (soft surface), with soft-guidance voice in
+    issue/suggestion text. The user is given agency: keep the verb if
+    it's intentional (platform-specific copy, button name); take the
+    rewrite if device-neutral phrasing fits.
+    """
+    if audience == Audience.NATIVE_MOBILE:
+        return PreprocessResult(standard_id="ACC-08", outcome=Outcome.PASS)
+
+    text_lower = text.lower()
+    # Conflict 5: ACC-01 owns "click here" / "tap here" — defer those.
+    if "click here" in text_lower or "tap here" in text_lower:
+        return PreprocessResult(standard_id="ACC-08", outcome=Outcome.DEFER)
+
+    match = _ACC08_DEVICE_VERB_RE.search(text)
+    if match:
+        verb = match.group(0)
+        return PreprocessResult(
+            standard_id="ACC-08",
+            outcome=Outcome.VIOLATION,
+            issue=(
+                f"ContentRX noticed '{verb}' here — could be intentional "
+                f"for a platform-specific surface or a button name. If "
+                f"it is, keep it."
+            ),
+            suggestion=(
+                f"If you wanted device-neutral copy, try 'select' or "
+                f"'open' instead of '{verb}'."
+            ),
+            confidence=0.65,
+        )
+    return PreprocessResult(standard_id="ACC-08", outcome=Outcome.DEFER)
+
+
 def check_acc01_vague_link_text(text: str) -> PreprocessResult:
     """ACC-01: Flag 'click here', 'learn more', and other non-descriptive link text."""
     lower = text.lower().strip()
@@ -894,6 +1085,71 @@ def check_acc01_vague_link_text(text: str) -> PreprocessResult:
         )
 
     return PreprocessResult(standard_id="ACC-01", outcome=Outcome.DEFER)
+
+
+# ---------------------------------------------------------------------------
+# CLR-03: Sentence-length thresholds (v4.7.1)
+# ---------------------------------------------------------------------------
+#
+# Per-content-type thresholds. The plan tightens short_ui_copy /
+# tooltip_microcopy / error_message from 25 → 20 words; long_form_copy
+# stays at 25. Heading-style content (button_cta, ui_label, heading,
+# confirmation) is exempt from this check — those are short by definition
+# and judged by their own standards (ACT-01, CON-02).
+
+_CLR03_SHORT_THRESHOLD = 20
+_CLR03_DEFAULT_THRESHOLD = 25
+_CLR03_SHORT_TYPES = frozenset({
+    "short_ui_copy", "tooltip_microcopy", "error_message",
+})
+_CLR03_EXEMPT_TYPES = frozenset({
+    "button_cta", "ui_label", "heading", "confirmation",
+})
+
+
+def check_clr03_sentence_length(
+    text: str, content_type: str,
+) -> PreprocessResult:
+    """CLR-03: Flag sentences over the per-content-type word-count threshold.
+
+    Factual detection at confidence 1.0. The LLM is inconsistent at
+    counting words; deterministic counting removes a class of false
+    negatives that beta users would otherwise notice.
+
+    Thresholds (v4.7.1):
+        short_ui_copy / tooltip_microcopy / error_message: 20 words
+        long_form_copy and others: 25 words
+        button_cta / ui_label / heading / confirmation: exempt (DEFER)
+    """
+    if content_type in _CLR03_EXEMPT_TYPES:
+        return PreprocessResult(standard_id="CLR-03", outcome=Outcome.DEFER)
+
+    threshold = (
+        _CLR03_SHORT_THRESHOLD
+        if content_type in _CLR03_SHORT_TYPES
+        else _CLR03_DEFAULT_THRESHOLD
+    )
+
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    for sentence in sentences:
+        words = [w for w in sentence.split() if w.strip()]
+        if len(words) > threshold:
+            return PreprocessResult(
+                standard_id="CLR-03",
+                outcome=Outcome.VIOLATION,
+                issue=(
+                    f"Sentence is {len(words)} words. House style: "
+                    f"keep sentences under {threshold} words for "
+                    f"{content_type.replace('_', ' ')}."
+                ),
+                suggestion=(
+                    "Split into shorter sentences. Look for natural "
+                    "breaks after coordinating conjunctions ('and', "
+                    "'but', 'because') or before a new clause."
+                ),
+                confidence=1.0,
+            )
+    return PreprocessResult(standard_id="CLR-03", outcome=Outcome.PASS)
 
 
 def check_clr01_redundant_phrases(text: str) -> PreprocessResult:
@@ -1062,12 +1318,15 @@ def check_inc02_non_inclusive_tech(text: str) -> PreprocessResult:
 def preprocess(
     text: str,
     content_type: str,
+    audience: Audience = Audience.PRODUCT_UI,
 ) -> list[PreprocessResult]:
     """Run all deterministic checks on a piece of content.
 
     Args:
         text: The content to check.
         content_type: The classified content type (heading, ui_label, etc.).
+        audience: The audience mode (PRODUCT_UI / NATIVE_MOBILE / GENERAL).
+            Threaded into ACC-08; other checks ignore it.
 
     Returns:
         List of PreprocessResult objects. Each result covers one standard
@@ -1082,8 +1341,10 @@ def preprocess(
     results.append(check_grm04_ampersands(text, content_type))
     results.append(check_grm05_numerals(text))
     results.append(check_grm06_compound_modifiers(text))
+    results.append(check_grm07_em_dashes(text))
     results.append(check_con03_date_formats(text))
     results.append(check_con02_sentence_case(text))
+    results.append(check_con02_strict_headings(text, content_type))
     results.append(check_act01_binary_responses(text))
 
     # Proofing checks
@@ -1101,8 +1362,10 @@ def preprocess(
 
     # Accessibility, clarity, inclusion
     results.append(check_acc01_vague_link_text(text))
+    results.append(check_acc08_device_verbs(text, audience))
     results.append(check_clr01_redundant_phrases(text))
     results.append(check_clr01_banned_words(text))
+    results.append(check_clr03_sentence_length(text, content_type))
     results.append(check_inc01_gendered_language(text))
     results.append(check_inc02_non_inclusive_tech(text))
 
@@ -1132,19 +1395,32 @@ def get_suppressed_standards(results: list[PreprocessResult]) -> set[str]:
 # Package integration: run_preprocess() returns Violation objects
 # ---------------------------------------------------------------------------
 
-def run_preprocess(text: str, content_type: str = "short_ui_copy"):
+def run_preprocess(
+    text: str,
+    content_type: str = "short_ui_copy",
+    audience: Audience | str = Audience.PRODUCT_UI,
+):
     """Run all deterministic checks and return violations as Violation objects.
 
     This is the entry point used by pipeline.py.
+
+    `audience` is threaded into ACC-08 only; other checks ignore it.
+    Most call sites that built before the audience parameter existed get
+    the safe PRODUCT_UI default — full enforcement.
+
+    Per-result confidence: factual detections emit at 1.0 (default);
+    shape detections (CON-02 strict headings, ACC-08 device verbs) emit
+    at 0.65, which routes through derive_verdict to `review_recommended`
+    rather than a hard `violation` verdict.
     """
-    results = preprocess(text, content_type)
+    if isinstance(audience, str):
+        audience = Audience.from_str(audience)
+
+    results = preprocess(text, content_type, audience=audience)
     suppressed = get_suppressed_standards(results)
 
     try:
-        from content_checker.models import (
-            DEFAULT_CONFIDENCE_PREPROCESSOR,
-            Violation,
-        )
+        from content_checker.models import Violation
     except ImportError:
         violations = get_preprocess_violations(results)
         return violations
@@ -1152,15 +1428,13 @@ def run_preprocess(text: str, content_type: str = "short_ui_copy"):
     violations = []
     for r in results:
         if r.is_violation:
-            # Preprocessor checks are deterministic regex/AST work — full
-            # confidence in their findings (per BUILD_PLAN_v2 Session 10).
             violations.append(Violation(
                 standard_id=r.standard_id,
                 rule=r.issue or "",
                 issue=r.issue or "",
                 suggestion=r.suggestion or "",
                 source="deterministic",
-                confidence=DEFAULT_CONFIDENCE_PREPROCESSOR,
+                confidence=r.confidence,
             ))
 
     violations = _ViolationList(violations, suppressed)

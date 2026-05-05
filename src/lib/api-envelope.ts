@@ -87,7 +87,15 @@
 //         (No engine bump required — `to_substrate_dict()` already
 //         carries the fields; this PR only changes which fields the
 //         TS-side public projection forwards.)
-export const SCHEMA_VERSION = "2.2.0" as const;
+// 2.3.0 — Document-tier holistic rewrite. Adds `suggested_rewrite`
+//         (string | null) at the top level of the public envelope.
+//         Populated only for tier="document" calls when the regular
+//         check finds something worth rewriting (verdict in
+//         {violation, review_recommended}); null otherwise. Comes
+//         from a parallel rewrite_document call into /api/evaluate.
+//         Additive — clients that don't read the field continue to
+//         work unchanged.
+export const SCHEMA_VERSION = "2.3.0" as const;
 
 /**
  * Adds `schema_version` and `warnings` to a response payload. Existing
@@ -157,6 +165,10 @@ export type PublicCheckEnvelope = {
   // nullable because some inputs don't classify confidently.
   content_type: string | null;
   moment: string | null;
+  // 2.3.0 — Document-tier holistic rewrite. Populated only for
+  // tier="document" calls when the check found something worth
+  // rewriting; null on standard/surface tiers and on clean documents.
+  suggested_rewrite: string | null;
 };
 
 /**
@@ -251,7 +263,7 @@ export function publicViolation(v: SubstrateViolation): PublicViolation {
  */
 export function publicCheckEnvelope(
   result: SubstrateCheckResult,
-  opts: { warnings?: string[] } = {},
+  opts: { warnings?: string[]; suggestedRewrite?: string | null } = {},
 ): PublicCheckEnvelope {
   const violations = Array.isArray(result.violations)
     ? result.violations.map(publicViolation)
@@ -273,5 +285,9 @@ export function publicCheckEnvelope(
     warnings: opts.warnings ?? [],
     content_type,
     moment,
+    // Schema 2.3.0: only populated by callers that ran a document
+    // rewrite alongside the check. Default null keeps the field
+    // present in the envelope even when no rewrite was attempted.
+    suggested_rewrite: opts.suggestedRewrite ?? null,
   };
 }

@@ -57,24 +57,36 @@ _LENGTH_RATIO_THRESHOLD = 3.0
 _LENGTH_THRESHOLD_INPUT_CHARS = 60
 
 
-def is_slop(suggestion: str, original: str | None = None) -> tuple[bool, str]:
+def is_slop(
+    suggestion: str,
+    original: str | None = None,
+    grm07_active: bool = False,
+) -> tuple[bool, str]:
     """Return (True, reason) when the suggestion fails the slop screen.
 
     The `reason` string is for telemetry and tests; it's never user-
     facing. Returns (False, "") for suggestions that pass the screen.
 
     Conservative on purpose. When in doubt, the suggestion passes.
+
+    `grm07_active` (Conflict 4): GRM-07 (em dashes) flags em dashes in
+    the user's INPUT. When that fires, the slop screen must remove em
+    dashes from suggestions even when the original had one — otherwise
+    ContentRX would flag the em dash and then suggest a replacement
+    that *keeps* it. Set `grm07_active=True` to bypass the echo exception.
     """
     if not suggestion or not suggestion.strip():
         return True, "empty"
 
     s_lower = suggestion.lower()
 
-    # Em dash: banned outright per the prompt. Skip the check when the
-    # original itself contains an em dash — the LLM echoing it back is
-    # legitimate (e.g. an em-dashed heading the user is editing).
-    if "—" in suggestion and (not original or "—" not in original):
-        return True, "em_dash"
+    # Em dash: banned outright per the prompt. The echo exception lets
+    # the LLM keep an em dash that was already in the original — UNLESS
+    # GRM-07 is active on this check, in which case the user input's
+    # em dash is itself a violation and the suggestion must not echo it.
+    if "—" in suggestion:
+        if grm07_active or not original or "—" not in original:
+            return True, "em_dash"
 
     for phrase in _BANNED_PHRASES:
         if phrase in s_lower:
@@ -126,6 +138,7 @@ def sanitize_violation(
     violation: Violation,
     original_text: str,
     audience: Audience,
+    grm07_active: bool = False,
 ) -> bool:
     """Replace a slop suggestion with the audience-aware fallback.
 
@@ -134,11 +147,18 @@ def sanitize_violation(
 
     Skips preprocessor-source violations — those carry hand-tuned
     suggestions from the engine authors that we trust by design.
+
+    `grm07_active`: Conflict 4. When GRM-07 fires on this check, em
+    dashes in suggestions are slop even when the original had one.
     """
     if violation.source != "llm":
         return False
 
-    is_bad, _reason = is_slop(violation.suggestion, original=original_text)
+    is_bad, _reason = is_slop(
+        violation.suggestion,
+        original=original_text,
+        grm07_active=grm07_active,
+    )
     if not is_bad:
         return False
 
@@ -161,8 +181,16 @@ def sanitize_violations(
 
     Returns the number of suggestions replaced — used by the pipeline
     to populate `PipelineMeta.suggestions_replaced` for observability.
+
+    Conflict 4 (GRM-07 echo gate): when GRM-07 is in the violation set,
+    the slop screen must remove em dashes from suggestions even when
+    the original had one. Otherwise the engine flags an em dash in the
+    input and produces a suggestion that keeps it — incoherent.
     """
+    grm07_active = any(v.standard_id == "GRM-07" for v in violations)
     return sum(
         1 for v in violations
-        if sanitize_violation(v, original_text, audience)
+        if sanitize_violation(
+            v, original_text, audience, grm07_active=grm07_active,
+        )
     )

@@ -64,6 +64,12 @@ type CheckEnvelope = PublicCheckEnvelope & {
   // like the engine flagged the new text but actually reflects the
   // earlier check.
   submittedText: string;
+  // Snapshot of the tier the user picked when submitting. We branch
+  // the result renderer on this — Document tier gets a totally
+  // different layout (suggested rewrite + findings list, no per-finding
+  // full-document diff) because the per-string DiffBlock pattern
+  // catastrophically fails for 5K-character inputs.
+  submittedTier: CheckTier;
 };
 
 // Tier metadata for the selector. Labels stay user-facing; the
@@ -124,11 +130,16 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
         setError(mapHttpError(res.status, parsed, body));
         return;
       }
-      const data = (await res.json()) as Omit<CheckEnvelope, "submittedText">;
-      // Capture the text we just submitted so DiffBlock renders against
-      // a stable "before" line even if the user keeps editing the
+      const data = (await res.json()) as Omit<
+        CheckEnvelope,
+        "submittedText" | "submittedTier"
+      >;
+      // Capture the text + tier we just submitted so the renderer
+      // branches on the tier the user actually checked (not on the
+      // tier they may have toggled to since), and DiffBlock renders
+      // against a stable "before" even if the user keeps editing the
       // textarea afterward.
-      setResponse({ ...data, submittedText: text });
+      setResponse({ ...data, submittedText: text, submittedTier: tier });
       // Optimistic UI: broadcast the completed check to sibling Client
       // Components (UsagePanelLive, ActiveSurfacesRowLive) so the
       // counter and Web app surface card jump immediately, instead of
@@ -305,34 +316,37 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
 
       {error && <ErrorBlock error={error} />}
 
-      {response && (
-        <section className="space-y-4">
-          <VerdictHeader
-            verdict={response.verdict}
-            findingCount={response.violations.length}
-            contentType={response.content_type}
-            moment={response.moment}
-            submittedText={response.submittedText}
-          />
-          {response.violations.length > 0 ? (
-            <ul className="space-y-2">
-              {response.violations.map((v, i) => (
-                <FindingCard
-                  key={i}
-                  finding={v}
-                  submittedText={response.submittedText}
-                  plan={plan}
-                />
-              ))}
-            </ul>
-          ) : response.verdict === "review_recommended" ? (
-            <ReviewReasonFallback reviewReason={response.review_reason} />
-          ) : null}
-          <p className="pt-2 text-xs text-quiet">
-            Evaluated in {response.latency_ms} ms.
-          </p>
-        </section>
-      )}
+      {response &&
+        (response.submittedTier === "document" ? (
+          <DocumentReviewResult response={response} plan={plan} />
+        ) : (
+          <section className="space-y-4">
+            <VerdictHeader
+              verdict={response.verdict}
+              findingCount={response.violations.length}
+              contentType={response.content_type}
+              moment={response.moment}
+              submittedText={response.submittedText}
+            />
+            {response.violations.length > 0 ? (
+              <ul className="space-y-2">
+                {response.violations.map((v, i) => (
+                  <FindingCard
+                    key={i}
+                    finding={v}
+                    submittedText={response.submittedText}
+                    plan={plan}
+                  />
+                ))}
+              </ul>
+            ) : response.verdict === "review_recommended" ? (
+              <ReviewReasonFallback reviewReason={response.review_reason} />
+            ) : null}
+            <p className="pt-2 text-xs text-quiet">
+              Evaluated in {response.latency_ms} ms.
+            </p>
+          </section>
+        ))}
     </div>
   );
 }
@@ -416,6 +430,311 @@ function VerdictHeader({
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * Document-tier result renderer. Built to fix the per-finding-shows-the-
+ * whole-document antipattern that the standard-tier DiffBlock pattern
+ * produces when applied to a 5K-char input. Shape:
+ *
+ *   1. VerdictHeader   — reused; carries the customer-grounding line.
+ *   2. SummaryCard     — counts + severity breakdown.
+ *   3. SuggestedRewrite — the holistic clean version (Schema 2.3.0).
+ *      The named-expert moat made visible.
+ *   4. FindingsList    — issue + tight suggestion text per finding.
+ *      NO per-finding diff against the whole document.
+ *   5. View original    — collapsed disclosure with the input.
+ *
+ * The original DiffBlock pattern is deliberately NOT used here. For
+ * Document tier, the rewrite IS the diff visualization; per-finding
+ * suggestions are receipts of what changed and why.
+ */
+function DocumentReviewResult({
+  response,
+  plan,
+}: {
+  response: CheckEnvelope;
+  plan: Plan;
+}) {
+  const findingCount = response.violations.length;
+  const severityCounts = {
+    high: response.violations.filter((v) => v.severity === "high").length,
+    medium: response.violations.filter((v) => v.severity === "medium")
+      .length,
+    low: response.violations.filter((v) => v.severity === "low").length,
+  };
+
+  return (
+    <section className="space-y-4">
+      <VerdictHeader
+        verdict={response.verdict}
+        findingCount={findingCount}
+        contentType={response.content_type}
+        moment={response.moment}
+        submittedText={response.submittedText}
+      />
+
+      {findingCount > 0 && (
+        <DocumentSummaryCard
+          findingCount={findingCount}
+          severityCounts={severityCounts}
+        />
+      )}
+
+      {response.suggested_rewrite && (
+        <SuggestedRewriteBlock rewrite={response.suggested_rewrite} />
+      )}
+
+      {findingCount > 0 ? (
+        <DocumentFindingsList
+          findings={response.violations}
+          submittedText={response.submittedText}
+          plan={plan}
+        />
+      ) : response.verdict === "review_recommended" ? (
+        <ReviewReasonFallback reviewReason={response.review_reason} />
+      ) : null}
+
+      <ViewOriginalDisclosure original={response.submittedText} />
+
+      <p className="pt-2 text-xs text-quiet">
+        Evaluated in {response.latency_ms} ms.
+      </p>
+    </section>
+  );
+}
+
+function DocumentSummaryCard({
+  findingCount,
+  severityCounts,
+}: {
+  findingCount: number;
+  severityCounts: { high: number; medium: number; low: number };
+}) {
+  // Per ADR 2026-04-29 §9b — substrate severity collapses to two
+  // visible customer tiers: high + medium → "Worth adjusting", low →
+  // "Quick polish". We surface counts in those buckets so the card
+  // matches the per-finding badges.
+  const worthAdjusting = severityCounts.high + severityCounts.medium;
+  const quickPolish = severityCounts.low;
+  return (
+    <div className="rounded-md border border-line bg-raised p-4 text-sm">
+      <p className="text-default">
+        <span className="font-semibold">{findingCount}</span>{" "}
+        {findingCount === 1 ? "finding" : "findings"} across this document.
+        {worthAdjusting > 0 && (
+          <>
+            {" "}
+            <span className="font-medium">{worthAdjusting}</span> worth
+            adjusting
+          </>
+        )}
+        {worthAdjusting > 0 && quickPolish > 0 && ", "}
+        {worthAdjusting === 0 && quickPolish > 0 && " "}
+        {quickPolish > 0 && (
+          <>
+            <span className="font-medium">{quickPolish}</span> quick polish
+          </>
+        )}
+        .
+      </p>
+    </div>
+  );
+}
+
+function SuggestedRewriteBlock({ rewrite }: { rewrite: string }) {
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">(
+    "idle",
+  );
+
+  useEffect(() => {
+    if (copyState === "idle") return;
+    const t = setTimeout(() => setCopyState("idle"), 2000);
+    return () => clearTimeout(t);
+  }, [copyState]);
+
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(rewrite);
+      setCopyState("copied");
+    } catch {
+      setCopyState("error");
+    }
+  };
+
+  const copyLabel =
+    copyState === "copied"
+      ? "Copied"
+      : copyState === "error"
+        ? "Couldn't copy"
+        : "Copy clean version";
+
+  return (
+    <div className="overflow-hidden rounded-md border border-accent-affirm-border bg-accent-affirm-soft">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-accent-affirm-border px-4 py-3">
+        <div>
+          <h3 className="text-sm font-semibold text-accent-affirm-text">
+            Suggested rewrite
+          </h3>
+          <p className="mt-0.5 text-xs text-accent-affirm-text/80">
+            A cleaned version in the ContentRX house voice. Copy and edit
+            from here.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onCopy}
+          aria-label="Copy clean version to clipboard"
+          className={[
+            "shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+            copyState === "copied"
+              ? "border-accent-affirm-border bg-accent-affirm-solid text-accent-affirm-on"
+              : copyState === "error"
+                ? "border-accent-caution-border bg-accent-caution-soft text-accent-caution-text"
+                : "border-accent-affirm-border bg-raised text-accent-affirm-text hover:bg-accent-affirm-solid hover:text-accent-affirm-on",
+          ].join(" ")}
+        >
+          {copyLabel}
+        </button>
+      </header>
+      <div className="bg-raised px-4 py-3">
+        <pre className="whitespace-pre-wrap break-words font-sans text-sm text-strong">
+          {rewrite}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+function DocumentFindingsList({
+  findings,
+  submittedText,
+  plan,
+}: {
+  findings: PublicViolation[];
+  submittedText: string;
+  plan: Plan;
+}) {
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold text-default">
+        Findings ({findings.length})
+      </h3>
+      <p className="text-xs text-quiet">
+        What changed and why. Each finding fired against the original
+        document; the rewrite above already incorporates them.
+      </p>
+      <ul className="space-y-2">
+        {findings.map((v, i) => (
+          <DocumentFindingRow
+            key={i}
+            finding={v}
+            submittedText={submittedText}
+            plan={plan}
+          />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * Per-finding row in the Document-tier findings list. Renders the
+ * issue, the suggestion text plainly (no DiffBlock against the whole
+ * document — that's the antipattern this redesign exists to kill),
+ * and the per-finding action toolbar (Copy suggestion / Adjust / Flag
+ * / Make a rule).
+ */
+function DocumentFindingRow({
+  finding,
+  submittedText,
+  plan,
+}: {
+  finding: PublicViolation;
+  submittedText: string;
+  plan: Plan;
+}) {
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [makeRuleOpen, setMakeRuleOpen] = useState(false);
+
+  return (
+    <li className="rounded-md border border-line bg-raised p-3 text-sm">
+      <div className="flex items-start justify-between gap-3">
+        <SeverityBadge severity={finding.severity} />
+        <div className="flex shrink-0 items-center gap-2">
+          {finding.suggestion && (
+            <CopySuggestionButton
+              submittedText={submittedText}
+              suggestion={finding.suggestion}
+              severity={finding.severity}
+              confidence={finding.confidence}
+              issue={finding.issue}
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => setAdjustOpen(true)}
+            aria-label="Adjust this finding"
+            className="shrink-0 rounded-md border border-line-strong bg-raised px-2.5 py-1 text-xs font-medium text-default transition-colors hover:bg-hover"
+          >
+            Adjust
+          </button>
+          <FlagForReview
+            text={submittedText}
+            verdict="violation"
+            variant="card-action"
+            source="dashboard"
+            contextLine={`Flagging finding: "${truncateForContext(finding.issue)}"`}
+          />
+          <MakeRuleButton plan={plan} onOpen={() => setMakeRuleOpen(true)} />
+        </div>
+      </div>
+      <p className="mt-2 text-strong">{finding.issue}</p>
+      {finding.suggestion && (
+        <p className="mt-1 text-default">
+          <span className="text-quiet">Suggestion: </span>
+          {finding.suggestion}
+        </p>
+      )}
+
+      <FindingAdjustModal
+        open={adjustOpen}
+        onClose={() => setAdjustOpen(false)}
+        submittedText={submittedText}
+        currentSuggestion={finding.suggestion ?? ""}
+        issue={finding.issue}
+        onSaved={() => {
+          setAdjustOpen(false);
+        }}
+      />
+
+      <FindingMakeRuleModal
+        open={makeRuleOpen}
+        onClose={() => setMakeRuleOpen(false)}
+        submittedText={submittedText}
+        issue={finding.issue}
+        plan={plan}
+        onSaved={() => {
+          setMakeRuleOpen(false);
+        }}
+      />
+    </li>
+  );
+}
+
+function ViewOriginalDisclosure({ original }: { original: string }) {
+  return (
+    <details className="rounded-md border border-line bg-raised text-sm">
+      <summary className="cursor-pointer select-none px-4 py-3 font-medium text-default hover:text-strong">
+        View original document
+      </summary>
+      <div className="border-t border-line px-4 py-3">
+        <pre className="whitespace-pre-wrap break-words font-mono text-xs text-default">
+          {original}
+        </pre>
+      </div>
+    </details>
   );
 }
 

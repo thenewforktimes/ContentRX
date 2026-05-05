@@ -51,11 +51,21 @@ vi.mock("@/lib/redis", () => ({
 
 // Engine boundary — return whichever response the test pre-loads.
 const cannedEval: { current: object | null } = { current: null };
+// Schema 2.3.0: rewriteDocument is fired alongside evaluate for tier=
+// document. Default mock returns a stable rewrite text; tests that
+// care assert against this. Tests that want to exercise the failure
+// path can `vi.mocked(rewriteDocument).mockRejectedValueOnce(...)`.
+const cannedRewrite = {
+  result: { rewritten: "Stub rewrite for the document tier test." },
+  latency_ms: 42,
+  tokens: { input: 100, output: 30, cache_creation_input: 0, cache_read_input: 0 },
+};
 vi.mock("@/lib/evaluate", () => ({
   evaluate: vi.fn(async () => {
     if (!cannedEval.current) throw new Error("no canned eval response");
     return cannedEval.current;
   }),
+  rewriteDocument: vi.fn(async () => cannedRewrite),
 }));
 
 // Rate-limiter — pass by default.
@@ -422,7 +432,7 @@ describe("/api/check — happy path", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
 
-    expect(body.schema_version).toBe("2.2.0");
+    expect(body.schema_version).toBe("2.3.0");
     expect(body.verdict).toBe("violation");
     expect(Array.isArray(body.violations)).toBe(true);
     expect(body.violations).toHaveLength(1);

@@ -197,6 +197,50 @@ export type SuggestFixResponse = {
   tokens: EngineTokens;
 };
 
+export type RewriteDocumentResponse = {
+  result: { rewritten: string };
+  latency_ms: number;
+  tokens: EngineTokens;
+};
+
+/**
+ * Document-tier holistic rewrite. Calls into the Python engine's
+ * `rewrite_document` mode (see `src/content_checker/rewrite_document.py`),
+ * which runs a single LLM call producing a clean version of the
+ * input in the ContentRX house voice. The dashboard's Document tier
+ * fires this in parallel with the regular check call so the
+ * customer sees both findings AND a suggested rewrite.
+ *
+ * Schema 2.3.0. Failures are non-fatal: the route catches and
+ * surfaces a null `suggested_rewrite` field with a warning, so the
+ * regular check results still render even when the rewrite call
+ * times out or hits a transient Anthropic error.
+ */
+export async function rewriteDocument(
+  text: string,
+): Promise<RewriteDocumentResponse> {
+  const secret = requireEnv("INTERNAL_EVAL_SECRET");
+
+  const res = await fetch(internalEvaluateUrl(), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-internal-secret": secret,
+    },
+    body: JSON.stringify({ text, mode: "rewrite_document" }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(
+      `Rewrite-document failed: ${res.status} ${res.statusText} ${body}`,
+    );
+  }
+
+  return (await res.json()) as RewriteDocumentResponse;
+}
+
 /**
  * Suggest-fix call into the Python evaluator. Rewrites a flagged
  * string to clear a specific standard's violation. BUILD_PLAN_v2
