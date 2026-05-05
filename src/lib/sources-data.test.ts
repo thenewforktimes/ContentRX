@@ -195,9 +195,11 @@ describe("STYLE_GUIDE_METADATA", () => {
 });
 
 describe("loadSourcesData (committed corpus)", () => {
-  it("loads 13 unique style guides — the current Session 16 count", () => {
+  it("loads 14 unique style guides (v4.7.1 added ContentRX house style)", () => {
+    // v4.7.1 (house-style P0): GRM-07 + ACC-08 cite the new internal
+    // "ContentRX house style" source — the 14th attribution entry.
     const data = loadSourcesData();
-    expect(data.style_guides).toHaveLength(13);
+    expect(data.style_guides).toHaveLength(14);
   });
 
   it("loads the 20 allow-list OSS repos (Session 15)", () => {
@@ -205,10 +207,13 @@ describe("loadSourcesData (committed corpus)", () => {
     expect(data.oss_repos).toHaveLength(20);
   });
 
-  it("carries the Session-16 attribution-coverage numbers", () => {
+  it("carries the v4.7.1 attribution-coverage numbers", () => {
+    // v4.7.1 (house-style P0): added 2 standards (GRM-07, ACC-08), both
+    // with sources → 49 total, 32 with attribution. pairs_total
+    // unchanged (no new entries in evals/examples_corpus/pairs.json).
     const data = loadSourcesData();
-    expect(data.standards_total).toBe(47);
-    expect(data.standards_with_attribution).toBe(30);
+    expect(data.standards_total).toBe(49);
+    expect(data.standards_with_attribution).toBe(32);
     expect(data.pairs_total).toBe(38);
   });
 });

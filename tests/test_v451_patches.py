@@ -545,7 +545,8 @@ class TestFilterGlobalNotes:
         """
         filtered = filter_standards(standards, "error_message")
         assert filtered["filtered_count"] > 0
-        assert filtered["total_count"] == 47
+        # v4.7.1 (house-style P0): added GRM-07 + ACC-08.
+        assert filtered["total_count"] == 49
 
 
 # ═══════════════════════════════════════════════════════════════════════

@@ -2263,8 +2263,10 @@ class TestPreprocessIntegration:
         assert "GRM-04" in violation_ids
 
     def test_total_check_count(self):
+        # v4.7.1 (house-style P0): added GRM-07, ACC-08, CLR-03,
+        # CON-02-strict-headings → 29 checks.
         results = preprocess("Hello world", "short_ui_copy")
-        assert len(results) == 25
+        assert len(results) == 29
 
     def test_clean_copy_no_violations(self):
         results = preprocess("Save your changes", "short_ui_copy")
@@ -2299,9 +2301,9 @@ class TestPreprocessIntegration:
         violations = [r for r in results if r.is_violation]
 
     def test_check_count(self):
-        """Preprocessor runs exactly 25 checks."""
+        """Preprocessor runs exactly 29 checks (v4.7.1)."""
         results = preprocess("Test string", "short_ui_copy")
-        assert len(results) == 25
+        assert len(results) == 29
 
     def test_all_checks_return_preprocess_result(self):
         results = preprocess("Test string", "short_ui_copy")
@@ -2314,10 +2316,12 @@ class TestPreprocessIntegration:
         violations = [r for r in results if r.is_violation]
         assert len(violations) == 0
 
-    def test_check_count_25(self):
-        """Canary test — if this changes, a check was added or removed."""
+    def test_check_count_29(self):
+        """Canary test — if this changes, a check was added or removed.
+        v4.7.1: 29 checks (added GRM-07, ACC-08, CLR-03, CON-02 strict).
+        """
         results = preprocess("Hello world", "short_ui_copy")
-        assert len(results) == 25
+        assert len(results) == 29
 
     def test_all_checks_have_standard_ids(self):
         """Every check result must carry a standard_id."""
@@ -2339,13 +2343,14 @@ class TestPreprocessIntegrationFull:
     Source: test_preprocess.py
     """
 
-    def test_returns_all_13_checks(self):
+    def test_returns_all_checks(self):
         results = preprocess("Hello world", "short_ui_copy")
         standard_ids = {r.standard_id for r in results}
         assert "GRM-03" in standard_ids
         assert "GRM-04" in standard_ids
         assert "GRM-01" in standard_ids
         assert "GRM-05" in standard_ids
+        assert "GRM-07" in standard_ids  # v4.7.1
         assert "CON-03" in standard_ids
         assert "GRM-02" in standard_ids
         assert "PRF-01" in standard_ids
@@ -2355,7 +2360,9 @@ class TestPreprocessIntegrationFull:
         assert "PRF-05" in standard_ids
         assert "PRF-06" in standard_ids
         assert "PRF-07" in standard_ids
-        assert len(results) == 25
+        assert "ACC-08" in standard_ids  # v4.7.1
+        assert "CLR-03" in standard_ids  # v4.7.1
+        assert len(results) == 29
 
     def test_multiple_proofing_violations_caught(self):
         """A string with several proofing errors should catch them all."""

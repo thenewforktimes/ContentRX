@@ -48,13 +48,14 @@ class TestBasicLoading:
         result = load_standards()
         assert "categories" in result
 
-    def test_has_47_standards(self):
+    def test_has_49_standards(self):
+        # v4.7.1 (house-style P0): added GRM-07 + ACC-08 → 49 total.
         result = load_standards()
         count = sum(
             len(cat.get("standards", []))
             for cat in result.get("categories", [])
         )
-        assert count == 47
+        assert count == 49
 
     def test_has_9_categories(self):
         result = load_standards()
@@ -135,7 +136,7 @@ class TestCaching:
         info = get_cache_info()
         assert info["cached"] is True
         assert info["path"] is not None
-        assert info["standard_count"] == 47
+        assert info["standard_count"] == 49
 
     def test_reset_clears_cache(self):
         load_standards()

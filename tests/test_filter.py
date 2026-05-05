@@ -11,7 +11,7 @@ from content_checker.filter import (
 
 
 class TestContentTypeHelpers:
-    def test_seven_types_defined(self, standards_data):
+    def test_eight_types_defined(self, standards_data):
         assert len(get_content_type_ids(standards_data)) == 8
 
     def test_button_in_types(self, standards_data):
@@ -22,14 +22,18 @@ class TestContentTypeHelpers:
 
 
 class TestFilterCounts:
+    # v4.7.1 (house-style P0): added GRM-07 (em dashes, all types) and ACC-08
+    # (device verbs, all flaggable types except heading) — adds 2 to every
+    # content type. CLR-03 also added "error_message" to its relevant types,
+    # adding 1 more there.
     @pytest.mark.parametrize("content_type,expected", [
-        ("button_cta", 9),
-        ("error_message", 25),
-        ("confirmation", 21),
-        ("tooltip_microcopy", 27),
-        ("ui_label", 14),
-        ("short_ui_copy", 41),
-        ("long_form_copy", 41),
+        ("button_cta", 11),
+        ("error_message", 28),
+        ("confirmation", 23),
+        ("tooltip_microcopy", 29),
+        ("ui_label", 16),
+        ("short_ui_copy", 43),
+        ("long_form_copy", 43),
     ])
     def test_standard_count(self, standards_data, content_type, expected):
         result = filter_standards(standards_data, content_type)
@@ -82,7 +86,9 @@ class TestContentTypeNotes:
 
     def test_error_has_no_notes(self, standards_data):
         result = filter_standards(standards_data, "error_message")
-        assert len(result["active_notes"]) == 3  # CLR-01 _global + VT-02 _global + TRN-04 _global
+        # CLR-01 + VT-02 + TRN-04 _globals (pre-existing) plus ACC-08 +
+        # CON-02 _globals added in v4.7.1 (house-style P0).
+        assert len(result["active_notes"]) == 5
 
 
 class TestSpecificAssignments:
@@ -118,7 +124,7 @@ class TestEdgeCases:
 
     def test_total_count_always_present(self, standards_data):
         result = filter_standards(standards_data, "nonexistent_type")
-        assert result["total_count"] == 47
+        assert result["total_count"] == 49
 
     def test_plain_text_only_by_default(self, standards_data):
         for ct in get_content_type_ids(standards_data):

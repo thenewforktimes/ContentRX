@@ -634,7 +634,8 @@ class TestCrossPatchIntegration:
             len(cat["standards"])
             for cat in standards["categories"]
         )
-        assert total == 47, f"Standard count changed: {total} != 47"
+        # v4.7.1 (house-style P0): added GRM-07 + ACC-08.
+        assert total == 49, f"Standard count changed: {total} != 49"
 
     def test_all_patched_standards_have_routing(self, standards):
         """Every standard touched by P1-P3 must retain its routing metadata.

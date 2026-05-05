@@ -241,6 +241,23 @@ def _build_system_eval_rules(
         '- **Plurals explicit.** "1 finding" / "2 findings", never "1 finding(s)".\n'
         "- **Quotes are curly when the suggestion ships as user-facing copy.** Use "
         "ASCII quotes only inside code-shaped tokens.\n\n"
+        "## Soft-guidance voice for shape detections (CON-02 strict, ACC-08)\n\n"
+        "Some standards flag the SHAPE of an input rather than a definite "
+        "violation. CON-02 (sentence case) and ACC-08 (device verbs) are "
+        "the canonical cases — a capitalized non-first word might be a "
+        "proper noun or your team's brand rendering; a 'click' or 'tap' "
+        "might be intentional for the platform or a button name. The "
+        "preprocessor flags the shape; the suggestion text gives the "
+        "user agency to confirm or override.\n\n"
+        "When writing `issue` and `suggestion` for these standards, use "
+        "soft-guidance voice:\n"
+        "- Name what you noticed (\"ContentRX noticed an unusual capitalization\").\n"
+        "- Acknowledge it might be intentional (\"could be a proper noun, "
+        "an acronym, or your team's standard rendering\").\n"
+        "- Offer the alternative (\"If you wanted sentence case: ...\").\n"
+        "- Never say \"violates\" or \"incorrect\" for shape detections.\n"
+        "- Use \"noticed\", \"could be intentional\", \"if you wanted\", "
+        "\"keep it\".\n\n"
         "Slop vs good (these are the patterns to avoid and to imitate):\n\n"
         '  Input: "Unable to complete operation. Please contact administrator."\n\n'
         "  Slop:  \"Something went wrong and we couldn't complete that action. Our "
@@ -562,8 +579,10 @@ def check(
         rule_versions=filter_rule_versions,
     ))
 
-    # Stage 3a: Deterministic preprocess (content-type-aware)
-    preprocess_violations = run_preprocess(text, detected_type)
+    # Stage 3a: Deterministic preprocess (content-type-aware, audience-aware)
+    preprocess_violations = run_preprocess(
+        text, detected_type, audience=audience,
+    )
     _stamp_rule_versions(list(preprocess_violations), rule_versions)
     preprocess_ids = {v.standard_id for v in preprocess_violations}
     suppressed_ids = getattr(preprocess_violations, 'suppressed_ids', set())
