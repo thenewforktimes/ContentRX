@@ -127,8 +127,8 @@ export default function AboutPage() {
           {" "}with its 95% confidence interval. When the measurement
           diverges from the design target, the thresholds move with
           the measurement, not with the target. Every verdict I
-          dismiss as <q>the standard doesn&apos;t apply here</q> feeds
-          the override signal, and the{" "}
+          dismiss as &ldquo;the standard doesn&apos;t apply
+          here&rdquo; feeds the override signal, and the{" "}
           <Link href="/calibration" className="underline underline-offset-2">
             calibration log
           </Link>
