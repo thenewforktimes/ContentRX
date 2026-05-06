@@ -43,7 +43,7 @@ export function AuthorBlock() {
           <p className="mt-1 text-sm text-default">
             Staff content designer. The context, the weights, and the
             standards all carry a single designer&apos;s judgment
-            calls — attributed and published.
+            calls, attributed and published.
           </p>
           <Timeline arc={CAREER_ARC} />
           <p className="mt-4 text-xs text-quiet">
