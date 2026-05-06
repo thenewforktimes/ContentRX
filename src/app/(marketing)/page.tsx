@@ -198,7 +198,7 @@ export default function Home() {
 
       <Section
         eyebrow="Built for your stack"
-        title="Easier to buy. Safer to ship."
+        title="Easier to adopt. Safer to ship."
       >
         <ul className="mt-2 grid gap-4 sm:grid-cols-2 sm:gap-3">
           {/* "One approval" gets the accent-affirm treatment — it's
