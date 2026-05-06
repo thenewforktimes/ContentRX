@@ -90,7 +90,7 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
     // The eyebrow + title hold the section together; if either
     // changes, the section is being meaningfully edited.
     expect(visible).toMatch(/built for your stack/i);
-    expect(visible).toMatch(/easier to buy.{1,4}safer to ship/i);
+    expect(visible).toMatch(/easier to adopt.{1,4}safer to ship/i);
   });
 
   it("home byline leads with the staff-content-designer claim", () => {
