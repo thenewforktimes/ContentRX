@@ -131,7 +131,24 @@ export function parseCalibrationMarkdown(
   return { generated_at, blocks };
 }
 
-const INLINE_RE = /(`[^`]+`)|(\*\*[^*]+\*\*)|(_[^_]+_)/g;
+// Inline tokenizer.
+//
+// Italic underscores need to be at word boundaries — otherwise a
+// snake_case identifier like `batch_approval` or `robo_labels` would
+// match `_approval, 43 robo_` as italic. This was a real
+// post-deploy bug: the Coverage section's bullet "By graduation
+// level: 0 autonomous, 0 batch_approval, 43 robo_labels." rendered
+// with the middle chunk italicized.
+//
+// Fix: each italic `_` must be flanked by non-word characters (or
+// start/end of string). This is a tighter version of CommonMark's
+// flanking rule that's good enough for the templated calibration-
+// log shape.
+//
+// Bold `**` and inline `` ` `` don't have the same issue — `**` is
+// rare in identifiers, and code spans use unambiguous backticks.
+const INLINE_RE =
+  /(`[^`]+`)|(\*\*[^*]+\*\*)|((?:^|(?<=[^A-Za-z0-9_]))_[^_]+?_(?=[^A-Za-z0-9_]|$))/g;
 
 /** Render a single line of markdown-flavored text into JSX nodes.
  * Exported for testing; the component below is the normal entry. */
