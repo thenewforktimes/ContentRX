@@ -174,4 +174,48 @@ describe("renderInline", () => {
     );
     expect(types).toEqual(["strong", "text", "em", "text", "code", "text"]);
   });
+
+  it("does NOT italicize underscores in snake_case identifiers", () => {
+    // Real bug from prod 2026-05-07: this exact line on
+    // /calibration/2026-19 rendered with `_approval, 43 robo_` as
+    // italic because the inline parser treated every `_X_` as
+    // italic — including the inner underscores of snake_case.
+    const out = renderInline(
+      "By graduation level: 0 autonomous, 0 batch_approval, 43 robo_labels.",
+      "k",
+    );
+    // No <em> nodes — every chunk is plain text.
+    const hasEm = out.some(
+      (n) =>
+        typeof n === "object" &&
+        n !== null &&
+        "type" in (n as object) &&
+        (n as { type: string }).type === "em",
+    );
+    expect(hasEm).toBe(false);
+  });
+
+  it("still italicizes word-boundary _text_ like _Pending_", () => {
+    // The opt-out: at-word-boundary italics still work.
+    const out = renderInline("- _Pending — no snapshot._", "k");
+    const hasEm = out.some(
+      (n) =>
+        typeof n === "object" &&
+        n !== null &&
+        "type" in (n as object) &&
+        (n as { type: string }).type === "em",
+    );
+    expect(hasEm).toBe(true);
+  });
+
+  it("italicizes _text_ at start of line", () => {
+    const out = renderInline("_first thing_ then more", "k");
+    expect(typeof out[0]).toBe("object");
+  });
+
+  it("italicizes _text_ at end of line", () => {
+    const out = renderInline("preamble then _last thing_", "k");
+    const last = out[out.length - 1];
+    expect(typeof last).toBe("object");
+  });
 });
