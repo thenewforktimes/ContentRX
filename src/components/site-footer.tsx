@@ -9,7 +9,7 @@
  *
  * Column choices:
  *   - Product:  what you can buy / use
- *   - Trust:    accountability surfaces (calibration, sources, ethics)
+ *   - Trust:    accountability surfaces (accuracy, calibration, ethics)
  *               + privacy/security policies
  *   - Company:  about, status, contact
  *
@@ -33,7 +33,6 @@ const productLinks = [
 const trustLinks = [
   { href: "/accuracy", label: "Accuracy" },
   { href: "/calibration", label: "Calibration log" },
-  { href: "/sources", label: "Sources" },
   { href: "/ethics", label: "Ethics" },
   { href: "/privacy", label: "Privacy" },
   { href: "/security", label: "Security" },

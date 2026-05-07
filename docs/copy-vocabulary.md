@@ -121,9 +121,9 @@ internal-only language. The audience is one technical founder running
 a daily review rhythm. Don't soften /admin.
 
 **Marketing prose is owned by its page file.** Landing copy, /pricing
-hero, /about, /ethics, /privacy, /security, /sources, /accuracy,
-/calibration. These stay in their files. The voice is Robert's. This
-doc covers the load-bearing vocabulary, not the narrative.
+hero, /about, /ethics, /privacy, /security, /accuracy, /calibration.
+These stay in their files. The voice is Robert's. This doc covers
+the load-bearing vocabulary, not the narrative.
 
 ## Engine output
 
@@ -345,10 +345,10 @@ different phrasings of "this needs the Team plan" before standardizing.
 | Stripe payment past due | *"Payment past due. Update your card to keep access."* |
 | Email signoff | *"ContentRX. The content model for product copy."* |
 
-Support email: **hello@contentrx.io** (general, ethics, sources opt-out,
-team plan setup). **privacy@contentrx.io** for privacy and data
-requests. **security@contentrx.io** for vulnerability reports. Don't
-introduce new addresses without updating /privacy.
+Support email: **hello@contentrx.io** (general, ethics, third-party
+opt-out, team plan setup). **privacy@contentrx.io** for privacy and
+data requests. **security@contentrx.io** for vulnerability reports.
+Don't introduce new addresses without updating /privacy.
 
 ## Patterns
 
@@ -432,4 +432,4 @@ above, link the ADR superseding it. Vocabulary changes can have
 positioning consequences (the *findings vs violations vs overrides*
 split is downstream of ADR 2026-04-25).
 
-Last refreshed: 2026-04-29.
+Last refreshed: 2026-05-06.

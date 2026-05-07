@@ -1,5 +1,5 @@
 /**
- * /ethics — ContentRX's three load-bearing commitments.
+ * /ethics — ContentRX's four load-bearing commitments.
  *
  * 2026-05-05 rewrite per Robert's audit: when the page first shipped
  * (Session 14) ContentRX agreed to a public-facing taxonomy, and the
@@ -8,10 +8,17 @@
  * customer-not-product). The 2026-04-25 private-taxonomy pivot
  * inverted that framing — we don't publish the taxonomy, we don't
  * crawl at scale, and customers paying for a tool care about
- * outcomes, not robots.txt. Three commitments left, in this order:
+ * outcomes, not robots.txt.
+ *
+ * 2026-05-06 update: /sources retired (ADR 2026-05-06). The
+ * transparency-and-opt-out commitment that page anchored folds in
+ * here as Commitment 4, "No stolen content," with a deep-link target
+ * (#no-stolen-content) that the /sources route now 308s into. Four
+ * commitments, in this order:
  *   1. Privacy
  *   2. Security
  *   3. Customer, not product
+ *   4. No stolen content
  *
  * Voice: Robert's first-person voice. Calm, direct, plain. No em
  * dashes. Names the actor. Doesn't blame. Points somewhere.
@@ -24,7 +31,7 @@ import { PageHeader } from "@/components/ui/page-header";
 export const metadata: Metadata = {
   title: "Ethics. ContentRX",
   description:
-    "How ContentRX handles your work. Three commitments: Privacy, Security, Customer not product.",
+    "How ContentRX handles your work. Four commitments: Privacy, Security, Customer not product, No stolen content.",
 };
 
 export default function EthicsPage() {
@@ -35,7 +42,7 @@ export default function EthicsPage() {
         title="How we handle your work"
         lede={
           <p className="text-sm text-quiet">
-            Three commitments hold the rest of the product together.
+            Four commitments hold the rest of the product together.
             They&apos;re short on purpose. The deep policy lives at{" "}
             <Link href="/privacy" className="underline underline-offset-2">
               /privacy
@@ -160,9 +167,36 @@ export default function EthicsPage() {
         </p>
       </Section>
 
+      <Section
+        number="4"
+        title="No stolen content"
+        summary="ContentRX learns from sources I have rights to use. Other people's work isn't mine to take."
+        id="no-stolen-content"
+      >
+        <p>
+          The model draws from a small set of inputs with clear
+          license: published style guides cited as influences, a few
+          permissively-licensed open-source repositories, and content
+          I write myself. Every input has an MIT license, a fair-use
+          standing, or a public-style-guide convention behind it.
+        </p>
+        <p className="mt-3">
+          If you maintain a project I&apos;ve cited and would rather
+          I hadn&apos;t, email{" "}
+          <a
+            href="mailto:hello@contentrx.io?subject=%5BOPTOUT%5D"
+            className="underline underline-offset-2"
+          >
+            hello@contentrx.io
+          </a>
+          {" "}with subject <code>[OPTOUT]</code> and the project
+          name. I&apos;ll remove the influence and confirm.
+        </p>
+      </Section>
+
       <footer className="mt-16 text-xs text-quiet">
         <p>
-          Last updated 2026-05-05. Source:{" "}
+          Last updated 2026-05-06. Source:{" "}
           <a
             href="https://github.com/thenewforktimes/contentRX/blob/main/src/app/(marketing)/ethics/page.tsx"
             className="underline underline-offset-2"
@@ -180,15 +214,23 @@ function Section({
   number,
   title,
   summary,
+  id,
   children,
 }: {
   number: string;
   title: string;
   summary: string;
+  /** Optional anchor id. When set, the section uses `scroll-mt-16`
+   * so deep links (#no-stolen-content) land below the sticky header
+   * instead of jamming the heading under it. */
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-8 border-t border-line pt-8 first:border-t-0 first:pt-0">
+    <section
+      id={id}
+      className="mt-8 border-t border-line pt-8 scroll-mt-16 first:border-t-0 first:pt-0"
+    >
       <p className="text-xs font-semibold uppercase tracking-widest text-quiet">
         Commitment {number}
       </p>
