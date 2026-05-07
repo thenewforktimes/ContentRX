@@ -5,11 +5,12 @@ these tests catch structural drift (missing fields, unknown standard
 IDs, sources that don't match the canonical list).
 
 2026-05-06: per ADR 2026-05-06-corpus-license-trim, the corpus was
-trimmed to commercial-OK licenses (CC-BY, OGL, CC0) and
-disagreement_map.json was deleted because every entry's positions
-were license-incompatible (Mailchimp NC-ND + all-rights-reserved
-sources). Re-instating a disagreement map with license-compatible
-sources is a follow-up.
+trimmed to commercial-OK licenses (CC-BY, OGL, CC0); per ADR
+2026-05-06-source-name-anonymization, source attribution uses
+functional descriptors rather than brand names. The
+disagreement_map.json was deleted in the trim because every entry's
+positions came from license-incompatible sources. Re-instating a
+disagreement map with license-compatible sources is a follow-up.
 """
 
 from __future__ import annotations
@@ -93,40 +94,65 @@ class TestPairsSchema:
                 f"Pair {pair['pair_id']} references unknown standard {sid}"
             )
 
-    def test_source_system_uses_canonical_name(self):
-        # Prevents drift into abbreviations. Post-2026-05-06 trim, the
-        # canonical list contains only sources with commercial-OK
-        # licenses (CC-BY, OGL, CC0). Re-adding a non-canonical source
-        # requires a license check first — see
-        # decisions/2026-05-06-corpus-license-trim.md.
+    def test_source_system_uses_canonical_descriptor(self):
+        # Prevents drift into brand names or abbreviations. Per ADRs
+        # 2026-05-06-corpus-license-trim and
+        # 2026-05-06-source-name-anonymization, the canonical list
+        # contains anonymized functional descriptors only — never
+        # brand names. Re-adding a brand name (or a new source
+        # without a license check + descriptor) requires a new ADR.
         canonical = {
-            "GOV.UK Style Guide",
-            "18F Content Guide",
-            "Google Developer Documentation Style Guide",
-            "Microsoft Writing Style Guide",
-            "USWDS",
-            "Material Design",
+            "UK national-government style guide",
+            "US federal content guide",
+            "developer documentation style guide",
+            "enterprise platform writing style guide",
+            "US federal design system",
+            "consumer-tech design system",
         }
         data = _load(PAIRS_PATH)
         for pair in data["pairs"]:
             source = pair.get("source_system")
             assert source in canonical, (
                 f"Pair {pair['pair_id']} uses non-canonical source "
-                f"{source!r} — add to the canonical list in the test "
-                "after confirming the source has a commercial-OK license "
-                "(CC-BY, Apache-2.0, MIT, OGL, CC0). Anything more "
-                "restrictive (NC, ND, all-rights-reserved) requires a "
-                "new ADR superseding 2026-05-06-corpus-license-trim."
+                f"{source!r}. Sources must be functional descriptors "
+                "(not brand names) drawn from the canonical list — see "
+                "decisions/2026-05-06-source-name-anonymization.md. "
+                "Adding a new source also requires a license check "
+                "(CC-BY, Apache-2.0, MIT, OGL, CC0) per "
+                "2026-05-06-corpus-license-trim."
             )
 
+    def test_no_brand_names_in_source_field(self):
+        # Anti-regression on the 2026-05-06 anonymization. Hardcoded
+        # brand strings must never re-appear in the source_system
+        # field, even if a new entry's source label coincidentally
+        # happens to contain one. The canonical list above is the
+        # allowlist; this test is the denylist on common brand-name
+        # leaks.
+        DENY = (
+            "Mailchimp", "GOV.UK", "Apple HIG", "Atlassian",
+            "Polaris", "GitHub Primer", "IBM Carbon",
+            "Material Design", "USWDS", "18F",
+            "Microsoft Writing Style Guide",
+            "Google Developer Documentation",
+            "Chicago Manual",
+        )
+        data = _load(PAIRS_PATH)
+        for pair in data["pairs"]:
+            source = pair.get("source_system", "")
+            for brand in DENY:
+                assert brand not in source, (
+                    f"Pair {pair['pair_id']} has source {source!r} "
+                    f"containing brand-name fragment {brand!r}. See "
+                    "decisions/2026-05-06-source-name-anonymization.md."
+                )
+
     def test_every_pair_has_commercial_ok_license(self):
-        # Anti-regression on the 2026-05-06 license trim. CC-BY-NC-ND
-        # (Mailchimp), all-rights-reserved (Apple HIG / Atlassian /
-        # GitHub Primer / IBM Carbon / Shopify Polaris), and any other
-        # license that doesn't permit commercial use with attribution
-        # must not re-enter the corpus. /ethics Commitment 4 ("No
-        # stolen content") makes a load-bearing claim that this guard
-        # protects.
+        # Anti-regression on the 2026-05-06 license trim. CC-BY-NC-ND,
+        # all-rights-reserved, or any other license that doesn't
+        # permit commercial use with attribution must not re-enter
+        # the corpus. /ethics Commitment 4 ("No stolen content")
+        # makes a load-bearing claim that this guard protects.
         commercial_ok = {"CC-BY-4.0", "OGL-3.0", "CC0-1.0", "MIT", "Apache-2.0"}
         data = _load(PAIRS_PATH)
         for pair in data["pairs"]:
