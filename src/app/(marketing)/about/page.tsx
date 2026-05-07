@@ -103,11 +103,14 @@ export default function AboutPage() {
           distillation of a live review where I said{" "}
           <q>that button shouldn&apos;t say <code>Submit</code>, it
           should say what happens next.</q> The{" "}
-          <Link href="/sources" className="underline underline-offset-2">
-            /sources
+          <Link
+            href="/ethics#no-stolen-content"
+            className="underline underline-offset-2"
+          >
+            influences I lean on
           </Link>
-          {" "}page lists every style guide and OSS repo the model
-          leaned on. The judgment between them is mine.
+          {" "}sit on /ethics, with the opt-out path. The judgment
+          between them is mine.
         </p>
       </Section>
 

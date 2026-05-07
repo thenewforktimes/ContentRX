@@ -118,10 +118,10 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
   it("links the public accountability surface from the body copy", () => {
     // /accuracy and /calibration are inline-linked from the
     // "why it works" section. The remaining trust surfaces
-    // (/sources, /ethics, /privacy, /security) live in the
-    // global <SiteFooter>; the body copy doesn't have to carry
-    // every cross-link, but it has to walk the reader to at
-    // least one accountability surface inline.
+    // (/ethics, /privacy, /security) live in the global
+    // <SiteFooter>; the body copy doesn't have to carry every
+    // cross-link, but it has to walk the reader to at least one
+    // accountability surface inline.
     expect(visible).toMatch(/href="\/(accuracy|calibration)"/);
   });
 
@@ -197,9 +197,9 @@ describe("/about page (src/app/(marketing)/about/page.tsx)", () => {
 
   it("inline-links at least one accountability surface from the body copy", () => {
     // The full accountability surface (/accuracy, /calibration,
-    // /sources, /ethics) is reachable from the global <SiteFooter>
-    // shipped with the (marketing) route group's layout. /about can
-    // be lighter on inline cross-refs as a result, but at minimum it
+    // /ethics) is reachable from the global <SiteFooter> shipped
+    // with the (marketing) route group's layout. /about can be
+    // lighter on inline cross-refs as a result, but at minimum it
     // should still walk the reader to /accuracy from the body — the
     // page is "about the model" and the model's measurement is the
     // load-bearing claim.
