@@ -34,16 +34,16 @@ The clean separation matches the plan's standing note:
   "generated_at": "2026-04-23T…Z",
   "pairs": [
     {
-      "pair_id": "mailchimp-clr-01-001",
+      "pair_id": "us-content-clr-01-001",
       "standard_id": "CLR-01",
       "moment": "error_recovery",
       "content_type": "error_message",
-      "source_system": "Mailchimp",
-      "source_section": "Voice and tone — Error messages",
+      "source_system": "US federal content guide",
+      "source_section": "Plain language — error messages",
       "not_this": "An unexpected error occurred.",
       "but_this": "Something went wrong. Try again in a moment.",
-      "rationale": "Mailchimp's voice principle: empathetic, actionable.",
-      "license": "CC-BY-NC-ND-4.0"
+      "rationale": "Plain-language canon: empathetic, actionable.",
+      "license": "CC0-1.0"
     }
   ]
 }
@@ -64,39 +64,53 @@ Fields:
   material (e.g., `CC-BY-4.0`, `MIT`, `all-rights-reserved` where
   applicable).
 
-## Canonical source systems
+## Canonical source descriptors
 
-Post-2026-05-06 license trim (see ADR
-[`decisions/2026-05-06-corpus-license-trim.md`](../../decisions/2026-05-06-corpus-license-trim.md)),
-the canonical list contains only sources with commercial-OK licenses
-(CC-BY, OGL, CC0). Anything more restrictive (NC, ND,
-all-rights-reserved) is out of envelope:
+Per ADRs
+[`2026-05-06-corpus-license-trim.md`](../../decisions/2026-05-06-corpus-license-trim.md)
+(license filter)
+and
+[`2026-05-06-source-name-anonymization.md`](../../decisions/2026-05-06-source-name-anonymization.md)
+(brand-name removal), the canonical list contains anonymized
+functional descriptors of sources with commercial-OK licenses
+(CC-BY, OGL, CC0):
 
-| System | License | Notes |
+| Descriptor | License category | Notes |
 |---|---|---|
-| GOV.UK Style Guide | OGL v3.0 | Plain-language canon |
-| 18F Content Guide | CC0-1.0 | Public domain; plain language |
-| Google Developer Documentation Style Guide | CC-BY-4.0 | Technical writing |
-| Microsoft Writing Style Guide | CC-BY-4.0 | Broad coverage |
-| USWDS (US Web Design System) | CC0-1.0 | Federal UI; plain language |
-| Material Design | CC-BY-4.0 | Visual + interaction conventions |
+| UK national-government style guide | OGL v3.0 | Plain-language canon |
+| US federal content guide | CC0-1.0 | Public domain; plain language |
+| US federal design system | CC0-1.0 | Federal UI; plain language |
+| developer documentation style guide | CC-BY-4.0 | Technical writing |
+| enterprise platform writing style guide | CC-BY-4.0 | Broad coverage |
+| consumer-tech design system | CC-BY-4.0 | Visual + interaction conventions |
 
-Re-adding any source outside this list requires a license check first.
-The pre-merge audit on `/ethics` Commitment 4 (No stolen content) is
-load-bearing: every pair has an MIT license, a fair-use standing, or
-a public-style-guide convention behind it. Anything that doesn't fit
-that envelope should not enter the corpus.
+The descriptors are stable strings — they're matched verbatim by
+`tools/check_close_paraphrase.py` against the `sources` field on
+each standard, so consistency between this list, the
+`source_system` field in `pairs.json`, the `source` field in
+`evals/external_source_snippets.json`, and the `sources` field in
+`standards_library.json` is load-bearing.
+
+Re-adding any source outside this list requires:
+1. A license check (CC-BY, Apache-2.0, MIT, OGL, CC0).
+2. A new descriptor that doesn't name the brand.
+3. A new ADR if either constraint is relaxed.
+
+The pre-merge audit on `/ethics` Commitment 4 (No stolen content)
+is load-bearing: every input has an MIT license, a fair-use
+standing, or a public-style-guide convention behind it. Anything
+that doesn't fit that envelope, or that names a brand directly,
+should not enter the corpus.
 
 ## Disagreement map (deleted 2026-05-06)
 
 The original Session 16 plan included a `disagreement_map.json` that
 captured cases where canonical design systems gave conflicting
 guidance. Every entry's positions came from sources that didn't
-survive the 2026-05-06 license trim (Mailchimp NC-ND + Apple HIG /
-Atlassian / Shopify Polaris / GitHub Primer all-rights-reserved), so
-the file was deleted with the trim. Re-instating a disagreement map
-with license-compatible sources is a follow-up — not committed
-today.
+survive the 2026-05-06 license trim (NC-ND + all-rights-reserved
+licenses), so the file was deleted with the trim. Re-instating a
+disagreement map with license-compatible sources is a follow-up —
+not committed today.
 
 ## Growth rules
 
