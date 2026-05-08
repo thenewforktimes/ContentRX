@@ -299,6 +299,7 @@ describe("live codebase is clean of error-severity findings", () => {
           // EXCLUDE_PATTERNS list in scripts/extract-customer-strings.ts.
           f !== "src/emails/cost-pause-alert.tsx" &&
           f !== "src/emails/cost-margin-alert.tsx" &&
+          f !== "src/emails/overage-meter-failure-alert.tsx" &&
           !f.includes(".test.") &&
           !f.includes(".spec.") &&
           !f.includes("__tests__/") &&

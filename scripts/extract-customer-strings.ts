@@ -90,6 +90,7 @@ const EXCLUDE_PATTERNS: ReadonlyArray<RegExp> = [
   // appropriate. Add new founder-only templates here as they land.
   /^src\/emails\/cost-pause-alert\.tsx$/,
   /^src\/emails\/cost-margin-alert\.tsx$/,
+  /^src\/emails\/overage-meter-failure-alert\.tsx$/,
   /\.test\.(ts|tsx)$/,
   /\.spec\.(ts|tsx)$/,
   /__tests__\//,
