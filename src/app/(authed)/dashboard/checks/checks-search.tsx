@@ -20,6 +20,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Pill } from "@/components/ui/pill";
+import { humanizeContentType, humanizeMoment } from "@/lib/humanize";
 
 // Includes legacy three-tier values for historical rows that pre-date
 // schema 3.0.0; new rows always write "small" or "large". The label
@@ -243,9 +244,11 @@ export function ChecksSearch({
               )}
               {(row.contentType || row.moment) && (
                 <p className="mt-1 text-xs text-quiet">
-                  {row.contentType && <span>{row.contentType}</span>}
+                  {row.contentType && (
+                    <span>{humanizeContentType(row.contentType)}</span>
+                  )}
                   {row.contentType && row.moment && <span> · </span>}
-                  {row.moment && <span>{row.moment}</span>}
+                  {row.moment && <span>{humanizeMoment(row.moment)}</span>}
                 </p>
               )}
             </li>

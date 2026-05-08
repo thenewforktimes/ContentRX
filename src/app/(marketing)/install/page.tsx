@@ -234,20 +234,20 @@ jobs:
           three-button stance on every finding (Agree / Disagree /
           Ship anyway), and the rationale chain on demand.
         </p>
-        <p className="mt-3">
-          Install from Figma Community:
-        </p>
-        <p className="mt-2">
-          <a
-            href="https://www.figma.com/community/plugin/"
-            className={buttonStyles({ variant: "secondary" })}
-          >
-            Figma Community →
-          </a>
+        <p className="mt-3 text-sm text-quiet">
+          Figma Community publication is in review. We&apos;ll
+          announce on{" "}
+          <Link href="/calibration" className="underline underline-offset-2">
+            /calibration
+          </Link>
+          {" "}when the plugin lands and email everyone on the
+          waitlist. In the meantime, the other four surfaces (MCP,
+          LSP, CLI, GitHub Action) cover the same engine and the
+          same monthly limit.
         </p>
         <p className="mt-3 text-sm text-quiet">
-          Sign in once via the dashboard to mint an API key;
-          paste it into the plugin&apos;s sign-in panel.
+          When it lands: sign in once via the dashboard to mint an
+          API key, paste it into the plugin&apos;s sign-in panel.
         </p>
       </Section>
 

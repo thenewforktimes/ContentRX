@@ -116,12 +116,13 @@ export default async function DashboardRunsIndexPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <Eyebrow>CI runs</Eyebrow>
+        <Eyebrow>Runs</Eyebrow>
         <h1 className="mt-2 text-2xl font-semibold">Recent runs</h1>
         <p className="mt-1 text-sm text-default">
-          Every GitHub Action run that flagged content. The PR comment
-          stays the actionable surface; this list is the durable
-          record once the PR closes.
+          Every run from the GitHub Action, CLI, MCP server, or LSP
+          that flagged content. For Action runs the PR comment stays
+          the actionable surface; this list is the durable record
+          once the PR closes.
         </p>
       </header>
 
@@ -182,23 +183,25 @@ function EmptyState() {
   return (
     <section className="rounded-lg border border-dashed border-line-strong bg-overlay p-8 text-sm">
       <h2 className="text-base font-semibold text-strong">
-        No CI runs yet.
+        No runs yet
       </h2>
       <p className="mt-2 text-default">
-        Runs show up here after the ContentRX GitHub Action fires on a
-        pull request and flags at least one finding. Clean PRs (the
-        Action posts &quot;All clear&quot;) don&apos;t create rows
+        Runs show up here after any of the engine surfaces flag at
+        least one finding under a shared run id. That includes the
+        GitHub Action on a PR, the CLI in a CI job, the MCP server
+        in your editor, and the LSP via diagnostics. Clean passes
+        (verdict &quot;All clear&quot;) don&apos;t create rows
         because there&apos;s no audit content to record.
       </p>
       <p className="mt-3 text-default">
-        Install the Action on a repo, open a PR with copy in it, and
-        it&apos;ll start posting comments and writing rows here.
+        Install any surface, run a check on copy that has a finding,
+        and it&apos;ll start writing rows here.
       </p>
       <Link
-        href="/install#action"
+        href="/install"
         className={`${buttonStyles({ size: "sm" })} mt-4`}
       >
-        Install the GitHub Action →
+        Install a surface →
       </Link>
     </section>
   );

@@ -30,6 +30,7 @@ import {
   triageOverride,
   type OverrideStatus,
 } from "@/lib/admin/override-inbox";
+import { humanizeMoment } from "@/lib/humanize";
 
 export const metadata = {
   title: "Override inbox · ContentRX admin",
@@ -195,7 +196,7 @@ export default async function AdminOverridesPage({
                   </p>
                   {row.moment && (
                     <p className="text-quiet">
-                      {row.moment}
+                      {humanizeMoment(row.moment)}
                     </p>
                   )}
                 </div>

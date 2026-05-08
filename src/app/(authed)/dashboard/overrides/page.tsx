@@ -65,7 +65,7 @@ export default async function OverridesPage() {
           disagrees with most so you can disable or tune them in team
           rules.
         </p>
-        <Link href="/dashboard" className={buttonStyles({ size: "sm" })}>
+        <Link href="/pricing" className={buttonStyles({ size: "sm" })}>
           Upgrade to Team
         </Link>
       </section>
