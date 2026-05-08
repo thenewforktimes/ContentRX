@@ -23,6 +23,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb, schema } from "@/db";
+import { enforceRateLimit } from "@/lib/ratelimit";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
 
 const RequestSchema = z.object({
@@ -54,6 +55,9 @@ export async function POST(req: Request) {
       { status: 401 },
     );
   }
+
+  const rl = await enforceRateLimit(clerkId);
+  if (rl) return rl;
 
   const body = await req.json().catch(() => null);
   const parsed = RequestSchema.safeParse(body);

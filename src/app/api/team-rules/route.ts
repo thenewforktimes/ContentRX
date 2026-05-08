@@ -23,6 +23,7 @@ import {
   findReDoSConcern,
   nextCustomStandardId,
 } from "@/lib/team-rules";
+import { enforceRateLimit } from "@/lib/ratelimit";
 import { revalidateDashboard } from "@/lib/revalidate";
 import { isKnownStandardId } from "@/lib/standards";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
@@ -102,6 +103,9 @@ export async function POST(req: Request) {
       { status: 403 },
     );
   }
+
+  const rl = await enforceRateLimit(auth.user.id);
+  if (rl) return rl;
 
   const body = await req.json().catch(() => null);
   const parsed = CreateSchema.safeParse(body);

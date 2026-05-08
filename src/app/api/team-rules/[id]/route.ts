@@ -17,6 +17,7 @@ import { z } from "zod";
 import { envelope } from "@/lib/api-envelope";
 import { getDb, schema } from "@/db";
 import { resolveAuth } from "@/lib/auth";
+import { enforceRateLimit } from "@/lib/ratelimit";
 import { revalidateDashboard } from "@/lib/revalidate";
 import { findReDoSConcern } from "@/lib/team-rules";
 import { sanitizeZodIssues } from "@/lib/zod-errors";
@@ -53,6 +54,9 @@ export async function PATCH(req: Request, context: RouteContext) {
       { status: 403 },
     );
   }
+
+  const rl = await enforceRateLimit(auth.user.id);
+  if (rl) return rl;
 
   const { id } = await context.params;
   const body = await req.json().catch(() => null);
@@ -132,6 +136,9 @@ export async function DELETE(req: Request, context: RouteContext) {
       { status: 403 },
     );
   }
+
+  const rl = await enforceRateLimit(auth.user.id);
+  if (rl) return rl;
 
   const { id } = await context.params;
   const db = getDb();
