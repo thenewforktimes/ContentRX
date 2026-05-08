@@ -35,8 +35,10 @@
 
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { OverageMeterFailureAlertEmail } from "@/emails/overage-meter-failure-alert";
 import { getDb, schema } from "@/db";
 import { requireCronAuth } from "@/lib/cron-auth";
+import { appUrl, sendEmail } from "@/lib/email";
 import { getRedis } from "@/lib/redis";
 import { getStripe } from "@/lib/stripe";
 import { logSafeError } from "@/lib/safe-error-log";
@@ -71,6 +73,11 @@ interface RunResult {
   errored: number;
   betaEnabled: boolean;
   results?: UserPushResult[];
+  /** True when the founder alert email was dispatched for this run.
+   * Absent (rather than false) when there were no failures, so the
+   * happy-path response shape is unchanged. */
+  alertEmailSent?: boolean;
+  alertEmailDeduplicated?: boolean;
 }
 
 /** Format a Date as "YYYY-MM" matching `currentMonth()`. */
@@ -213,6 +220,48 @@ async function run(opts: { month?: string }): Promise<RunResult> {
     }
   }
 
+  // Founder alert: any push failure means a user-month didn't reach
+  // Stripe, so they'll be under-billed unless we re-attempt before the
+  // period closes. Fire once per closing-month-day via Redis dedupe so
+  // a manual re-run of the cron same-day doesn't double-email.
+  let alertEmailSent: boolean | undefined;
+  let alertEmailDeduplicated: boolean | undefined;
+  if (errored > 0) {
+    const failures = results
+      .filter((r): r is UserPushResult & { error: string } =>
+        r.status === "error" && typeof r.error === "string",
+      )
+      .map((r) => ({
+        userId: r.userId,
+        overageChecks: r.overageChecks,
+        error: r.error,
+      }));
+    const founderEmail = process.env.FOUNDER_EMAIL ?? "hello@contentrx.io";
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const result = await sendEmail({
+        to: founderEmail,
+        subject: `Overage meter: ${errored} push failure${errored === 1 ? "" : "s"} for ${closingMonth}`,
+        react: OverageMeterFailureAlertEmail({
+          closingMonth,
+          errored,
+          pushed,
+          failures,
+          appUrl: appUrl(),
+        }),
+        // (closingMonth, today) so a same-day re-run doesn't double
+        // email but a re-run on a later day (after partial recovery)
+        // can re-alert if failures persist.
+        dedupeKey: `overage-meter-failure-alert:${closingMonth}:${today}`,
+      });
+      alertEmailSent = result.ok && !result.deduplicated;
+      alertEmailDeduplicated = !!result.deduplicated;
+    } catch (err) {
+      logSafeError("overage-meter founder alert email failed", err);
+      alertEmailSent = false;
+    }
+  }
+
   return {
     ok: true,
     closingMonth,
@@ -222,6 +271,8 @@ async function run(opts: { month?: string }): Promise<RunResult> {
     errored,
     betaEnabled: true,
     results,
+    ...(alertEmailSent !== undefined ? { alertEmailSent } : {}),
+    ...(alertEmailDeduplicated ? { alertEmailDeduplicated: true } : {}),
   };
 }
 
