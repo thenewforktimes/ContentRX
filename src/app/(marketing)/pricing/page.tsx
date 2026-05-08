@@ -81,7 +81,7 @@ export default function PricingPage() {
             "Slack + Figma plugin + GitHub Action",
           ]}
           overageNote="Hard cap by default. Opt in to $0.10/check overage from your dashboard."
-          cta={{ href: "/sign-up?plan=pro", label: "Start free trial" }}
+          cta={{ href: "/sign-up", label: "Start free trial" }}
           emphasized
           mostPopular
         />
@@ -97,7 +97,7 @@ export default function PricingPage() {
             "GitHub PR bot at the org level",
           ]}
           overageNote="Hard cap by default. Opt in to $0.10/check overage from your dashboard."
-          cta={{ href: "/sign-up?plan=team", label: "Start free trial" }}
+          cta={{ href: "/sign-up", label: "Start free trial" }}
         />
       </section>
 

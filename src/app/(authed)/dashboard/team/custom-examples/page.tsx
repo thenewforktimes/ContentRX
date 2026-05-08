@@ -27,6 +27,7 @@ import { buttonStyles } from "@/components/ui/button";
 import { Pill } from "@/components/ui/pill";
 import { getDb, schema } from "@/db";
 import { CUSTOM_EXAMPLES_CAP_PER_TEAM } from "@/lib/custom-examples";
+import { humanizeContentType, humanizeMoment } from "@/lib/humanize";
 import { getOrProvisionUser } from "@/lib/user-provisioning";
 import { DeleteExampleButton } from "./delete-example-button";
 
@@ -60,7 +61,7 @@ export default async function CustomExamplesPage() {
           short-circuits those strings on every subsequent check
           without running the LLM, without weakening any global rule.
         </p>
-        <Link href="/dashboard" className={buttonStyles({ size: "sm" })}>
+        <Link href="/pricing" className={buttonStyles({ size: "sm" })}>
           Upgrade to Team
         </Link>
       </section>
@@ -152,14 +153,14 @@ export default async function CustomExamplesPage() {
                   </td>
                   <td className="py-2 pr-4 text-xs">
                     {e.moment ? (
-                      <code className="font-mono">{e.moment}</code>
+                      <span>{humanizeMoment(e.moment)}</span>
                     ) : (
                       <span className="text-quiet">any</span>
                     )}
                   </td>
                   <td className="py-2 pr-4 text-xs">
                     {e.contentType ? (
-                      <code className="font-mono">{e.contentType}</code>
+                      <span>{humanizeContentType(e.contentType)}</span>
                     ) : (
                       <span className="text-quiet">any</span>
                     )}

@@ -4,10 +4,8 @@ import { EmailShell, headingStyle, primaryButton } from "./_shell";
 
 export function WelcomeEmail({
   appUrl,
-  pluginUrl,
 }: {
   appUrl: string;
-  pluginUrl: string;
 }) {
   return (
     <EmailShell preview="Welcome to ContentRX. Let's get your first check running.">
@@ -22,8 +20,8 @@ export function WelcomeEmail({
       </Text>
       <Text>Three ways to start:</Text>
       <Text>
-        1. <Link href={pluginUrl}>Install the Figma plugin</Link> and scan
-        a frame in 30 seconds.
+        1. <Link href={`${appUrl}/install#mcp`}>Install the MCP server</Link>{" "}
+        for Claude Code or Cursor and check a string in 30 seconds.
         <br />
         2. <Link href={`${appUrl}/dashboard`}>Open your dashboard</Link> to
         grab an API key for the CLI or GitHub Action.

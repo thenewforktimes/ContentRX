@@ -125,7 +125,6 @@ export async function POST(req: Request) {
           subject: "Welcome to ContentRX",
           react: WelcomeEmail({
             appUrl: base,
-            pluginUrl: "https://www.figma.com/community/plugin/contentrx",
           }),
         }),
         trackEvent("signup", {
