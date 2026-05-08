@@ -17,6 +17,7 @@ import { z } from "zod";
 import { publicCheckEnvelope } from "@/lib/api-envelope";
 import { revalidateDashboard } from "@/lib/revalidate";
 import { resolveAuth } from "@/lib/auth";
+import { safeAfter } from "@/lib/safe-after";
 import {
   checkCostPause,
   evaluateAndPauseIfExceeded,
@@ -268,11 +269,19 @@ export async function POST(req: Request) {
   const usageScopeUserId = teamScope(auth);
   const claim = await claimQuotaSlots(usageScopeUserId, checksNeeded, quota);
   if (!claim.granted) {
-    void notifyQuotaExhausted({
-      to: auth.user.email,
-      plan: auth.plan,
-      quota,
-      userId: auth.user.id,
+    // after() schedules the email send to run after the 402 response
+    // ships, but before Fluid Compute can recycle the function
+    // instance — without it, a fire-and-forget `void` can lose the
+    // email when the runtime tears down between requests. The send
+    // itself is idempotent via Redis dedupe, so a runtime kill
+    // mid-after() at worst delays the alert until the next exhaust.
+    safeAfter(async () => {
+      await notifyQuotaExhausted({
+        to: auth.user.email,
+        plan: auth.plan,
+        quota,
+        userId: auth.user.id,
+      });
     });
     return json(
       {
@@ -308,12 +317,14 @@ export async function POST(req: Request) {
     remainingAfter <= warningThreshold(auth.plan, quota) &&
     remainingAfter > 0
   ) {
-    void notifyQuotaWarning({
-      to: auth.user.email,
-      used: newUsed,
-      quota,
-      plan: auth.plan,
-      userId: auth.user.id,
+    safeAfter(async () => {
+      await notifyQuotaWarning({
+        to: auth.user.email,
+        used: newUsed,
+        quota,
+        plan: auth.plan,
+        userId: auth.user.id,
+      });
     });
   }
 
@@ -552,21 +563,24 @@ export async function POST(req: Request) {
     // Threshold evaluation runs after the event row lands so the new
     // call's spend is included in the daily/monthly sum. Errors here
     // are non-fatal — the next call's evaluation will catch the same
-    // threshold cross. Don't await the email; the user response
-    // doesn't depend on it.
-    void evaluateAndPauseIfExceeded(auth.user.id)
-      .then((result) => {
+    // threshold cross. Wrapped in after() so Fluid Compute holds the
+    // function instance open long enough for the rollup query + email
+    // to finish; without it, a runtime tear-down between requests
+    // would silently drop the alert.
+    safeAfter(async () => {
+      try {
+        const result = await evaluateAndPauseIfExceeded(auth.user.id);
         if (result?.pausedNow) {
-          void notifyCostPause({
+          await notifyCostPause({
             userEmail: auth.user.email,
             userId: auth.user.id,
             ...result,
           });
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         logSafeError("evaluateAndPauseIfExceeded failed", err);
-      });
+      }
+    });
   }
 
   // Bust the dashboard's edge cache + tag-cached loaders so the usage
