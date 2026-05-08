@@ -20,13 +20,13 @@ export function WelcomeEmail({
       </Text>
       <Text>Three ways to start:</Text>
       <Text>
-        1. <Link href={`${appUrl}/install#mcp`}>Install the MCP server</Link>{" "}
+        First, <Link href={`${appUrl}/install#mcp`}>install the MCP server</Link>{" "}
         for Claude Code or Cursor and check a string in 30 seconds.
         <br />
-        2. <Link href={`${appUrl}/dashboard`}>Open your dashboard</Link> to
+        Next, <Link href={`${appUrl}/dashboard`}>open your dashboard</Link> to
         grab an API key for the CLI or GitHub Action.
         <br />
-        3. Reply to this email. We read every message.
+        Last, reply to this email. We read every message.
       </Text>
       <Text style={{ marginTop: 20 }}>
         <Button href={`${appUrl}/dashboard`} style={primaryButton}>
