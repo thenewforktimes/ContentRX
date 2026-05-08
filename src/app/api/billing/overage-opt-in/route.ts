@@ -39,7 +39,10 @@ export async function POST(req: Request) {
     // the beta window. Customers without BETA_OVERAGE access see a
     // 404 rather than a 403 + "you don't have access to overage."
     return NextResponse.json(
-      { error: "Overage isn't available yet on your account." },
+      {
+        error:
+          "Overage isn't available yet on your account. Email hello@contentrx.io if you have questions.",
+      },
       { status: 404 },
     );
   }
