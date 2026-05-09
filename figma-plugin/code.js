@@ -162,15 +162,29 @@ figma.ui.onmessage = async (msg) => {
     // -----------------------------------------------------------------------
     // Focus: select and zoom to a specific text node
     // Called when the user clicks "Go to layer" in the results panel.
+    //
+    // Every path emits a figma.notify so the user gets clear feedback that
+    // the click registered — without it, when the viewport zoom is subtle
+    // (layer already visible, plugin panel covering it) the click reads
+    // as "nothing happened." Errors notify with { error: true } so the
+    // toast is visually distinct.
     // -----------------------------------------------------------------------
     case "focus-node": {
-      const node = figma.getNodeById(msg.nodeId);
+      let node = null;
+      try {
+        node = figma.getNodeById(msg.nodeId);
+      } catch (err) {
+        const message = `Couldn't open layer: ${(err && err.message) || err}`;
+        figma.notify(message, { error: true });
+        figma.ui.postMessage({ type: "focus-error", message });
+        break;
+      }
+
       if (!node) {
         // #24: Layer was deleted since the scan
-        figma.ui.postMessage({
-          type: "focus-error",
-          message: "This layer no longer exists in the file.",
-        });
+        const message = "This layer no longer exists in the file.";
+        figma.notify(message, { error: true });
+        figma.ui.postMessage({ type: "focus-error", message });
         break;
       }
 
@@ -180,15 +194,16 @@ figma.ui.onmessage = async (msg) => {
         pageParent = pageParent.parent;
       }
       if (pageParent && pageParent !== figma.currentPage) {
-        figma.ui.postMessage({
-          type: "focus-error",
-          message: "This layer is on a different page.",
-        });
+        const message = "This layer is on a different page.";
+        figma.notify(message, { error: true });
+        figma.ui.postMessage({ type: "focus-error", message });
         break;
       }
 
       figma.currentPage.selection = [node];
       figma.viewport.scrollAndZoomIntoView([node]);
+      // Confirm success — short timeout so the toast doesn't linger.
+      figma.notify(`Selected: ${node.name}`, { timeout: 1500 });
       figma.ui.postMessage({ type: "focus-complete", nodeId: msg.nodeId });
       break;
     }
