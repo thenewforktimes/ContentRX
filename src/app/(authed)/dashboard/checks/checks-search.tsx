@@ -20,7 +20,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Pill } from "@/components/ui/pill";
-import { humanizeContentType, humanizeMoment } from "@/lib/humanize";
+import { humanizeChecks, humanizeContentType, humanizeMoment } from "@/lib/humanize";
 
 // Includes legacy three-tier values for historical rows that pre-date
 // schema 3.0.0; new rows always write "small" or "large". The label
@@ -226,8 +226,7 @@ export function ChecksSearch({
                 <div className="text-right text-xs text-quiet">
                   <p>{formatRelative(new Date(row.createdAt))}</p>
                   <p>
-                    {row.unitsConsumed} unit
-                    {row.unitsConsumed === 1 ? "" : "s"}
+                    {row.unitsConsumed} {humanizeChecks(row.unitsConsumed)}
                     {row.source ? ` · ${row.source}` : ""}
                   </p>
                 </div>

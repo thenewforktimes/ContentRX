@@ -106,6 +106,20 @@ export function humanizeOverrideStance(value: string | null | undefined): string
 }
 
 /**
+ * Customer-facing label for the metering field.
+ *
+ * Wire format (schema 3.0.0) carries `units_consumed` for backward
+ * compatibility, but customers only ever see "check" / "checks." Per
+ * `docs/copy-vocabulary.md` the noun is "check" — 1 check = 200
+ * characters — and qualifiers like "billing unit" or "metering unit"
+ * never surface on a customer-facing read. Use this at every render
+ * boundary that displays a count derived from unitsConsumed.
+ */
+export function humanizeChecks(count: number): string {
+  return count === 1 ? "check" : "checks";
+}
+
+/**
  * The customer-facing pill tone vocabulary. Mirrors PillTone in
  * src/components/ui/pill.tsx but kept narrow here since these
  * helpers only emit a subset.

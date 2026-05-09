@@ -1,21 +1,25 @@
 /**
  * /pricing — public pricing page.
  *
- * Five-tier structure (locked 2026-05-07 by _private/pricing-analysis.md):
+ * Five-tier structure (locked 2026-05-07 by _private/pricing-analysis.md;
+ * copy rewritten 2026-05-09 per the audit that cut speculative features
+ * — multi-brand voices, agency multi-client billing, GitHub PR bot,
+ * Slack integration, "custom rule overrides" on Pro, team analytics —
+ * none of which had shipping code):
  *   - Free:       10 checks/mo. Acquisition flywheel.
  *   - Pro:        $39/mo ($379/yr, 20% off). 1,000 checks/mo. Self-serve.
  *   - Team:       $79/seat/mo ($759/seat/yr, 20% off). 2,000 checks/seat,
  *                 pooled across the team. Self-serve, no seat minimum.
  *   - Scale:      $1,799/mo ($17,299/yr, 20% off). 60,000 checks pooled,
- *                 multi-brand voices, agency multi-client. Sales-assisted.
+ *                 10-seat cap. Sales-assisted.
  *   - Enterprise: Coming soon. SSO/SAML, SCIM, audit logs, custom rules,
  *                 dedicated CSM, SOC 2 Type II. $36k/yr floor when ready.
  *
  * Above the cap: hard cap by default. Pro, Team, and Scale customers
  * can opt in to $0.10/check overage from their dashboard (Phase 4).
  *
- * Metering shape (schema 3.0.0): 1 unit per 200 characters, rounded up.
- * A button label bills as 1 unit; a 4,000-char doc bills as 20.
+ * Metering shape (schema 3.0.0): 1 check per 200 characters, rounded up.
+ * A button label bills as 1 check; a 4,000-char doc bills as 20.
  */
 
 import type { Metadata } from "next";
@@ -28,7 +32,7 @@ import { Pill } from "@/components/ui/pill";
 export const metadata: Metadata = {
   title: "Pricing. ContentRX",
   description:
-    "Free for evaluation. $39/month for individual professionals. $79/seat for small teams. $1,799/month for agencies and design-system orgs. Enterprise coming soon.",
+    "Free for evaluation. $39/month to use it daily. $79/seat for teams. $1,799/month for design-system orgs. Enterprise coming soon.",
 };
 
 export default function PricingPage() {
@@ -41,18 +45,12 @@ export default function PricingPage() {
         title="A staff content designer's verdict on every string you ship."
         lede={
           <>
-            Free to start, $39/month to use it daily, $79/seat for teams.
-            In your repo, your PR, your Figma file, your terminal, without
-            leaving the work.
+            Free for evaluation. $39/month to use it daily. $79/seat
+            for teams. In your repo, your PR, your Figma file, your
+            terminal, without leaving the work.
           </>
         }
-        meta={
-          <>
-            All paid plans share the same engine, the same calibrated
-            reviewer, and the same five surfaces. The differences are
-            seat count, monthly checks, and admin features.
-          </>
-        }
+        meta={<>Same engine, same standards, every plan.</>}
       />
 
       <section
@@ -64,9 +62,8 @@ export default function PricingPage() {
           price="$0"
           quota="10 checks per month"
           features={[
-            "1 repo",
             "Short copy and long-form review",
-            "All five surfaces",
+            "Every standard, every surface",
           ]}
           cta={{ href: "/sign-up", label: "Start free" }}
         />
@@ -76,9 +73,9 @@ export default function PricingPage() {
           priceSubnote="$379/year (save 20%)"
           quota="1,000 checks per month"
           features={[
-            "Short copy and long-form review",
-            "Custom rule overrides",
-            "Slack + Figma plugin + GitHub Action",
+            "Everything in Free",
+            "Built for daily use",
+            "Free trial included",
           ]}
           overageNote="Hard cap by default. Opt in to $0.10/check overage from your dashboard."
           cta={{ href: "/sign-up", label: "Start free trial" }}
@@ -93,8 +90,8 @@ export default function PricingPage() {
           features={[
             "Everything in Pro",
             "Rule sharing across the team",
-            "Member management + analytics",
-            "GitHub PR bot at the org level",
+            "Custom examples",
+            "Member management with pooled checks",
           ]}
           overageNote="Hard cap by default. Opt in to $0.10/check overage from your dashboard."
           cta={{ href: "/sign-up", label: "Start free trial" }}
@@ -112,8 +109,8 @@ export default function PricingPage() {
           quota="60,000 checks per month, pooled"
           features={[
             "Everything in Team",
-            "10-seat cap, multi-brand voices",
-            "Agency multi-client billing",
+            "10 seats, one pooled budget",
+            "For design-system orgs and content teams",
           ]}
           overageNote="Hard cap by default. Opt in to $0.10/check overage from your dashboard."
           cta={{
@@ -128,9 +125,9 @@ export default function PricingPage() {
           quota="Custom checks, custom seats"
           features={[
             "Everything in Scale",
-            "SSO/SAML + SCIM + audit logs",
-            "Custom rules + dedicated CSM",
-            "Self-hosted option + IP indemnification",
+            "SSO/SAML, SCIM, audit logs",
+            "Custom rules, dedicated CSM",
+            "Self-hosted option, IP indemnification",
           ]}
           unavailable
         />
@@ -143,78 +140,56 @@ export default function PricingPage() {
             q="What's a check?"
             a={
               <>
-                One pass of the engine over your content. We bill by
-                content length: <strong>1 unit per 200 characters</strong>,
-                rounded up. A button label or error message bills as 1
-                unit. A 1,000-character paragraph bills as 5. A
-                4,000-character doc bills as 20. The estimator in your
-                dashboard shows the unit cost before you submit, so the
-                price is never a surprise.
+                1 check = 200 characters, rounded up. A button label
+                is 1 check. A 1,000-character paragraph is 5.
               </>
             }
           />
           <Faq
-            q="Why bill by length?"
-            a="Because reviewing one button label and reviewing a full screen of copy aren't the same work. Length is honest and predictable. Short copy is cheap; long content costs proportionally more. No tier toggles to learn, no decision to mis-make at submit time."
-          />
-          <Faq
-            q="What happens if I hit my limit on Pro?"
+            q="What if I hit my limit on Pro?"
             a={
               <>
-                Pro caps at 1,000 checks per month, equivalent to
-                200,000 characters of content reviewed. By default,
-                that&apos;s a hard cap. We email at 80% so you have
-                warning, and again at 100%. To keep checking past the
-                cap, opt in to overage at $0.10/check from your
-                dashboard. We bill it with your next invoice. You can
-                turn it off anytime. If you&apos;re bumping 1,000 most
-                months, the Team plan ($79/seat with 2,000 pooled per
-                seat) is the right next step.
+                You&apos;ll get an email at 80% and again at 100%. By
+                default, checks pause at the cap. Opt into $0.10/check
+                overage from your dashboard if you want to keep going.
               </>
             }
           />
           <Faq
             q="Can I cancel anytime?"
-            a="Yes. Stripe-hosted Customer Portal, no email-us-to-cancel pattern, no retention dark patterns. Your team setup stays put for 90 days after cancellation; come back within that window and you pick up where you left off."
+            a="Yes. Stripe-hosted Customer Portal. Your team setup stays put for 90 days after cancellation."
           />
           <Faq
-            q="How do I know the accuracy holds up over time?"
+            q="How do I know the accuracy holds up?"
             a={
               <>
-                Every Monday, the calibration log at{" "}
+                Every Monday, the{" "}
                 <Link href="/calibration" className="underline underline-offset-2">
-                  /calibration
+                  calibration log
                 </Link>
-                {" "}publishes the previous week&apos;s measured accuracy,
-                drift signals, and which standards were refined. The
-                discernment loop is public: you can read what changed
-                and why. If kappa drops, you&apos;ll see it before you
-                feel it.
+                {" "}publishes the previous week&apos;s measured kappa,
+                drift signals, and which standards were refined. If the
+                number drops, you&apos;ll see it before you feel it.
               </>
             }
           />
           <Faq
             q="Do I need a credit card to try it?"
-            a="No. Free is 10 checks/mo, no card required. Sign up, install on your surface of choice, and run your first check."
+            a="No. Free is 10 checks per month, no card required."
           />
           <Faq
-            q="Do I need an Anthropic or OpenAI API key?"
-            a="No. ContentRX includes the LLM. You bring your subscription; we handle the AI vendor relationship. No procurement conversation, no security review of another LLM provider, no separate Anthropic billing account to set up. One ContentRX API key covers all five surfaces."
-          />
-          <Faq
-            q="When does Enterprise become available?"
-            a="When SOC 2 Type II is in hand and SSO/SAML/SCIM are wired. Enterprise pricing starts at $36,000/year and includes audit logs, custom rules, dedicated CSM, a self-hosted option, and IP indemnification. If you have an Enterprise procurement timeline, email us and we'll let you know when we're ready."
+            q="Do I need an Anthropic or OpenAI key?"
+            a="No. ContentRX includes the LLM. One API key covers all five surfaces."
           />
           <Faq
             q="Where do I install it?"
             a={
               <>
-                MCP (Claude Code, Cursor), LSP (VS Code, Zed, any LSP
-                editor), CLI, GitHub Action, and the Figma plugin.{" "}
                 <Link href="/install" className="underline underline-offset-2">
-                  Install instructions for each
+                  /install
                 </Link>
-                .
+                {" "}covers the MCP server, the LSP, the CLI, the
+                GitHub Action, and the Figma plugin.
               </>
             }
           />
