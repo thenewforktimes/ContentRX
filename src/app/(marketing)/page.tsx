@@ -72,10 +72,10 @@ export default function Home() {
             Staff-level content design review in every repo
           </h1>
           <p className="mt-6 text-lg text-default sm:text-xl">
-            ContentRX reads the strings you ship with the judgment of a
-            staff content designer. Verdict, suggestion, rationale, in
-            your pull request, your IDE, and your Figma file. Before the
-            next review cycle, before merge.
+            ContentRX reviews your strings with the judgment of a staff
+            content designer, before you ship. Verdict, suggestion,
+            rationale, in your pull request, your IDE, and your Figma
+            file. Before the next review, before merge.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3 text-sm">
             <Link href="/sign-up" className={buttonStyles({ variant: "primary" })}>
