@@ -9,6 +9,73 @@
   /* ------------------------------------------------------------------ */
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* ContentRX brand palette. Dark mode is canonical (matches the web
+   * app per the design-token system in src/app/globals.css); light
+   * mode overrides under the prefers-color-scheme media query. The
+   * plugin runs in a Figma iframe with no access to the dashboard's
+   * Tailwind layer, so these variables are a maintained mirror.
+   *
+   * The plugin still uses `var(--figma-color-X, …)` for surface +
+   * text colors so it adapts to Figma's theme. The CRX vars below
+   * carry the brand signals (accent, verdict, source-of-finding)
+   * where brand consistency is load-bearing. */
+  :root {
+    --crx-accent-solid: #fb923c;
+    --crx-accent-on-solid: #1c0f04;
+    --crx-accent-soft: #2d1810;
+    --crx-accent-text: #fdba74;
+    --crx-accent-border: #c2410c;
+
+    --crx-affirm-solid: #4ade80;
+    --crx-affirm-soft: #14201e;
+    --crx-affirm-text: #86efac;
+    --crx-affirm-border: #22c55e;
+
+    --crx-caution-solid: #facc15;
+    --crx-caution-soft: #2a2410;
+    --crx-caution-text: #fde047;
+    --crx-caution-border: #ca8a04;
+
+    --crx-concern-solid: #f87171;
+    --crx-concern-soft: #2c0e0e;
+    --crx-concern-text: #fca5a5;
+    --crx-concern-border: #dc2626;
+
+    --crx-info-solid: #a78bfa;
+    --crx-info-soft: #1e1942;
+    --crx-info-text: #c4b5fd;
+    --crx-info-border: #7c3aed;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --crx-accent-solid: #4338ca;
+      --crx-accent-on-solid: #ffffff;
+      --crx-accent-soft: #e0e7ff;
+      --crx-accent-text: #312e81;
+      --crx-accent-border: #6366f1;
+
+      --crx-affirm-solid: #0f766e;
+      --crx-affirm-soft: #ccfbf1;
+      --crx-affirm-text: #134e4a;
+      --crx-affirm-border: #14b8a6;
+
+      --crx-caution-solid: #ca8a04;
+      --crx-caution-soft: #fef3c7;
+      --crx-caution-text: #854d0e;
+      --crx-caution-border: #eab308;
+
+      --crx-concern-solid: #dc2626;
+      --crx-concern-soft: #fee2e2;
+      --crx-concern-text: #991b1b;
+      --crx-concern-border: #ef4444;
+
+      --crx-info-solid: #7c3aed;
+      --crx-info-soft: #ede9fe;
+      --crx-info-text: #5b21b6;
+      --crx-info-border: #a78bfa;
+    }
+  }
+
   body {
     font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 12px;
@@ -51,8 +118,8 @@
   }
 
   input:focus {
-    border-color: var(--figma-color-border-brand, #0d99ff);
-    box-shadow: 0 0 0 1px var(--figma-color-border-brand, #0d99ff);
+    border-color: var(--crx-accent-border);
+    box-shadow: 0 0 0 1px var(--crx-accent-border);
   }
 
   .btn {
@@ -70,8 +137,8 @@
   }
 
   .btn-primary {
-    background: var(--figma-color-bg-brand, #0d99ff);
-    color: #fff;
+    background: var(--crx-accent-solid);
+    color: var(--crx-accent-on-solid);
   }
   .btn-primary:hover { opacity: 0.9; }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -94,11 +161,11 @@
   .btn-text:hover { color: var(--figma-color-text, #333); }
 
   .btn-danger {
-    background: #fde8e8;
-    color: #c33;
-    border: 1px solid #f5c6c6;
+    background: var(--crx-concern-soft);
+    color: var(--crx-concern-text);
+    border: 1px solid var(--crx-concern-border);
   }
-  .btn-danger:hover { background: #fcd0d0; }
+  .btn-danger:hover { opacity: 0.9; }
 
   .btn-row {
     display: flex;
@@ -127,10 +194,10 @@
     margin-bottom: 12px;
   }
 
-  .verdict-pass { background: #e6f9ed; color: #1a7f37; }
-  .verdict-fail { background: #fde8e8; color: #c33; }
-  /* v2 Session 10 — three-state verdict; REVIEW is amber, between pass and fail */
-  .verdict-review { background: #fff8e1; color: #b76e00; }
+  .verdict-pass { background: var(--crx-affirm-soft); color: var(--crx-affirm-text); }
+  .verdict-fail { background: var(--crx-concern-soft); color: var(--crx-concern-text); }
+  /* v2 Session 10 — three-state verdict; REVIEW is the brand caution tone, between pass and fail */
+  .verdict-review { background: var(--crx-caution-soft); color: var(--crx-caution-text); }
   .verdict-icon { font-size: 14px; }
 
   /* ------------------------------------------------------------------ */
@@ -171,12 +238,12 @@
     letter-spacing: 0.4px;
   }
   .severity-badge.severity-high {
-    background: #fde0e0;
-    color: #962020;
+    background: var(--crx-concern-soft);
+    color: var(--crx-concern-text);
   }
   .severity-badge.severity-medium {
-    background: #fdecc8;
-    color: #8c5a00;
+    background: var(--crx-caution-soft);
+    color: var(--crx-caution-text);
   }
   .severity-badge.severity-low {
     background: var(--figma-color-bg-secondary, #f0f0f0);
@@ -229,17 +296,13 @@
     white-space: pre-wrap;
   }
   .diff-removed {
-    background: #fde8e8;
-    color: #9b2c2c;
+    background: var(--crx-concern-soft);
+    color: var(--crx-concern-text);
     text-decoration: line-through;
   }
   .diff-added {
-    background: #dcfce7;
-    color: #166534;
-  }
-  @media (prefers-color-scheme: dark) {
-    .diff-removed { background: #4c1d24; color: #fca5a5; }
-    .diff-added   { background: #14322a; color: #86efac; }
+    background: var(--crx-affirm-soft);
+    color: var(--crx-affirm-text);
   }
 
   /* ------------------------------------------------------------------ */
@@ -260,13 +323,13 @@
   }
 
   .source-badge-instant {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--crx-caution-soft);
+    color: var(--crx-caution-text);
   }
 
   .source-badge-ai {
-    background: #e8e0f7;
-    color: #5b3ea2;
+    background: var(--crx-info-soft);
+    color: var(--crx-info-text);
   }
 
   /* ------------------------------------------------------------------ */
@@ -3984,13 +4047,20 @@ function renderNodeCard(result) {
 
     // PR-35 — render the suggestion as a stacked before/after diff
     // when we have both. Falls back to the plain "Suggestion" line
-    // when the original text isn't on the result (older code paths).
+    // when the original text isn't on the result (older code paths)
+    // OR when the suggestion is instruction-shaped (the engine is
+    // telling the customer what to do, not handing them the fixed
+    // text). Without that branch, instructions like "Remove spaces,
+    // tabs, or newlines from the beginning and end of the string."
+    // get word-diffed against the original and render as if the
+    // entire sentence should be replaced with the instruction text.
     // Per the 2026-05-08 design pass: the rationale (issue) and the
     // recommendation (suggestion) both render inline on every finding,
     // no click-to-expand, so the customer sees BOTH our reasoning AND
     // our fix in plain English without an extra interaction.
+    const useInlineDiff = result.text && !isInstructionShape(result.text, enrichedSuggestion);
     const suggestionBlock = enrichedSuggestion
-      ? (result.text
+      ? (useInlineDiff
           ? `<div class="suggestion-label">Suggested change</div>
              ${renderDiffBlock(result.text, enrichedSuggestion)}`
           : `<div class="suggestion-label">Suggestion</div>
@@ -4346,6 +4416,38 @@ function wordDiff(before, after) {
 
 /** Render a diff token stream as the stacked "− before / + after"
  *  HTML block. Empty `after` (or identical strings) returns "". */
+/**
+ * Heuristic: is the suggestion a fix-the-string rewrite, or a
+ * plain-English instruction describing what to do?
+ *
+ * The preprocessor sometimes emits the actual corrected string
+ * (e.g. text.replace(/ & /g, " and ") returns the fixed text), and
+ * sometimes emits guidance ("Remove spaces, tabs, or newlines from
+ * the beginning and end of the string."). Word-diffing the original
+ * against an instruction produces a misleading visualization: the
+ * entire original gets struck through and the instruction renders
+ * as if it were the replacement. From a customer's perspective
+ * that reads "the engine wants me to delete my whole sentence and
+ * type the instruction in its place" — broken.
+ *
+ * Rule of thumb: if fewer than 30% of the suggestion's words appear
+ * in the original, the suggestion is talking ABOUT the fix rather
+ * than spelling out the fixed text. Render it as plain prose, no
+ * diff. The 30% threshold lets short paraphrases through (e.g.
+ * "Save & Close" → "Save and Close" shares 67%) while catching
+ * imperative-shaped guidance ("Remove spaces, tabs, or newlines…").
+ */
+function isInstructionShape(text, suggestion) {
+  if (!text || !suggestion) return false;
+  const wordsInOriginal = new Set(
+    String(text).toLowerCase().match(/\b\w+\b/g) || [],
+  );
+  const suggestionWords = String(suggestion).toLowerCase().match(/\b\w+\b/g) || [];
+  if (wordsInOriginal.size === 0 || suggestionWords.length === 0) return false;
+  const overlap = suggestionWords.filter((w) => wordsInOriginal.has(w)).length;
+  return overlap / suggestionWords.length < 0.3;
+}
+
 function renderDiffBlock(before, after) {
   if (!after || before === after) return "";
   const tokens = wordDiff(before || "", after);
