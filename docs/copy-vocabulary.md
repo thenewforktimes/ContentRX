@@ -385,9 +385,17 @@ Rules of thumb, not strings.
 - **Numbers.** *"1,000 checks per month"*, not *"1000 checks/mo"*.
   Comma separator on thousands. The numbers customers see most: 10
   (free monthly limit), 1,000 (Pro monthly limit), 2,000/seat (Team),
-  60,000 (Scale monthly limit), 200 (chars per unit), 50,000 (max
-  chars per call). Match these in copy or you're contradicting another
-  surface.
+  60,000 (Scale monthly limit), 200 (characters per check), 50,000
+  (max characters per call). Match these in copy or you're
+  contradicting another surface.
+- **Checks, not units.** *"1 check per 200 characters"*, never *"1
+  unit per 200 characters"*. The wire format (schema 3.0.0) carries
+  `units_consumed` for backward compatibility, but customers only
+  ever see "check" / "checks." Render-boundary humanizer:
+  `humanizeChecks(count)` in `src/lib/humanize.ts`. Qualifiers like
+  "billing unit" or "metering unit" never surface on a customer-
+  facing read. /admin pages keep the raw `unit` jargon — that surface
+  is founder-only.
 - **Punctuation instead of em dashes.** When you reach for an em dash,
   reach for a period, a comma, a colon, parens, or a sentence break.
   Almost always one of those works. The em dash reads as

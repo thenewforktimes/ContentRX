@@ -27,6 +27,7 @@ import type { PublicCheckEnvelope, PublicViolation } from "@/lib/api-envelope";
 import { MAX_INPUT_CHARS, isLargeInput, meter } from "@/lib/metering";
 import type { Plan } from "@/lib/quotas";
 import {
+  humanizeChecks,
   humanizeContentType,
   humanizeMoment,
   humanizeReviewReason,
@@ -238,7 +239,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
                 {" · "}
                 <strong className="font-semibold">
                   {decision.unitsConsumed}{" "}
-                  {decision.unitsConsumed === 1 ? "unit" : "units"}
+                  {humanizeChecks(decision.unitsConsumed)}
                 </strong>
               </>
             )}
@@ -253,7 +254,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
             </span>
           ) : (
             <span className="text-default">
-              1 unit per 200 characters
+              1 check per 200 characters
             </span>
           )}
         </div>
