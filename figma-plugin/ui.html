@@ -147,8 +147,18 @@
     background: var(--figma-color-bg-secondary, #f0f0f0);
     color: var(--figma-color-text, #333);
     border: 1px solid var(--figma-color-border, #ddd);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .btn-secondary:hover { background: var(--figma-color-bg-hover, #e8e8e8); }
+  /* Brand-accent hover. Figma's --figma-color-bg-hover resolves close
+   * to bg-secondary in dark theme, so the previous hover read as
+   * almost-no-change. Switching to the CRX accent border + a tertiary
+   * background gives an unmistakable hover signal that matches the
+   * brand. */
+  .btn-secondary:hover {
+    background: var(--figma-color-bg-tertiary, #e8e8e8);
+    border-color: var(--crx-accent-border);
+    color: var(--crx-accent-text);
+  }
   .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .btn-text {
@@ -4763,8 +4773,13 @@ window.onmessage = async (event) => {
     }
 
     case "focus-error": {
-      // #24, #25: Layer was deleted or moved to a different page
-      renderError(msg.message);
+      // #24, #25: Layer was deleted or moved to a different page.
+      // The sandbox already shows a figma.notify toast with the same
+      // message — that's the user-visible feedback. Don't call
+      // renderError() here; that replaces the entire results area
+      // and destroys the user's scan, which reads as "the button
+      // broke everything." Console-log for debugging only.
+      console.warn("[ContentRX] focus-error:", msg.message);
       break;
     }
   }
