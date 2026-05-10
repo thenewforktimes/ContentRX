@@ -36,7 +36,7 @@ export default function PrivacyPage() {
         lede={
           <>
             ContentRX is a content-design review tool. To do that job,
-            ContentRX has to receive the strings you check, run them
+            ContentRX has to receive the checks you run, run them
             through the evaluation engine (which uses Anthropic&apos;s
             Claude models), and store enough of a record to bill you
             and to show you your own history. This page lays out what
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Content you submit for review</strong>. Every
-            string passed to <code>/api/check</code>,{" "}
+            check passed to <code>/api/check</code>,{" "}
             <code>/api/classify</code>, or <code>/api/suggest-fix</code>{" "}
             is forwarded to the evaluation engine and to Anthropic. In
             ContentRX&apos;s own database, only a sha256 hash of the
@@ -76,11 +76,11 @@ export default function PrivacyPage() {
             surface that made the request.
           </li>
           <li>
-            <strong>Strings you explicitly share via Flag for Review</strong>.
+            <strong>Checks you explicitly share via Flag for Review</strong>.
             {" "}When you tap Flag for Review on a finding and confirm
-            the consent modal, the plaintext of that string is stored
+            the consent modal, the plaintext of that check is stored
             for calibration alongside a per-row consent record. Each
-            shared string is visible to you at{" "}
+            shared check is visible to you at{" "}
             <Link href="/dashboard/shared" className="underline underline-offset-2">
               /dashboard/shared
             </Link>
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
             >
               {PRIVACY_EMAIL}
             </a>
-            {" "}to revoke a shared string at any time.
+            {" "}to revoke a shared check at any time.
           </li>
           <li>
             <strong>Usage and operational telemetry</strong>.
@@ -115,22 +115,22 @@ export default function PrivacyPage() {
           you the receipts you would expect.
         </p>
         <p className="mt-3">
-          Content strings run the evaluation and return verdicts.
-          When you have explicitly shared a string via Flag for
+          Content checks run the evaluation and return verdicts.
+          When you have explicitly shared a check via Flag for
           Review, it also informs the calibration log so the engine
-          gets better. The hash stored for unshared strings supports
+          gets better. The hash stored for unshared checks supports
           dashboard history lookups without keeping the plaintext.
         </p>
         <p className="mt-3">
           Telemetry fixes bugs (Sentry), bills correctly (token
           counts), enforces rate limits (Redis), and tracks which
           public pages people read (Plausible). None of these
-          subprocessors receive content strings.
+          subprocessors receive content checks.
         </p>
         <p className="mt-3">
           ContentRX does not sell your data and does not train any
           model on customer content. The Flag-for-Review consent flow
-          is the only path by which a customer string influences the
+          is the only path by which a customer check influences the
           calibration corpus.
         </p>
       </Section>
@@ -143,7 +143,7 @@ export default function PrivacyPage() {
         </p>
         <ul className="mt-3 ml-5 list-disc space-y-2">
           <li>
-            <strong>ContentRX does not sell your strings</strong>.{" "}
+            <strong>ContentRX does not sell your checks</strong>.{" "}
             Hashed, anonymised, or otherwise. No data-broker contract,
             no advertiser arrangement.
           </li>
@@ -155,11 +155,11 @@ export default function PrivacyPage() {
           <li>
             <strong>ContentRX does not use your content to train any
             model</strong> (its own, Anthropic&apos;s, anyone&apos;s).
-            Strings you share via Flag for Review feed a hand-curated
+            Checks you share via Flag for Review feed a hand-curated
             calibration corpus. Nothing else does.
           </li>
           <li>
-            <strong>ContentRX does not share your strings with any
+            <strong>ContentRX does not share your checks with any
             third party</strong> beyond the subprocessors named below.
           </li>
           <li>
@@ -171,7 +171,7 @@ export default function PrivacyPage() {
         </ul>
         <p className="mt-4">
           The engineering layer behind that. Every public route that
-          takes a string runs a pre-screen. The pre-screen refuses
+          takes a check runs a pre-screen. The pre-screen refuses
           obvious credentials and PII before they can reach Anthropic,
           the error logs, or anyone&apos;s eyes. The patterns include
           credit card numbers, SSNs, and keys for AWS, Stripe, OpenAI,
@@ -202,7 +202,7 @@ export default function PrivacyPage() {
             <SubprocessorRow
               name="Anthropic"
               purpose="LLM evaluation"
-              data="The text strings you submit for review."
+              data="The text checks you submit for review."
             />
             <SubprocessorRow
               name="Stripe"
@@ -282,88 +282,89 @@ export default function PrivacyPage() {
           ContentRX.
         </p>
         <p className="mt-3">
-          <strong>Strings you shared via Flag for Review</strong>{" "}
-          stay in the calibration corpus until you revoke them. To
-          revoke a specific string, email{" "}
-          <a href={`mailto:${PRIVACY_EMAIL}`} className="underline underline-offset-2">
-            {PRIVACY_EMAIL}
-          </a>
-          {" "}with rough timing and source surface. Your shared-strings
-          list at{" "}
+          <strong>Checks you shared via Flag for Review</strong> stay
+          in the calibration corpus until you revoke them. Your
+          shared-checks list at{" "}
           <Link href="/dashboard/shared" className="underline underline-offset-2">
             /dashboard/shared
           </Link>
           {" "}is the canonical record of what ContentRX has on you
-          from that consent flow.
+          from that consent flow. Each row has a{" "}
+          <span className="font-medium text-strong">Remove this check</span>
+          {" "}button that deletes the row and any record it produced
+          in the calibration log.
         </p>
         <p className="mt-3">
-          <strong>To delete your account entirely</strong>, email{" "}
-          <a href={`mailto:${PRIVACY_EMAIL}`} className="underline underline-offset-2">
-            {PRIVACY_EMAIL}
-          </a>
-          . ContentRX runs this sequence.
+          <strong>When you delete your account entirely</strong>,
+          every row attached to it goes too. ContentRX&apos;s baseline
+          is the right and ability to be forgotten, not an
+          anonymize-and-keep posture. The sequence:
         </p>
         <ul className="mt-3 ml-5 list-disc space-y-2">
-          <li>Cancels any active subscription.</li>
+          <li>Any active subscription is cancelled.</li>
           <li>
-            Anonymizes historical violation hashes and override
-            records by setting <code>user_id</code> to null. The
-            hashed signal stays so engine calibration retains it. The
-            link back to you is severed.
+            Every check you ran is deleted. Hashes, findings,
+            overrides, dismissals, all of it.
           </li>
-          <li>Deletes any Flag-for-Review shares.</li>
-          <li>Clears identifiers on your account row.</li>
-          <li>Deletes your Clerk login.</li>
+          <li>Every check you shared via Flag for Review is deleted.</li>
+          <li>
+            Team rules, team members, team invitations, and any
+            agent-run history are deleted.
+          </li>
+          <li>
+            Your account row, API key, Stripe customer link, and
+            subscription record are deleted from ContentRX&apos;s
+            database.
+          </li>
+          <li>Your Clerk login is deleted.</li>
         </ul>
         <p className="mt-3">
-          Some records have legally required retention. Stripe
-          receipts run 7 years for tax. Fraud-prevention logs run
-          shorter. ContentRX will tell you specifically what stays
-          and why when you ask.
+          Run the delete flow from{" "}
+          <Link href="/dashboard/settings" className="underline underline-offset-2">
+            /dashboard/settings
+          </Link>
+          . Stripe itself retains receipts for tax and fraud
+          reasons on its side. That retention is Stripe&apos;s, not
+          ContentRX&apos;s.
         </p>
       </Section>
 
       <Section title="Your rights">
-        <p>
-          Everything below routes through{" "}
-          <a href={`mailto:${PRIVACY_EMAIL}`} className="underline underline-offset-2">
-            {PRIVACY_EMAIL}
-          </a>
-          . ContentRX responds within 30 days.
-        </p>
         <ul className="mt-3 ml-5 list-disc space-y-2">
           <li>
-            <strong>See what ContentRX has on you</strong>. Email the
-            address above. ContentRX will respond with the records
-            it holds.
+            <strong>See what ContentRX has on you</strong>. The
+            dashboard shows your check history, your shared checks,
+            and your account record. For a single export of
+            everything in one bundle, email{" "}
+            <a href={`mailto:${PRIVACY_EMAIL}`} className="underline underline-offset-2">
+              {PRIVACY_EMAIL}
+            </a>
+            {" "}with subject <code>[EXPORT]</code>. ContentRX responds
+            within 30 days.
           </li>
           <li>
             <strong>Correct it</strong>. Most fields are editable from
-            the dashboard. For anything that is not, ask.
+            the dashboard. For anything that is not, email the address
+            above.
           </li>
           <li>
-            <strong>Delete your account</strong>. Email the address
-            above with subject{" "}
-            <code>[DELETE]</code>. ContentRX runs the deletion
-            sequence described in &ldquo;How long ContentRX keeps
-            it.&rdquo;
+            <strong>Delete your account</strong>. Run the in-product
+            delete flow at{" "}
+            <Link href="/dashboard/settings" className="underline underline-offset-2">
+              /dashboard/settings
+            </Link>
+            . Every row attached to your account is deleted.
           </li>
           <li>
-            <strong>Export your data</strong>. Email the address above
-            with subject{" "}
-            <code>[EXPORT]</code>. ContentRX will respond within 30
-            days.
-          </li>
-          <li>
-            <strong>Revoke a string you shared via Flag for Review</strong>.
-            {" "}Email the address above with rough timing and source
-            surface. ContentRX deletes the row and any record that
-            string produced in the calibration log. Your{" "}
+            <strong>Revoke a check you shared via Flag for Review</strong>.
+            {" "}Open{" "}
             <Link href="/dashboard/shared" className="underline underline-offset-2">
               /dashboard/shared
             </Link>
-            {" "}page lists every string ContentRX is holding on this
-            path.
+            {" "}and tap{" "}
+            <span className="font-medium text-strong">Remove this check</span>
+            {" "}on the row. ContentRX deletes the row and any record
+            it produced in the calibration log.
           </li>
         </ul>
       </Section>
