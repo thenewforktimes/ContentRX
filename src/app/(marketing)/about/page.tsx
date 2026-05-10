@@ -58,16 +58,16 @@ export default function AboutPage() {
 
       <Section title="Calibration, not training">
         <p>
-          When you flag a verdict as wrong, that signal lands in the
-          refinement log I read each week. Patterns get curated by
-          hand. Training pipelines don&apos;t absorb your strings.
+          When you flag content for review, the signal lands in the
+          refinement log. Patterns get curated by hand. Your strings
+          stay out of training pipelines.
         </p>
         <p className="mt-3">
-          Training averages everyone&apos;s strings into a black box.
-          Calibration is one editor reading patterns and making
-          judgment calls. The model improves because a content
-          designer is doing the work, not because your strings became
-          someone else&apos;s data.
+          Training averages strings into a black box. Calibration
+          reads patterns and makes judgment calls. ContentRX
+          improves because a content designer is reviewing the
+          work, not because your strings became someone else&apos;s
+          data.
         </p>
         <p className="mt-3">
           Every Monday the measured accuracy lands on{" "}
