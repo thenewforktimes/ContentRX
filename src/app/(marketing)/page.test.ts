@@ -31,10 +31,15 @@ function readSource(relPath: string): string {
 
 function visibleCopy(source: string): string {
   // Strip block + line comments so the test only sees what ends up in
-  // rendered HTML (or in JSX text, at least).
+  // rendered HTML (or in JSX text, at least). Also strip top-level
+  // import statements, since component file paths frequently contain
+  // brand-vocabulary words inside hyphenated kebab-case identifiers
+  // (`hero-verdict-mock`, etc.) that look like word boundaries to a
+  // naive regex but aren't customer-visible.
   return source
     .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/(^|\s)\/\/.*$/gm, "$1");
+    .replace(/(^|\s)\/\/.*$/gm, "$1")
+    .replace(/^import\s[^;]+;$/gm, "");
 }
 
 describe("landing page (src/app/(marketing)/page.tsx)", () => {
@@ -164,20 +169,35 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
     expect(matches ?? []).toEqual([]);
   });
 
-  it("lands the long-form audience with a second tagline line (F1)", () => {
-    // Phase F (2026-05-09 roadmap update) adds a second tagline line
-    // beneath the H1 to land the long-form-writing audience without
-    // diluting the core staff-level position. The line is
-    // load-bearing for the long-form-positioning workstream — if a
-    // future edit drops it, /writes loses its inbound from the hero.
+  it("lands the long-form audience in the lede (post-2026-05-09 reword)", () => {
+    // F1 originally added a separate supporting-line block under the
+    // H1 ("And on the longer-form writing your team sends."). That
+    // block was dropped 2026-05-09 (third reword same day) for
+    // vertical-spacing reasons — it pushed the IntegrationRow chip
+    // row below the fold, which fights the marketing north-star.
     //
-    // Reword 2026-05-09 (later same day): dropped "to itself" so
-    // the line covers external long-form too (product update emails,
-    // security disclosures, blog posts) — the engine handles both
-    // inbound and outbound long-form, and "to itself" was scoping
-    // away the bigger half.
-    expect(visible).toMatch(/longer-form writing your team sends/i);
-    expect(visible).not.toMatch(/longer-form writing your team sends to itself/i);
+    // Long-form coverage moved into the lede paragraph itself
+    // ("strings and long-form writing"). The structural assertion
+    // follows: long-form has to be named in the hero, somewhere.
+    expect(visible).toMatch(/long-form writing/i);
+    // Anti-regression on the dropped supporting line.
+    expect(visible).not.toMatch(/longer-form writing your team sends/i);
+  });
+
+  it("hero lede uses customer-facing vocabulary, not 'verdict'", () => {
+    // 2026-05-09 brand-vocabulary call: "verdict" reads as judgey
+    // and isn't the calm/confident/charming voice the brand sits in.
+    // The hero paragraph drops it; suggestions + rationale carry the
+    // same load without the courtroom register. This pins the lede
+    // against re-introducing the word on the customer-facing surface
+    // most eyes hit first.
+    //
+    // Note: "verdict" still survives in the engine wire format
+    // (api/check response field) and in component / variable names
+    // (humanizeVerdict, VerdictHeader, etc.) — those are internal,
+    // not customer-visible. A broader sweep is a separate follow-up.
+    // This assertion scopes to the landing page only.
+    expect(visible).not.toMatch(/\bverdict\b/i);
   });
 
   it("renders the use-case toggle showing breadth of writing kinds (F1)", () => {

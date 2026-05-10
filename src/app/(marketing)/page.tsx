@@ -57,7 +57,7 @@ import { Wordmark } from "@/components/wordmark";
 export const metadata: Metadata = {
   title: "ContentRX. Staff-level content design review, in every repo",
   description:
-    "ContentRX reads the strings you ship with the judgment of a staff content designer. Verdict, suggestion, rationale. In your pull request, your IDE, and your Figma file, before the next review cycle.",
+    "ContentRX reviews your strings and long-form writing and gives you suggestions and rationale. Before your next PR, before merge.",
 };
 
 export default function Home() {
@@ -72,13 +72,10 @@ export default function Home() {
           <h1 className="mt-8 text-4xl font-semibold tracking-tight text-strong sm:text-5xl lg:text-6xl">
             Staff-level content design review in every repo
           </h1>
-          <p className="mt-4 text-xl font-medium text-default sm:text-2xl">
-            And on the longer-form writing your team sends.
-          </p>
           <p className="mt-6 text-lg text-default sm:text-xl">
-            ContentRX reviews your strings with the judgment of a staff
-            content designer. Verdict, suggestion, rationale, before
-            the next review.
+            ContentRX reviews your strings and long-form writing and
+            gives you suggestions and rationale. Before your next PR,
+            before merge.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3 text-sm">
             <Link href="/sign-up" className={buttonStyles({ variant: "primary" })}>
@@ -174,7 +171,7 @@ export default function Home() {
           <li>
             <strong>GitHub Action</strong> that evaluates strings
             touched in a pull request. <code>fail-on: review</code>{" "}
-            gates merge on review-recommended verdicts.{" "}
+            gates merge on findings flagged for review.{" "}
             <Link
               href="/install#action"
               className="underline underline-offset-2"
@@ -185,7 +182,7 @@ export default function Home() {
           </li>
           <li>
             <strong>LSP</strong> for VS Code, Zed, and any LSP
-            editor. Verdicts as diagnostics, inline.{" "}
+            editor. Findings as diagnostics, inline.{" "}
             <Link
               href="/install#lsp"
               className="underline underline-offset-2"
@@ -196,7 +193,7 @@ export default function Home() {
           </li>
           <li>
             <strong>Figma plugin</strong> for design-time review.
-            Per-string verdicts with context banners and rationale
+            Per-string findings with context banners and rationale
             chains.{" "}
             <Link
               href="/install#figma"
@@ -274,7 +271,7 @@ export default function Home() {
               We meet content where it&apos;s being written. MCP for
               Claude Code, CLI for the terminal, GitHub Action for
               pull requests, LSP for editors, the Figma plugin for
-              design-time. Same verdict on every surface.{" "}
+              design-time. Same engine on every surface.{" "}
               <Link
                 href="/install"
                 className="underline underline-offset-2"
