@@ -1,31 +1,49 @@
 /**
  * /install — per-surface install instructions.
  *
- * Human-eval build plan Session 29. Lead with generation-layer
- * surfaces: MCP server, CLI, GitHub Action. Figma plugin sits at the
- * bottom, reframed as the design-time checker rather than the
- * flagship.
+ * 2026-05-11 polish pass. Robo's review: page hadn't been touched
+ * in a while, content density too high, "Surface 1 / 2 / 3" eyebrow
+ * numbering added chrome, and three surfaces (GitHub Action,
+ * Figma plugin, VS Code Marketplace) needed coming-soon callouts
+ * because their public marketplace listings haven't shipped yet.
  *
- * Each section has an anchor (#mcp, #cli, #action, #figma) so the
- * landing page's per-surface "Install" links deep-link here.
+ * Cuts:
+ *   - PageHeader lede + meta tightened (~130 → ~40 words).
+ *   - Dashboard body cut from ~100 + code + 50 to ~30 (the 3-step
+ *     sign-in code block was stating the obvious; the trailing
+ *     "calibrated for product writing" paragraph lives on /pricing
+ *     FAQ + /writes).
+ *   - MCP / LSP / CLI / Action / Figma bodies cut to one-liners.
+ *   - "Stacking surfaces" closer cut entirely. /accuracy +
+ *     /dashboard cross-links survive in a tight foot line.
+ *   - Internal plumbing references dropped: tool names from MCP
+ *     prose, /api/suggest-fix from LSP prose.
  *
- * Voice note for Robert: the prose is in my voice; the install
- * snippets are pinned against the real package metadata and should
- * stay in sync with cli-client + mcp-server version bumps. Snippet
- * correctness is the most important thing on this page — test
- * against the real published commands before editing prose.
+ * Surface order matches the home page's SurfacesGrid:
+ *   1. Dashboard          (no install — lowest-friction try)
+ *   2. MCP server         (available)
+ *   3. LSP server         (available; VS Code Marketplace coming soon)
+ *   4. CLI                (available)
+ *   5. GitHub Action      (Marketplace listing coming soon)
+ *   6. Figma plugin       (Community publication coming soon)
+ *
+ * "Surface N" eyebrow numbering dropped 2026-05-11. The chip-nav
+ * + section ordering carry the sequence; numbers added nothing.
+ *
+ * Voice: short declarative, no em dashes, no semicolons, no colons.
+ * Verb-led where the section content allows.
  */
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { buttonStyles } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { Pill } from "@/components/ui/pill";
 import { Section } from "@/components/ui/section";
 
 export const metadata: Metadata = {
   title: "Install. ContentRX",
   description:
-    "Install ContentRX for Claude Code, Cursor, any LSP editor, your CLI, GitHub Actions, or Figma. Generation-layer surfaces lead; the Figma plugin sits alongside for design-time checks.",
+    "Install ContentRX for Claude Code, Cursor, any LSP editor, your CLI, GitHub Actions, or Figma. Or skip the install and paste in the dashboard.",
 };
 
 export default function InstallPage() {
@@ -36,11 +54,7 @@ export default function InstallPage() {
         title="Five surfaces, one content model."
         lede={
           <>
-            Content-standards enforcement is moving upstream into the
-            generation layer. Install ContentRX where your team actually
-            writes product content (in the IDE, on the command line, in
-            pull requests) with the Figma plugin alongside for the
-            strings that arrive through design. Or skip the install
+            Pick the surfaces your team writes in. Or skip the install
             and{" "}
             <Link href="/dashboard/explain" className="underline underline-offset-2">
               paste your writing in the dashboard
@@ -50,17 +64,14 @@ export default function InstallPage() {
         }
         meta={
           <>
-            All five surfaces hit the same public API. One{" "}
+            Same engine, every surface. One{" "}
             <Link
               href="/dashboard"
               className="underline underline-offset-2"
             >
               API key
             </Link>
-            {" "}covers them all. ContentRX handles the LLM relationship,
-            which means your text travels through one vendor relationship
-            (us to Anthropic), not two. You don&apos;t need an Anthropic
-            or OpenAI key. Pick the surfaces your team lives in.
+            {" "}covers them all. No Anthropic or OpenAI key needed.
           </>
         }
       >
@@ -80,55 +91,26 @@ export default function InstallPage() {
         title="Dashboard. Sign in, paste, get the review"
       >
         <p>
-          The dashboard&apos;s paste-mode surface handles the same
-          engine the install surfaces use, with no install. Paste a
-          button label, an error message, a product update email, a
-          security advisory, or any long-form writing your team is
-          shipping. ContentRX returns the document-level diagnostic,
-          a clean rewrite, and the categorized flags.
-        </p>
-        <p className="mt-3">
-          Try it now:
-        </p>
-        <Code>{`# 1. Sign in or sign up at contentrx.io
-# 2. Open /dashboard/explain
-# 3. Paste your writing and click Check`}</Code>
-        <p className="mt-3 text-sm text-quiet">
-          The paste flow is calibrated for product and internal
-          writing; for persuasive marketing copy expect more
-          &lsquo;worth a look&rsquo; flags than usual. The five
-          install surfaces below cover the same engine for teams
-          that want it wired into their editor, terminal, pull
-          request, or design tool.
+          Sign in and paste. Same engine, no install. Get the
+          document-level read, a clean rewrite, and the flag list.
         </p>
       </Section>
 
-      <Section
-        id="mcp"
-        eyebrow="Surface 1"
-        title="MCP server. Claude Code, Cursor, any MCP client"
-      >
+      <Section id="mcp" title="MCP server. Claude Code, Cursor, any MCP client">
         <p>
-          The ContentRX MCP server exposes <code>evaluate_copy</code>{" "}
-          and <code>classify_moment</code> tools (plus team
-          custom-example management) to any MCP client. Claude Code
-          or Cursor can check a string inline during generation. The
-          LLM narrates the context first, then the verdict, then a
-          suggested rewrite.
+          Inline check during generation. The LLM names the context,
+          calls the verdict, suggests a rewrite. All in the same
+          conversation.
         </p>
-        <p className="mt-3">
-          Claude Code:
-        </p>
+        <p className="mt-3">Claude Code:</p>
         <Code>{`claude mcp add contentrx -- uvx contentrx-mcp`}</Code>
-        <p className="mt-3">
-          Any MCP client (stdio):
-        </p>
+        <p className="mt-3">Any MCP client (stdio):</p>
         <Code>
           {`export CONTENTRX_API_KEY=cx_...
 uvx contentrx-mcp`}
         </Code>
         <p className="mt-3 text-sm text-quiet">
-          Source + full tool surface:{" "}
+          Source:{" "}
           <a
             href="https://github.com/thenewforktimes/contentRX/tree/main/mcp-server"
             className="underline underline-offset-2"
@@ -139,42 +121,33 @@ uvx contentrx-mcp`}
         </p>
       </Section>
 
-      <Section
-        id="lsp"
-        eyebrow="Surface 2"
-        title="LSP server. Inline diagnostics in any LSP editor"
-      >
+      <Section id="lsp" title="LSP server. Inline diagnostics in any LSP editor">
         <p>
-          Diagnostics appear as you type, the same way TypeScript
-          errors do. Yellow squiggles for violations; blue
-          squiggles for review-recommended strings. Right-click a
-          diagnostic to rewrite in place (Claude via{" "}
-          <code>/api/suggest-fix</code>), open the standard&apos;s
-          rationale page, or mark as false positive.
+          Diagnostics as you type. Right-click to rewrite in place,
+          open the rationale, or mark false positive.
         </p>
-        <p className="mt-3">
-          VS Code / Cursor (one-click, the extension launches
-          the server for you):
-        </p>
+        <p className="mt-3">Any LSP editor (VS Code, Cursor, Zed, Neovim, JetBrains, emacs lsp-mode):</p>
         <Code>
-          {`# Install the ContentRX extension from the Marketplace
-# Then: command palette → "ContentRX: Set API key"`}
-        </Code>
-        <p className="mt-3">
-          Any LSP editor (Zed, Neovim, JetBrains, emacs lsp-mode):
-        </p>
-        <Code>
-          {`uv tool install contentrx-lsp        # or: pipx install contentrx-lsp
+          {`uvx contentrx-lsp                    # one-shot, no persistent install
+# or:
+pipx install contentrx-lsp           # persistent install
+# or:
+uv tool install contentrx-lsp        # persistent install via uv
+
 export CONTENTRX_API_KEY=cx_...
 # Point your editor's LSP client at \`contentrx-lsp\` (stdio)`}
         </Code>
         <p className="mt-3 text-sm text-quiet">
-          Scope: JSX / TSX text children + text attributes
-          (<code>alt</code>, <code>aria-label</code>,{" "}
+          A VS Code extension that wraps the LSP is in development.
+          Marketplace listing coming soon. The manual install above
+          works in VS Code today via any generic LSP-client extension.
+        </p>
+        <p className="mt-3 text-sm text-quiet">
+          Scope is JSX and TSX text children, plus the{" "}
+          <code>alt</code>, <code>aria-label</code>,{" "}
           <code>placeholder</code>, <code>title</code>,{" "}
-          <code>tooltip</code>, <code>label</code>). Random string
-          literals aren&apos;t extracted: false-positive risk is
-          too high. Source:{" "}
+          <code>tooltip</code>, and <code>label</code> attributes.
+          Random string literals stay unflagged. Source:{" "}
           <a
             href="https://github.com/thenewforktimes/contentRX/tree/main/lsp-server"
             className="underline underline-offset-2"
@@ -185,17 +158,10 @@ export CONTENTRX_API_KEY=cx_...
         </p>
       </Section>
 
-      <Section
-        id="cli"
-        eyebrow="Surface 3"
-        title="CLI. contentrx on PyPI"
-      >
+      <Section id="cli" title="CLI. contentrx on PyPI">
         <p>
-          Stdlib-only runtime (no <code>requests</code>, no{" "}
-          <code>httpx</code>). One <code>pip install</code> and
-          you&apos;re checking strings from any terminal or CI
-          runner. Exit codes are part of the public API so
-          pipelines can gate on them.
+          One pip install. Stdlib-only runtime. Exit codes are part
+          of the public API, gate pipelines on them.
         </p>
         <Code>
           {`pip install contentrx-cli
@@ -205,9 +171,7 @@ contentrx --batch strings.txt --json
 contentrx --explain "Are you sure?"`}
         </Code>
         <p className="mt-3 text-sm text-quiet">
-          <code>--explain</code> prints the full rationale chain
-          after the verdict. <code>--json</code> emits the raw API
-          response for scripting. Full flag list:{" "}
+          Source:{" "}
           <a
             href="https://github.com/thenewforktimes/contentRX/tree/main/cli-client"
             className="underline underline-offset-2"
@@ -220,16 +184,17 @@ contentrx --explain "Are you sure?"`}
 
       <Section
         id="action"
-        eyebrow="Surface 4"
         title="GitHub Action. PR gate"
+        pill={<Pill tone="neutral">Coming soon</Pill>}
       >
         <p>
-          Drop a YAML snippet into{" "}
-          <code>.github/workflows/</code> and ContentRX evaluates
-          strings touched in every pull request. Use{" "}
-          <code>fail-on: review</code> to block merges on
-          review-recommended verdicts, or stay permissive with the
-          default <code>fail-on: violation</code>.
+          Drop a YAML into{" "}
+          <code>.github/workflows/</code>. ContentRX evaluates
+          strings touched in every pull request.
+        </p>
+        <p className="mt-3 text-sm text-quiet">
+          Marketplace listing coming soon. The snippet below is the
+          shape it&apos;ll land with.
         </p>
         <Code>
           {`# .github/workflows/contentrx.yml
@@ -246,7 +211,7 @@ jobs:
           fail-on: violation  # or review`}
         </Code>
         <p className="mt-3 text-sm text-quiet">
-          Action source + the full input surface:{" "}
+          Source:{" "}
           <a
             href="https://github.com/thenewforktimes/contentRX/tree/main/github-action"
             className="underline underline-offset-2"
@@ -259,15 +224,12 @@ jobs:
 
       <Section
         id="figma"
-        eyebrow="Surface 5 · alongside"
-        title="Figma plugin. Design-time check"
+        title="Figma plugin. Design-time check, alongside the engine"
+        pill={<Pill tone="neutral">Coming soon</Pill>}
       >
         <p>
-          The Figma plugin catches strings that arrive through
-          design (badges, empty states, onboarding flows) before
-          they land in code. Per-string verdicts, context banners,
-          three-button stance on every finding (Agree / Disagree /
-          Ship anyway), and the rationale chain on demand.
+          Catch strings at design time, before they land in code.
+          Per-string verdicts and a stance on every finding.
         </p>
         <p className="mt-3 text-sm text-quiet">
           Figma Community publication is in review. We&apos;ll
@@ -276,38 +238,21 @@ jobs:
             /calibration
           </Link>
           {" "}when the plugin lands and email everyone on the
-          waitlist. In the meantime, the other four surfaces (MCP,
-          LSP, CLI, GitHub Action) cover the same engine and the
-          same monthly limit.
-        </p>
-        <p className="mt-3 text-sm text-quiet">
-          When it lands: sign in once via the dashboard to mint an
-          API key, paste it into the plugin&apos;s sign-in panel.
+          waitlist.
         </p>
       </Section>
 
-      <Section title="Stacking surfaces">
-        <p className="text-sm">
-          The surfaces stack cleanly. A team typically runs the MCP
-          server locally for inline checks during authoring, the LSP
-          for as-you-type diagnostics, the GitHub Action as the PR
-          gate, and the Figma plugin for the designer-led flows. The
-          CLI covers batch jobs and one-off checks from any terminal.
-          All five share one model, one monthly limit, one set of
-          team rules.
-        </p>
-        <p className="mt-3 text-sm">
-          See{" "}
-          <Link href="/accuracy" className="underline underline-offset-2">
-            /accuracy
-          </Link>
-          {" "}for the calibration numbers and{" "}
-          <Link href="/dashboard" className="underline underline-offset-2">
-            /dashboard
-          </Link>
-          {" "}to mint an API key.
-        </p>
-      </Section>
+      <p className="mt-12 text-sm text-quiet">
+        Mint an API key on{" "}
+        <Link href="/dashboard" className="underline underline-offset-2">
+          /dashboard
+        </Link>
+        . See{" "}
+        <Link href="/accuracy" className="underline underline-offset-2">
+          /accuracy
+        </Link>
+        {" "}for the calibration numbers.
+      </p>
     </main>
   );
 }

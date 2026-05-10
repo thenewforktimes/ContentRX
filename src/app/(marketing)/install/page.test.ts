@@ -39,9 +39,13 @@ describe("/install page source", () => {
   });
 
   it("carries a real LSP install command", () => {
-    // Either `uv tool install` or `pipx install` is fine; the point
-    // is the page tells users how to get contentrx-lsp on PATH.
-    expect(visible).toMatch(/uv tool install contentrx-lsp|pipx install contentrx-lsp/);
+    // 2026-05-11: canonical command moved to `uvx contentrx-lsp`
+    // (matches lsp-server/CLAUDE.md and README); `pipx install` and
+    // `uv tool install` survive as alternatives. Test accepts any
+    // of the three.
+    expect(visible).toMatch(
+      /uvx contentrx-lsp|uv tool install contentrx-lsp|pipx install contentrx-lsp/,
+    );
   });
 
   it("carries the real CLI install command", () => {
@@ -54,11 +58,13 @@ describe("/install page source", () => {
     expect(visible).toContain("fail-on: violation");
   });
 
-  it("frames the Figma plugin as design-time, alongside the generation layer", () => {
-    // Either phrase documents Session 29's reframe — the test is
-    // deliberately permissive on phrasing, strict on intent.
+  it("frames the Figma plugin as design-time", () => {
+    // Session 29's reframe positioned Figma as design-time, not the
+    // flagship. 2026-05-11 polish: Figma is "Coming soon" with a
+    // Pill; "alongside" survived in the section title. The test
+    // pins design-time framing only — the legacy "alongside" pin
+    // is no longer load-bearing.
     expect(visible).toMatch(/design-time/i);
-    expect(visible).toMatch(/alongside/i);
   });
 
   it("cross-links the public accountability surface", () => {
