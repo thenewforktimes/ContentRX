@@ -95,12 +95,14 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
   });
 
   it("renders the OneApprovalCell with the procurement story", () => {
-    // 2026-05-10 quadrant rebuild: "Built for your stack" was a
-    // 1-hero-card + 3-trust-cards section; replaced with a single
-    // OneApprovalCell paired with AgentSection in a 2-up quadrant
-    // row. The procurement angle still leads the lower fold; the
-    // trust links moved into TrustStrip below.
-    expect(source).toContain("OneApprovalCell");
+    // 2026-05-11 six-cell rebuild: OneApprovalCell now lives inside
+    // OutcomesGrid (was previously a sibling cell in page.tsx).
+    // The structural assertion: outcomes-grid imports + renders it,
+    // and the cell's own copy carries the procurement story.
+    const outcomesVisible = visibleCopy(
+      readSource("src/components/outcomes-grid.tsx"),
+    );
+    expect(outcomesVisible).toContain("OneApprovalCell");
     const oneApprovalVisible = visibleCopy(
       readSource("src/components/one-approval-cell.tsx"),
     );
@@ -110,16 +112,20 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
     expect(oneApprovalVisible).toContain('href="/pricing"');
   });
 
-  it("renders the TrustStrip with four trust links", () => {
-    // 2026-05-10: Privacy, Security, Install, Accuracy fold from
-    // their prior card / commitment treatments into a single inline
-    // link strip. /accuracy moved here when the Calibrated judgment
-    // commitment got cut, so the moat link still surfaces from body
-    // copy (not just the global footer).
-    expect(source).toContain("TrustStrip");
-    const trustVisible = visibleCopy(
-      readSource("src/components/trust-strip.tsx"),
+  it("renders the TrustCell with four trust links (Receipts)", () => {
+    // 2026-05-11: trust links moved from an inline strip
+    // (TrustStrip) into a quadrant cell (TrustCell, eyebrow
+    // "Receipts") inside the OutcomesGrid. Privacy, Security,
+    // Install, Accuracy still all surface; /accuracy is the moat
+    // link the Calibrated judgment commitment used to host.
+    const outcomesVisible = visibleCopy(
+      readSource("src/components/outcomes-grid.tsx"),
     );
+    expect(outcomesVisible).toContain("TrustCell");
+    const trustVisible = visibleCopy(
+      readSource("src/components/trust-cell.tsx"),
+    );
+    expect(trustVisible).toMatch(/Receipts/);
     for (const label of ["Privacy", "Security", "Install", "Accuracy"]) {
       expect(trustVisible).toContain(`label: "${label}"`);
     }
@@ -162,12 +168,12 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
 
   it("links the public accountability surface from the body copy", () => {
     // /accuracy and /calibration are inline-linked from the body
-    // copy. 2026-05-10: the link moved from the (cut) Calibrated
-    // judgment commitment card into the TrustStrip alongside
-    // Privacy / Security / Install. The body-copy assertion now
-    // reads from the trust-strip component source.
+    // copy. 2026-05-10: link moved from the (cut) Calibrated judgment
+    // commitment card into the trust strip. 2026-05-11: trust strip
+    // became TrustCell (a quadrant cell inside OutcomesGrid). The
+    // body-copy assertion reads from the trust-cell component.
     const trustVisible = visibleCopy(
-      readSource("src/components/trust-strip.tsx"),
+      readSource("src/components/trust-cell.tsx"),
     );
     expect(trustVisible).toMatch(/href:\s*"\/(accuracy|calibration)"/);
   });
@@ -216,17 +222,15 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
   });
 
   it("surfaces the weekly review agent with the digest mock", () => {
-    // 2026-05-09: agent block was extracted into AgentSection.
-    // 2026-05-10: AgentSection converted from full-width panel to
-    // a single quadrant cell (paired with OneApprovalCell). The 3
-    // sub-claim cards (Read-only / Deterministic / 0 checks per
-    // run) were dropped; the digest mock + headline + 1-line body
-    // + CTA carries the cell now. Sub-claims still live in
-    // /dashboard/agent for users who want the full breakdown.
-    //
-    // Pinned: agent eyebrow, headline, Team-plan pricing read,
-    // /dashboard/agent CTA, digest-mock category Pills.
-    expect(source).toContain("AgentSection");
+    // 2026-05-09: agent extracted into AgentSection.
+    // 2026-05-10: converted from panel to quadrant cell.
+    // 2026-05-11: AgentSection now renders inside OutcomesGrid
+    // (was previously a sibling in page.tsx). Outcomes-grid imports
+    // it; agent-section.tsx still owns the copy + digest mock.
+    const outcomesVisible = visibleCopy(
+      readSource("src/components/outcomes-grid.tsx"),
+    );
+    expect(outcomesVisible).toContain("AgentSection");
     expect(agentSectionVisible).toMatch(/weekly review agent/i);
     expect(agentSectionVisible).toMatch(/drift, caught every monday/i);
     // Pricing read: agent ships on the Team plan. Phrasing relaxed
@@ -241,51 +245,81 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
     expect(agentSectionVisible).toMatch(/Accessibility/);
   });
 
-  it("lower fold sits in the order Surfaces → Outcomes → Agent → TrustStrip → Author", () => {
-    // 2026-05-10 quadrant rebuild: the lower fold is now five
-    // ordered beats: SurfacesGrid (above-fold ends), OutcomesGrid
-    // (4-cell quadrant), AgentSection + OneApprovalCell (2-up
-    // quadrant row), TrustStrip (inline link strip), AuthorBlock
-    // (compact byline). This pins the order so a future edit can't
-    // accidentally reorder the visual rhythm.
+  it("lower fold sits in the order Surfaces → Outcomes → Author in page.tsx", () => {
+    // 2026-05-11 six-cell rebuild: page.tsx's lower fold collapses
+    // to three ordered beats — SurfacesGrid, OutcomesGrid (the six
+    // quadrant cells), AuthorBlock. The agent / one-approval / trust
+    // cells used to be siblings; they now live INSIDE OutcomesGrid.
     const surfacesIdx = visible.indexOf("SurfacesGrid");
     const outcomesIdx = visible.indexOf("OutcomesGrid");
-    const agentIdx = visible.indexOf("AgentSection");
-    const oneApprovalIdx = visible.indexOf("OneApprovalCell");
-    const trustIdx = visible.indexOf("TrustStrip");
     const authorIdx = visible.indexOf("<AuthorBlock");
     expect(surfacesIdx).toBeGreaterThan(-1);
     expect(outcomesIdx).toBeGreaterThan(surfacesIdx);
-    expect(agentIdx).toBeGreaterThan(outcomesIdx);
-    expect(oneApprovalIdx).toBeGreaterThan(agentIdx);
-    expect(trustIdx).toBeGreaterThan(oneApprovalIdx);
-    expect(authorIdx).toBeGreaterThan(trustIdx);
+    expect(authorIdx).toBeGreaterThan(outcomesIdx);
   });
 
-  it("renders the OutcomesGrid with four verb-led outcomes", () => {
-    // 2026-05-10 quadrant rebuild: OutcomesGrid is a 2x2 grid of
-    // four cells (Save time / Save money / Stay consistent /
-    // Long-form review). Each cell has a hero visual filling the
-    // bottom half. Verb-led labels per Robo's call: single-noun
-    // labels ("Time", "Money") felt undernourished, so the
-    // eyebrows landed on action phrases.
+  it("OutcomesGrid renders the six cells in row order", () => {
+    // Cell order inside OutcomesGrid (the six-cell 2x3 grid):
+    //   Row 1: SaveTimeCell, SaveMoneyCell
+    //   Row 2: OneApprovalCell, AgentSection
+    //   Row 3: TrustCell, LongFormCell
+    // Pin enforced via JSX-element ordering in the component source.
+    const outcomesVisible = visibleCopy(
+      readSource("src/components/outcomes-grid.tsx"),
+    );
+    const order = [
+      "<SaveTimeCell />",
+      "<SaveMoneyCell />",
+      "<OneApprovalCell />",
+      "<AgentSection />",
+      "<TrustCell />",
+      "<LongFormCell />",
+    ];
+    let lastIdx = -1;
+    for (const cell of order) {
+      const idx = outcomesVisible.indexOf(cell);
+      expect(idx, `expected ${cell} in OutcomesGrid`).toBeGreaterThan(lastIdx);
+      lastIdx = idx;
+    }
+  });
+
+  it("OutcomesGrid surfaces the eyebrow set across the six cells", () => {
+    // 2026-05-11 six-cell rebuild. The grid is now 2x3:
+    //   Row 1: Save time, Save money (verb-led)
+    //   Row 2: One approval, Weekly review agent (mixed)
+    //   Row 3: Receipts, Long-form review (mixed)
     //
-    // The structural pin: the import + render exist, and the four
-    // verb-led labels surface in the component source.
+    // Stay consistent was cut (the WHERE IT RUNS section above
+    // already lands the cross-surface story). Anti-regression
+    // enforced separately below.
     expect(source).toContain("OutcomesGrid");
     const outcomesVisible = visibleCopy(
       readSource("src/components/outcomes-grid.tsx"),
     );
     expect(outcomesVisible).toMatch(/Save time/);
     expect(outcomesVisible).toMatch(/Save money/);
-    expect(outcomesVisible).toMatch(/Stay consistent/);
     expect(outcomesVisible).toMatch(/Long-form review/);
-    // Funnels visitors to the long-form gallery (cta is passed as
-    // a JS object, so the hrefs surface as `href: "/path"` rather
-    // than the JSX-attribute form `href="/path"`).
+    // The Save money cell's CTA funnels to /pricing; the Long-form
+    // cell's CTA funnels to /writes. Both CTAs land via the cta
+    // prop, so the hrefs surface as `href: "/path"` (JS object
+    // form) rather than `href="/path"` (JSX attribute form).
     expect(outcomesVisible).toContain('href: "/writes"');
-    // Funnels comparison-shoppers from the Save money cell to /pricing.
     expect(outcomesVisible).toContain('href: "/pricing"');
+  });
+
+  it("Stay consistent was cut from OutcomesGrid (anti-regression)", () => {
+    // 2026-05-11 cut. The WHERE IT RUNS section above the lower
+    // fold already lands the cross-surface story (six surface
+    // cards in a grid, each with the same engine claim). Adding
+    // a second "Stay consistent" cell in the grid duplicated.
+    //
+    // Anti-regression: a future edit shouldn't quietly re-add
+    // this cell without an explicit ADR.
+    const outcomesVisible = visibleCopy(
+      readSource("src/components/outcomes-grid.tsx"),
+    );
+    expect(outcomesVisible).not.toMatch(/Stay consistent/);
+    expect(outcomesVisible).not.toMatch(/Same call across surfaces/);
   });
 
   it("does not render the deprecated UseCaseToggle component", () => {
@@ -310,7 +344,7 @@ describe("landing page (src/app/(marketing)/page.tsx)", () => {
     // top of the lower fold. Either path satisfies the funnel; the
     // test reads both component sources.
     const trustVisible = visibleCopy(
-      readSource("src/components/trust-strip.tsx"),
+      readSource("src/components/trust-cell.tsx"),
     );
     const integrationVisible = visibleCopy(
       readSource("src/components/integration-row.tsx"),

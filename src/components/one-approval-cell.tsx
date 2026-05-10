@@ -24,7 +24,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 
 export function OneApprovalCell() {
   return (
-    <li className="flex min-h-[360px] flex-col rounded-2xl border border-line bg-raised p-8 sm:p-10">
+    <li className="flex flex-col rounded-2xl border border-line bg-raised p-6 sm:p-8">
       <Eyebrow>One approval</Eyebrow>
       <p className="mt-3 text-lg font-semibold text-strong sm:text-xl">
         One bill. No new vendor.

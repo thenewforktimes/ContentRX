@@ -32,7 +32,7 @@ export function AgentSection() {
   return (
     <li
       id="agent"
-      className="flex min-h-[360px] flex-col rounded-2xl border border-line bg-raised p-8 sm:p-10"
+      className="flex flex-col rounded-2xl border border-line bg-raised p-6 sm:p-8"
     >
       <Eyebrow>Weekly review agent</Eyebrow>
       <p className="mt-3 text-lg font-semibold text-strong sm:text-xl">

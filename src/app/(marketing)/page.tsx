@@ -43,15 +43,12 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AgentSection } from "@/components/agent-section";
 import { AuthorBlock } from "@/components/author-block";
 import { HeroVerdictMock } from "@/components/hero-verdict-mock";
 import { HowItWorksDiagram } from "@/components/how-it-works-diagram";
 import { IntegrationRow } from "@/components/integration-row";
-import { OneApprovalCell } from "@/components/one-approval-cell";
 import { OutcomesGrid } from "@/components/outcomes-grid";
 import { SurfacesGrid } from "@/components/surfaces-grid";
-import { TrustStrip } from "@/components/trust-strip";
 import { buttonStyles } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Wordmark } from "@/components/wordmark";
@@ -132,40 +129,28 @@ export default function Home() {
           the teaser; this is the index). 2026-05-09 design pass. */}
       <SurfacesGrid />
 
-      {/* Outcomes — 2x2 product-quadrant grid. Rebuilt 2026-05-10
-          (per Robo's review: the prior text-only editorial 4-up
-          read shabby next to the visual-rich upper sections). Each
-          quadrant cell has a hero visual: typographic Hours →
-          Seconds, $39 anchor with surface icons, stylized
-          5-surface flag-row, mini /writes example snippet. */}
+      {/* Outcomes — 2x3 quadrant grid (six cells, identical
+          geometry). Rebuilt 2026-05-11 from a 2x2 + extra row +
+          inline strip into a single coherent grid section. Cells:
+          Save time, Save money, One approval, Weekly review agent,
+          Receipts (trust links), Long-form review.
+
+          Six-cell rebuild rationale (Robo's review):
+            - Stay consistent cut. WHERE IT RUNS above already lands
+              the cross-surface story.
+            - One approval moved into the grid (was orphaned in its
+              own 2-up row).
+            - Agent moved into the grid alongside One approval.
+            - Trust links became their own cell (TrustCell, eyebrow
+              "Receipts") instead of an inline strip.
+            - Long-form review pushed to the last row.
+            - Cell padding reduced p-8/10 → p-6/8 and min-h dropped
+              so cards stop feeling oversized.
+
+          OutcomesGrid imports AgentSection, OneApprovalCell, and
+          TrustCell directly so the grid is self-contained; page.tsx
+          now needs only the OutcomesGrid render. */}
       <OutcomesGrid />
-
-      {/* Agent + One approval — 2-up quadrant row. Companion cells
-          continuing the lower-fold quadrant rhythm. AgentSection is
-          now a single cell (down from a full-width panel); One
-          approval is typography-only (no fake checkout UI). Both
-          render as <li> so they sit inside this <ul>. */}
-      <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-        <AgentSection />
-        <OneApprovalCell />
-      </ul>
-
-      {/* Trust strip — inline horizontal link row. Replaces the
-          prior Privacy/Security/Integrations 3-card grid AND the
-          Commitments 3-row checkmark list. The four trust pages
-          (Privacy, Security, Install, Accuracy) live as arrow-links
-          on a single line. /accuracy moves here from the Commitments
-          section that got cut so the moat link still surfaces from
-          body copy.
-
-          Cuts 2026-05-10 (per Robo): "Style guides we maintain"
-          (disingenuous; we don't maintain external style guides),
-          "Calibrated judgment" (readers don't drill into kappa from
-          home; /accuracy still reachable via this strip + global
-          footer), "Custom rules in context" (Team-plan feature;
-          home-page real estate goes further on universally-relevant
-          outcomes; /pricing carries the upsell). */}
-      <TrustStrip />
 
       {/* Author byline — compact editorial closer. Moved to the page
           foot 2026-05-10 so the load-bearing value props lead the
