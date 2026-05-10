@@ -29,7 +29,11 @@
 import { NextResponse } from "next/server";
 import { and, eq, isNull } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { isGithubAppConfigured } from "@/lib/agent/github-app";
+import { openPrForDigest } from "@/lib/agent/open-pr";
+import { renderDigest } from "@/lib/agent/render-digest";
 import { persistAgentRun } from "@/lib/agent/run-agent";
+import type { AgentRunPayload } from "@/lib/agent/run-agent";
 import { requireCronAuth } from "@/lib/cron-auth";
 import { logSafeError } from "@/lib/safe-error-log";
 
@@ -37,6 +41,7 @@ interface RunResult {
   ok: true;
   teamsConsidered: number;
   runsPersisted: number;
+  prsOpened: number;
   failures: Array<{ teamId: string; error: string }>;
 }
 
@@ -66,11 +71,60 @@ export async function POST(req: Request) {
 
   const failures: RunResult["failures"] = [];
   let runsPersisted = 0;
+  let prsOpened = 0;
+  const githubAppLive = isGithubAppConfigured();
 
   for (const owner of owners) {
     try {
-      await persistAgentRun(owner.id);
+      const row = await persistAgentRun(owner.id);
       runsPersisted++;
+
+      // GitHub-side delivery is gated by App-config presence AND the
+      // team having connected a repo. Either being absent silently
+      // skips the PR step — the run is still persisted to
+      // agent_runs and visible at /admin/agent-runs.
+      if (!githubAppLive) continue;
+
+      const installation = await getInstallation(db, owner.id);
+      if (!installation) continue;
+      if (!installation.targetRepoOwner || !installation.targetRepoName) {
+        continue;
+      }
+
+      const payload = row.payload as AgentRunPayload;
+      const digestMarkdown = renderDigest(payload);
+
+      const prResult = await openPrForDigest({
+        installationId: installation.githubInstallationId,
+        owner: installation.targetRepoOwner,
+        repo: installation.targetRepoName,
+        branch: installation.targetBranch,
+        digestMarkdown,
+        runAtIso: payload.runAt,
+      });
+
+      if (prResult.ok) {
+        prsOpened++;
+        await db
+          .update(schema.agentGithubInstallations)
+          .set({
+            lastPrNumber: prResult.number,
+            lastPrUrl: prResult.htmlUrl,
+            lastPrAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(
+            eq(
+              schema.agentGithubInstallations.id,
+              installation.id,
+            ),
+          );
+      } else {
+        failures.push({
+          teamId: owner.id,
+          error: `pr_${prResult.reason}: ${prResult.message}`,
+        });
+      }
     } catch (err) {
       logSafeError("[cron/agent-run]", err);
       failures.push({
@@ -84,9 +138,41 @@ export async function POST(req: Request) {
     ok: true,
     teamsConsidered: owners.length,
     runsPersisted,
+    prsOpened,
     failures,
   };
   return NextResponse.json(result);
+}
+
+async function getInstallation(
+  db: ReturnType<typeof getDb>,
+  teamId: string,
+): Promise<{
+  id: string;
+  githubInstallationId: number;
+  targetRepoOwner: string;
+  targetRepoName: string;
+  targetBranch: string;
+} | null> {
+  const rows = (await db
+    .select({
+      id: schema.agentGithubInstallations.id,
+      githubInstallationId:
+        schema.agentGithubInstallations.githubInstallationId,
+      targetRepoOwner: schema.agentGithubInstallations.targetRepoOwner,
+      targetRepoName: schema.agentGithubInstallations.targetRepoName,
+      targetBranch: schema.agentGithubInstallations.targetBranch,
+    })
+    .from(schema.agentGithubInstallations)
+    .where(eq(schema.agentGithubInstallations.teamId, teamId))
+    .limit(1)) as Array<{
+    id: string;
+    githubInstallationId: number;
+    targetRepoOwner: string;
+    targetRepoName: string;
+    targetBranch: string;
+  }>;
+  return rows[0] ?? null;
 }
 
 // Allow GET for parity with the other cron routes (Vercel Cron sends

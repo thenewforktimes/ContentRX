@@ -40,6 +40,16 @@ const RUNTIME_FILES: readonly string[] = [
   // existing flag history alone, no LLM ever in the path.
   "src/lib/agent/render-digest.ts",
   "src/app/api/agent/preview/route.ts",
+  // GitHub App delivery path (G3 follow-up). The cron opens a draft
+  // PR with the digest as the description — the PR-creation pipeline
+  // is GitHub-API-only and must stay free of any LLM call. Anthropic
+  // SDK in any of these files would mean the agent grew an inference
+  // step the V1 trust math can't support.
+  "src/lib/agent/github-app.ts",
+  "src/lib/agent/open-pr.ts",
+  "src/app/api/agent/github/install/route.ts",
+  "src/app/api/agent/github/callback/route.ts",
+  "src/app/api/agent/github/webhook/route.ts",
 ];
 
 const FORBIDDEN_PATTERNS: readonly RegExp[] = [

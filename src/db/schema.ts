@@ -1337,6 +1337,65 @@ export const customerFlaggedReviews = pgTable(
   ],
 ).enableRLS();
 
+// GitHub App installations for the weekly review agent — Phase G3
+// follow-up of the 2026-05-09 roadmap.
+//
+// One row per (team, GitHub installation). When a team owner installs
+// the ContentRX GitHub App on a repo, the webhook lands here and we
+// store the installation id + the target repo coordinates. The cron
+// reads this row at agent-run time, mints an installation-scoped
+// access token via the App's private key, and opens a draft PR with
+// the digest as the PR description.
+//
+// Multi-repo support is V2: V1 stores one row per team and uses the
+// `target_repo_owner` + `target_repo_name` set at callback time. A
+// later iteration can promote this to a one-to-many relationship.
+export const agentGithubInstallations = pgTable(
+  "agent_github_installations",
+  {
+    id: cuid(),
+    teamId: text("team_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // GitHub's installation id for the connected user/org. Used to
+    // mint installation-scoped access tokens for the API calls that
+    // open the draft PR.
+    githubInstallationId: integer("github_installation_id").notNull(),
+    // Login + account_type are display-only; the installation_id is
+    // the operative identifier.
+    githubAccountLogin: text("github_account_login").notNull(),
+    githubAccountType: text("github_account_type", {
+      enum: ["User", "Organization"],
+    }).notNull(),
+    // The repo the cron opens its draft PR against. V1 takes the
+    // first repo the App was installed on; V2 will let the team
+    // pick.
+    targetRepoOwner: text("target_repo_owner").notNull(),
+    targetRepoName: text("target_repo_name").notNull(),
+    targetBranch: text("target_branch").notNull().default("main"),
+    // Bookkeeping for the dashboard's "last PR" affordance — the
+    // most recent draft PR the cron opened.
+    lastPrNumber: integer("last_pr_number"),
+    lastPrUrl: text("last_pr_url"),
+    lastPrAt: timestamp("last_pr_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // One installation per team — V1 contract. If the team owner
+    // re-installs (e.g. to switch repos), we update in place.
+    uniqueIndex("agent_github_installations_team_unique").on(t.teamId),
+    // Lookup by GitHub installation id during webhook delivery.
+    uniqueIndex("agent_github_installations_installation_id_unique").on(
+      t.githubInstallationId,
+    ),
+  ],
+).enableRLS();
+
 // Weekly review agent — Phase G1 of the 2026-05-09 roadmap.
 //
 // Captures one row per agent run. Agent V1 is read-only: it reads the
@@ -1399,3 +1458,6 @@ export type CustomerFlaggedReview = InferSelectModel<
   typeof customerFlaggedReviews
 >;
 export type AgentRun = InferSelectModel<typeof agentRuns>;
+export type AgentGithubInstallation = InferSelectModel<
+  typeof agentGithubInstallations
+>;
