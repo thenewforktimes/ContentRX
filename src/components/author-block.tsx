@@ -2,22 +2,29 @@
  * AuthorBlock — the named-author byline used on /about and /accuracy.
  *
  * Pre-2026-05-11 this had two render modes (compact + card); the
- * compact variant lived on the landing page. The landing dropped
- * the byline 2026-05-11 (the 6-cell quadrant grid carries the page
- * now), leaving only the card variant in active use on /about
- * (where the byline IS the section) and /accuracy (the methodology
- * binds tightly to the named author). The compact path was removed.
+ * landing dropped the byline 2026-05-11 and the compact variant
+ * came out with it, leaving only the card variant in active use on
+ * /about (where the byline IS the section) and /accuracy (the
+ * methodology binds tightly to the named author).
+ *
+ * 2026-05-11 polish:
+ *   - Body dropped "attributed and published." Robert isn't
+ *     publishing or attributing inputs; the calibration log is the
+ *     only thing that gets shared.
+ *   - "Read the longer story on the about-the-model page" link cut.
+ *     The link was self-referential when AuthorBlock rendered on
+ *     /about, and the global nav already covers cross-links from
+ *     /accuracy.
+ *   - "a single designer's" → "one designer's" so the phrasing
+ *     matches /about's lede.
  *
  * No portrait by design — the brand isn't trading on Robert's face,
  * it's trading on the verifiable career arc and the public
  * accountability surfaces (/accuracy, /calibration, /ethics) the
  * model holds itself to.
  *
- * Career-arc data lives in CAREER_ARC; the page test pins the four
- * orgs (Intuit, Meta, Opendoor, PayPal).
+ * Career-arc data lives in CAREER_ARC.
  */
-
-import Link from "next/link";
 
 const CAREER_ARC: readonly { name: string; current?: boolean }[] = [
   { name: "Intuit" },
@@ -40,20 +47,9 @@ export function AuthorBlock() {
           </p>
           <p className="mt-1 text-sm text-default">
             Staff content designer. The context, the weights, and the
-            standards all carry a single designer&apos;s judgment
-            calls, attributed and published.
+            standards all carry one designer&apos;s judgment calls.
           </p>
           <Timeline arc={CAREER_ARC} />
-          <p className="mt-4 text-xs text-quiet">
-            Read the longer story on the{" "}
-            <Link
-              href="/about"
-              className="underline underline-offset-2 hover:text-default"
-            >
-              about-the-model
-            </Link>{" "}
-            page.
-          </p>
         </div>
       </div>
     </aside>
