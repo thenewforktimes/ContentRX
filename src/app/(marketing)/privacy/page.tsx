@@ -94,12 +94,11 @@ export default function PrivacyPage() {
             {" "}to revoke a shared string at any time.
           </li>
           <li>
-            <strong>Usage and operational telemetry</strong>. Counts
-            of checks per month (for billing), API token usage (for
-            cost accounting), error reports captured by Sentry,
-            anonymous page-view metrics from Plausible (which is
-            cookieless and doesn&apos;t track across sites), and rate-
-            limit counters in Upstash Redis.
+            <strong>Usage and operational telemetry</strong>. Check
+            counts per month for billing. API token usage for cost
+            accounting. Error reports captured by Sentry. Page-view
+            metrics from Plausible, which is cookieless and does not
+            track across sites. Rate-limit counters in Upstash Redis.
           </li>
         </ul>
         <p className="mt-3">
@@ -115,10 +114,10 @@ export default function PrivacyPage() {
           you the receipts you would expect.
         </p>
         <p className="mt-3">
-          Content strings run the evaluation, return verdicts, and
-          (when you have explicitly shared a string via Flag for
-          Review) inform the calibration log so the engine gets
-          better. The hash stored for unshared strings supports
+          Content strings run the evaluation and return verdicts.
+          When you have explicitly shared a string via Flag for
+          Review, it also informs the calibration log so the engine
+          gets better. The hash stored for unshared strings supports
           dashboard history lookups without keeping the plaintext.
         </p>
         <p className="mt-3">
@@ -171,14 +170,13 @@ export default function PrivacyPage() {
         </ul>
         <p className="mt-4">
           The engineering layer behind that. Every public route that
-          takes a string runs a pre-screen that refuses obvious
-          credentials and PII (credit card numbers, SSNs, AWS, Stripe,
-          OpenAI, Anthropic, GitHub keys) before they can reach
-          Anthropic, the error logs, or anyone&apos;s eyes. Sentry
-          events have request bodies and auth headers stripped before
-          send. The long-form version of this commitment, with the
-          rationale and the &ldquo;what changes if ContentRX ever
-          changes its mind&rdquo; path, lives at{" "}
+          takes a string runs a pre-screen. The pre-screen refuses
+          obvious credentials and PII before they can reach Anthropic,
+          the error logs, or anyone&apos;s eyes. The patterns include
+          credit card numbers, SSNs, and keys for AWS, Stripe, OpenAI,
+          Anthropic, and GitHub. Sentry events have request bodies
+          and auth headers stripped before send. The long-form
+          version of this commitment lives at{" "}
           <Link href="/ethics" className="underline underline-offset-2">
             /ethics
           </Link>
@@ -376,7 +374,8 @@ export default function PrivacyPage() {
           Plausible is cookieless. ContentRX does not use third-party
           analytics, ad networks, or tracking pixels. If a regulator
           asks for a cookie banner, the honest answer is &ldquo;not
-          needed today, but tell ContentRX and one will land.&rdquo;
+          needed today.&rdquo; If that changes, ContentRX will add
+          one.
         </p>
       </Section>
 
