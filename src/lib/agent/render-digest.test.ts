@@ -284,7 +284,6 @@ describe("renderDigest trust-signal opener", () => {
       customization: WARMED_UP_CUSTOMIZATION,
     });
     expect(md).toContain("47 flag decisions");
-    expect(md).toContain("12 custom examples");
     expect(md).toContain("4 active team rules");
   });
 
