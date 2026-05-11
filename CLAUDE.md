@@ -35,8 +35,9 @@ surfaces (MCP server, LSP server) land in BUILD_PLAN_v2 phases 1 and 5.
 7. **LSP server** — `lsp-server/` (Python, stdio, ships via `uvx`) plus
    editor extensions in `editor-extensions/` (VS Code etc.)
 8. **Docs site** — `docs-site/` (in-tree today, target deploy target is
-   `docs.contentrx.app` — but the public surface is now `/accuracy`,
-   `/calibration`, `/reports`, NOT a public taxonomy.
+   `docs.contentrx.app` — but the public credibility surface is now
+   `/accuracy` (with the calibration log + quarterly reports folded
+   in as anchored sections), NOT a public taxonomy.
    See [decisions/2026-04-25-private-taxonomy-pivot.md](decisions/2026-04-25-private-taxonomy-pivot.md).)
 
 The Next.js app imports the Python engine at runtime via a Vercel Python
@@ -62,10 +63,16 @@ The public surface — what customers and prospects actually see — is:
 
 - `/accuracy` — measured system kappa with 95% CI, measured self-drift
   kappa with 95% CI, target ceiling stated separately. Generated nightly.
-- `/calibration` — weekly calibration log entries (kappa movement, drift
-  signals, override count, refinement-log activity). Generated automatically.
-- `/reports` — quarterly accuracy reports. Generated scaffold, hand-edited
-  narrative.
+  Hosts two anchored sections:
+  - `#calibration-log` — weekly calibration log entries (kappa
+    movement, drift signals, override count, refinement-log
+    activity). The bare `/calibration` route 308s here (consolidated
+    2026-05-11 round-4).
+  - `#quarterly-reports` — quarterly accuracy reports. Generated
+    scaffold + hand-edited narrative. The bare `/reports` route 308s
+    here (consolidated 2026-05-11 round-4). Raw quarterly markdown
+    still lives at `reports/quarterly/<YYYY-Q>.md` for the founder
+    to edit and for `/admin/reports` to render.
 
 The substrate (private taxonomy + override stream + refinement log) produces
 the report (public artifacts) through scheduled generators in `reports/`.

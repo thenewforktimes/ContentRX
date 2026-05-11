@@ -40,7 +40,10 @@ export type AuthResolved = {
 };
 
 export type AuthError = {
-  status: 401 | 403;
+  // 401 = bad credentials, 403 = forbidden, 503 = user row not
+  // provisioned yet (Clerk webhook race on first signup — the
+  // caller should retry shortly).
+  status: 401 | 403 | 503;
   message: string;
 };
 
@@ -77,9 +80,16 @@ export async function resolveAuth(req: Request): Promise<AuthResolved | AuthErro
     .limit(1);
 
   if (!user) {
-    // Webhook didn't fire or races with signup. Fail closed; the client
-    // should retry after signup completes.
-    return { status: 401, message: "User not provisioned yet" };
+    // Webhook didn't fire or races with signup. 503 (not 401) so the
+    // CLI / MCP / LSP can distinguish "your credentials are wrong"
+    // from "your account is still being set up, try again in a
+    // moment." 401 conflated the two and gave first-time users
+    // immediately post-signup a misleading "Invalid API key" error.
+    return {
+      status: 503,
+      message:
+        "We're still setting up your account. Try again in a moment.",
+    };
   }
 
   return await enrichWithSeats(user);

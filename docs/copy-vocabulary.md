@@ -387,8 +387,8 @@ Rules of thumb, not strings.
   or *"Click here"*.
 - **Modal confirm/cancel.** Confirm verb-the-object, cancel says
   *"Cancel"*. *"Disable rule"* / *"Cancel"*. Not *"Disable"* / *"Keep
-  it on"*. The api-key revoke modal still uses *"Keep key"*. That's a
-  divergence to fix when next touching that file.
+  it on"*. (The api-key revoke modal used to say *"Keep key"*; that
+  divergence was closed in the 2026-05-11 round-4 audit.)
 - **Loading states on async buttons.** *"Verbing…"*. So *"Saving…"*,
   *"Joining…"*, *"Generating…"*, *"Redirecting to Stripe…"*. Not
   *"Loading…"* on a specific action.

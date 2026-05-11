@@ -33,6 +33,7 @@ import { redirect } from "next/navigation";
 import { buttonStyles } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getDb, schema } from "@/db";
+import { humanizeSource } from "@/lib/humanize";
 import { getOrProvisionUser } from "@/lib/user-provisioning";
 
 const PAGE_LIMIT = 50;
@@ -167,7 +168,7 @@ export default async function DashboardRunsIndexPage() {
                     </span>
                   )}
                   {r.source && (
-                    <span className="text-quiet">via {sourceLabel(r.source)}</span>
+                    <span className="text-quiet">via {humanizeSource(r.source)}</span>
                   )}
                 </div>
               </Link>
@@ -189,9 +190,9 @@ function EmptyState() {
         Runs show up here after any of the engine surfaces flag at
         least one finding under a shared run id. That includes the
         GitHub Action on a PR, the CLI in a CI job, the MCP server
-        in your editor, and the LSP via diagnostics. Clean passes
-        (verdict &quot;All clear&quot;) don&apos;t create rows
-        because there&apos;s no audit content to record.
+        in your editor, and the LSP via diagnostics. All-clear
+        checks don&apos;t create rows because there&apos;s no audit
+        content to record.
       </p>
       <p className="mt-3 text-default">
         Install any surface, run a check on copy that has a finding,
@@ -205,16 +206,6 @@ function EmptyState() {
       </Link>
     </section>
   );
-}
-
-function sourceLabel(source: string): string {
-  if (source === "action") return "GitHub Action";
-  if (source === "cli") return "CLI";
-  if (source === "mcp") return "MCP";
-  if (source === "lsp") return "LSP";
-  if (source === "plugin") return "Figma plugin";
-  if (source === "dashboard") return "Web app";
-  return source;
 }
 
 function formatRelative(date: Date): string {
