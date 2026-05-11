@@ -31,6 +31,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Mark } from "@/components/ui/mark";
 import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
@@ -68,7 +69,7 @@ export default function EthicsPage() {
       >
         <p>
           Send a check to ContentRX. The engine evaluates it. The
-          verdict comes back. The plaintext doesn&apos;t persist.
+          verdict comes back. <Mark>The plaintext doesn&apos;t persist.</Mark>{" "}
           ContentRX retains a sha256 hash, the verdict, the severity,
           the content type, and the surface that called. That&apos;s
           the entire list. ContentRX cannot reconstruct your writing
@@ -123,10 +124,10 @@ export default function EthicsPage() {
         summary="ContentRX makes money by charging for a tool. Not by selling, repackaging, or modeling the work you check."
       >
         <p>
-          ContentRX makes money from subscriptions. Free exists so
-          you can try the product. Paid tiers exist because the
-          engine costs real money to run and calibration takes real
-          time. There&apos;s no second shoe to drop.
+          <Mark>ContentRX makes money from subscriptions.</Mark> Free
+          exists so you can try the product. Paid tiers exist because
+          the engine costs real money to run and calibration takes
+          real time. There&apos;s no second shoe to drop.
         </p>
         <ul className="mt-3 ml-5 list-disc space-y-2">
           <li>
