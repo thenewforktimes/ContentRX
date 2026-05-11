@@ -201,22 +201,16 @@ export default async function DashboardPage() {
 function TryACheckPanel({ plan }: { plan: Plan }) {
   return (
     <section className="rounded-lg border border-line p-5">
-      <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Try a check</h2>
-        <span className="text-xs text-default">
-          Paste any UI copy · 1 check
-        </span>
-      </header>
       <ExplainClient plan={plan} />
       <p className="mt-3 text-xs text-quiet">
-        Your text is reviewed by ContentRX and discarded after the
-        check. We don&apos;t retain, sell, or train models on what you
-        paste.{" "}
+        Your checks are private until you flag them for review.
+        ContentRX does not sell your checks, track you with cookies,
+        or share your usage data with brokers.{" "}
         <Link
           href="/privacy"
           className="underline underline-offset-2 hover:text-default"
         >
-          How we handle your text
+          How ContentRX handles your checks
         </Link>
         .
       </p>

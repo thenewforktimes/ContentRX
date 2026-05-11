@@ -126,9 +126,19 @@ export function FolderTabs() {
     // (between inactive tabs and the body) and removes it where it
     // shouldn't be (under the active tab).
     <div className="border-b border-line">
+      {/*
+        Hide the native scrollbar.
+          - `overflow-x-auto` is kept so narrow viewports still let the
+            user pan horizontally via trackpad / arrow keys / touch.
+          - The Webkit and Firefox-specific scrollbar rules suppress
+            the rendered bar that was adding 12–15px of vertical
+            chrome to the tab strip on overflowing widths. Robert
+            flagged the vertical-scroll appearance as broken; this
+            removes it.
+        */}
       <nav
         aria-label="Dashboard sections"
-        className="flex gap-1 overflow-x-auto pt-2"
+        className="flex gap-1 overflow-x-auto pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {TABS.map((tab) => {
           const isActive = tab.match(pathname);

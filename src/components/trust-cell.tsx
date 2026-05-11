@@ -29,7 +29,7 @@ const LINKS: readonly TrustLink[] = [
   { label: "Privacy", href: "/privacy", Icon: LockIcon },
   { label: "Security", href: "/security", Icon: ShieldIcon },
   { label: "Install", href: "/install", Icon: DownloadIcon },
-  { label: "Accuracy", href: "/accuracy", Icon: GaugeIcon },
+  { label: "Accuracy", href: "/accuracy", Icon: BullseyeIcon },
 ] as const;
 
 export function TrustCell() {
@@ -121,7 +121,10 @@ function DownloadIcon({ className }: { className?: string }) {
   );
 }
 
-function GaugeIcon({ className }: { className?: string }) {
+function BullseyeIcon({ className }: { className?: string }) {
+  // Concentric rings around a filled center. Same line weight (2px),
+  // same caps + joins as the other icons in this set. The center
+  // dot makes the "hit the mark" reading unambiguous at small sizes.
   return (
     <svg
       viewBox="0 0 24 24"
@@ -132,9 +135,9 @@ function GaugeIcon({ className }: { className?: string }) {
       strokeLinejoin="round"
       className={className}
     >
-      <path d="M3 18 a9 9 0 0 1 18 0" />
-      <path d="M12 18 L17 8.5" />
-      <circle cx="12" cy="18" r="1.25" fill="currentColor" />
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5.5" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
     </svg>
   );
 }
