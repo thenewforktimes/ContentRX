@@ -169,6 +169,7 @@ export default async function DashboardPage() {
               : null
           }
           subscriptionStatus={activeSub?.status ?? null}
+          cancelAtPeriodEnd={activeSub?.cancelAtPeriodEnd ?? false}
         />
 
         <ApiKeyPanel
@@ -514,6 +515,7 @@ async function loadActiveSubscription(
 ): Promise<{
   status: string;
   currentPeriodEnd: Date | null;
+  cancelAtPeriodEnd: boolean;
 } | null> {
   const ownerId = teamOwnerUserId ?? userId;
   const cached = await unstable_cache(
@@ -523,6 +525,7 @@ async function loadActiveSubscription(
         .select({
           status: schema.subscriptions.status,
           currentPeriodEnd: schema.subscriptions.currentPeriodEnd,
+          cancelAtPeriodEnd: schema.subscriptions.cancelAtPeriodEnd,
         })
         .from(schema.subscriptions)
         .where(
@@ -549,6 +552,7 @@ async function loadActiveSubscription(
   return {
     status: cached.status,
     currentPeriodEnd: asDate(cached.currentPeriodEnd),
+    cancelAtPeriodEnd: cached.cancelAtPeriodEnd ?? false,
   };
 }
 

@@ -461,6 +461,7 @@ async function upsertSubscription(args: {
 
   const seats = item?.quantity ?? 1;
   const currentPeriodEnd = itemPeriodEnd(item) ?? null;
+  const cancelAtPeriodEnd = subscription.cancel_at_period_end ?? false;
   const entitled = isEntitled(subscription.status);
 
   // Stripe Customer ID on the users row — set on first successful
@@ -487,6 +488,7 @@ async function upsertSubscription(args: {
         plan,
         seats,
         currentPeriodEnd,
+        cancelAtPeriodEnd,
         stripeCustomerId: customerId ?? "",
       })
       .where(eq(schema.subscriptions.id, existing.id));
@@ -519,6 +521,7 @@ async function upsertSubscription(args: {
       plan,
       seats,
       currentPeriodEnd,
+      cancelAtPeriodEnd,
     });
   }
 

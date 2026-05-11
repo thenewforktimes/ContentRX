@@ -49,6 +49,11 @@ type Props = {
   seats: number;
   currentPeriodEnd: string | null;
   subscriptionStatus: string | null;
+  /** True between the moment the customer clicks Cancel in the Stripe
+   *  Portal and the moment the paid period ends. Stripe keeps `status`
+   *  on "active" through that grace window, so we need the separate
+   *  flag to render the right copy ("Ends" not "Renews"). */
+  cancelAtPeriodEnd: boolean;
 };
 
 type Interval = "monthly" | "annual";
@@ -62,6 +67,7 @@ export function SubscriptionPanel({
   seats,
   currentPeriodEnd,
   subscriptionStatus,
+  cancelAtPeriodEnd,
 }: Props) {
   if (plan === "free") {
     return <UpgradeCard />;
@@ -72,6 +78,7 @@ export function SubscriptionPanel({
       seats={seats}
       currentPeriodEnd={currentPeriodEnd}
       subscriptionStatus={subscriptionStatus}
+      cancelAtPeriodEnd={cancelAtPeriodEnd}
     />
   );
 }
@@ -219,6 +226,7 @@ function PaidCard({
   seats,
   currentPeriodEnd,
   subscriptionStatus,
+  cancelAtPeriodEnd,
 }: {
   // Scale is sales-assisted at launch (no Stripe Checkout), so a Scale
   // user lands here only via founder-side provisioning. The label
@@ -228,6 +236,7 @@ function PaidCard({
   seats: number;
   currentPeriodEnd: string | null;
   subscriptionStatus: string | null;
+  cancelAtPeriodEnd: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -281,10 +290,15 @@ function PaidCard({
             {humanizeStatus(visibleStatus)}
           </Pill>
         )}
+        {cancelAtPeriodEnd && (
+          <Pill tone="amber">Scheduled to cancel</Pill>
+        )}
       </p>
       {currentPeriodEnd && (
         <p className="mb-3 text-xs text-quiet">
-          Renews {formatDate(currentPeriodEnd)}
+          {cancelAtPeriodEnd
+            ? `Access ends ${formatDate(currentPeriodEnd)}. No further charges.`
+            : `Renews ${formatDate(currentPeriodEnd)}`}
         </p>
       )}
       {error && (
