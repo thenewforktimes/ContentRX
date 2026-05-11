@@ -209,7 +209,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
           htmlFor="explain-text"
           className="block text-sm font-medium text-default"
         >
-          Text to evaluate
+          Drop in short or long-form content
         </label>
         <textarea
           id="explain-text"
