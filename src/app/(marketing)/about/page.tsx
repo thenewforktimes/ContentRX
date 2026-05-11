@@ -61,7 +61,7 @@ export default function AboutPage() {
           ContentRX never reads a customer check for calibration
           unless the customer shared it. The path is one button,
           Flag for Review, with a consent modal that names what gets
-          stored and how to revoke. Nothing else feeds the corpus.
+          stored and how to revoke. Nothing else feeds the log.
         </p>
         <p className="mt-3">
           Training averages content into a black box. Calibration

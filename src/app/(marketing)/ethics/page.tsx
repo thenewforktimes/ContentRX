@@ -144,7 +144,7 @@ export default function EthicsPage() {
           <li>
             ContentRX does not train a model on your content. Yours,
             ours, Anthropic&apos;s, anyone&apos;s. A customer check
-            joins the calibration corpus only when you share it via
+            joins the calibration log only when you share it via
             Flag for Review. One path. One consent modal per check.
             Available to every paying customer. Revoke any time from
             the dashboard. The checks you have shared live at{" "}

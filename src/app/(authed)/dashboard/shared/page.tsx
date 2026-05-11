@@ -43,7 +43,7 @@ const REASON_LABEL: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   open: "Awaiting review",
-  addressed_corpus: "Added to calibration corpus",
+  addressed_corpus: "Added to calibration log",
   addressed_taxonomy: "Folded into engine reasoning",
   addressed_patch: "Routed to a rule fix",
   not_actionable: "Reviewed, no change",

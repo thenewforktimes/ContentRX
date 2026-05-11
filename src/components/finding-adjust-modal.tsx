@@ -7,7 +7,7 @@
  * Per ADR 2026-05-11, Adjust is a private record of the customer's
  * own dismissal. The string and the disagreement land in
  * `violation_overrides` (sha256 only). Nothing flows into the
- * calibration corpus from here.
+ * calibration log from here.
  *
  * To share a string with ContentRX for calibration, the customer
  * uses the separate Flag-for-Review CTA + consent modal

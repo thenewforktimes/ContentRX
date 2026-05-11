@@ -61,9 +61,11 @@ export default async function OverridesPage() {
       <section className="flex flex-col items-start gap-3 rounded-lg border border-line p-6">
         <h1 className="text-lg font-semibold">Rule patterns</h1>
         <p className="text-sm text-default">
-          Available on the Team plan. Surfaces the rules your team
-          disagrees with most so you can disable or tune them in team
-          rules.
+          Team plan feature. Coordinate rule changes across your team.
+          When your team dismisses a finding, ContentRX records the
+          pattern. This page rolls those dismissals up so you can turn
+          off rules everyone disagrees with in Team rules. The whole
+          team sees consistent behavior on the next check.
         </p>
         <Link href="/pricing" className={buttonStyles({ size: "sm" })}>
           Upgrade to Team

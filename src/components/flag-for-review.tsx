@@ -4,7 +4,7 @@
  * Flag-for-Review button + consent modal.
  *
  * Per ADR 2026-05-11 this is the only path by which a customer check
- * enters ContentRX's calibration corpus. The customer taps Flag for
+ * enters ContentRX's calibration log. The customer taps Flag for
  * Review on a check result; the modal captures (1) what they think is
  * off, (2) optional note, (3) required consent. On submit, POSTs to
  * /api/customer-flag and the row lands in /admin/customer-flags for
