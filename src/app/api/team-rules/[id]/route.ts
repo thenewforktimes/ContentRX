@@ -107,11 +107,14 @@ export async function PATCH(req: Request, context: RouteContext) {
     try {
       new RegExp(pattern);
     } catch {
-      // Generic message matches the sister POST route at
-      // /api/team-rules. Echoing the raw compile error leaked
-      // engine-internal regex grammar detail to the client.
+      // Matches the sister POST route's message so both endpoints
+      // give the same guidance. Echoing the raw compile error
+      // leaked engine-internal regex grammar detail to the client;
+      // the trade is the engine-voice gate flagged "Invalid regex
+      // pattern" alone as not actionable enough — adding "Check
+      // the pattern syntax and try again." names the next step.
       return NextResponse.json(
-        { error: "Invalid regex pattern" },
+        { error: "Invalid regex pattern. Check the pattern syntax and try again." },
         { status: 400 },
       );
     }
