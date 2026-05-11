@@ -131,7 +131,7 @@ export default function PrivacyPage() {
           ContentRX does not sell your data and does not train any
           model on customer content. The Flag-for-Review consent flow
           is the only path by which a customer check influences the
-          calibration corpus.
+          calibration log.
         </p>
       </Section>
 
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
             <strong>ContentRX does not use your content to train any
             model</strong> (its own, Anthropic&apos;s, anyone&apos;s).
             Checks you share via Flag for Review feed a hand-curated
-            calibration corpus. Nothing else does.
+            calibration log. Nothing else does.
           </li>
           <li>
             <strong>ContentRX does not share your checks with any
@@ -283,7 +283,7 @@ export default function PrivacyPage() {
         </p>
         <p className="mt-3">
           <strong>Checks you shared via Flag for Review</strong> stay
-          in the calibration corpus until you revoke them. Your
+          in the calibration log until you revoke them. Your
           shared-checks list at{" "}
           <Link href="/dashboard/shared" className="underline underline-offset-2">
             /dashboard/shared

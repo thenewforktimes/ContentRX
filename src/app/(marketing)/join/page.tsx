@@ -129,9 +129,9 @@ export default async function JoinPage({ searchParams }: PageProps) {
           Join {owner?.email ?? "a ContentRX team"}
         </h1>
         <p className="mt-3 text-sm text-quiet">
-          Accepting this invitation adds your account to the team. You&apos;ll
-          share the team&apos;s monthly check quota, custom rules, and
-          custom examples.
+          Accepting this invitation adds your account to the team.
+          You&apos;ll share the team&apos;s monthly check quota and
+          custom rules.
         </p>
       </header>
 

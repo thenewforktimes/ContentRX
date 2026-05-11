@@ -46,7 +46,7 @@ export default async function MembersPage() {
         <h1 className="text-lg font-semibold">Members</h1>
         <p className="text-sm text-default">
           Available on the Team plan. Invite teammates to share your
-          monthly check limit, custom rules, and custom examples.
+          monthly check limit and custom rules.
         </p>
         <Link href="/pricing" className={buttonStyles({ size: "sm" })}>
           Upgrade to Team

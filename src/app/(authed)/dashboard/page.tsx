@@ -20,14 +20,6 @@
  * Usage + insights answer "am I about to hit a limit?" and "what
  * should I look at?" — those rise. API key is one-time-mint plus
  * occasional rotate; demoted below the work surfaces.
- *
- * Calibration (the pairwise-preference elicitation surface) used to
- * live as section 9. Removed 2026-04-29 — customers don't have the
- * context to know what calibration is or why they should engage,
- * and the context-switching cost outweighed the data we collected
- * via the dashboard. Per ADR 2026-05-11 the calibration corpus is
- * fed exclusively via the Flag-for-Review consent flow; shared
- * strings are visible to the customer at /dashboard/shared.
  */
 
 import { auth } from "@clerk/nextjs/server";
@@ -413,7 +405,7 @@ function MembersLink() {
       </header>
       <p className="mb-3 text-sm text-default">
         Invite teammates by email. They&apos;ll share the team&apos;s
-        monthly check limit, custom rules, and custom examples.
+        monthly check limit and custom rules.
       </p>
       <Link
         href="/dashboard/members"

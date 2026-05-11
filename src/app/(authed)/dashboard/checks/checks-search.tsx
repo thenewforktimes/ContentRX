@@ -76,7 +76,7 @@ const VERDICT_KEYS: VerdictFilter[] = [
 ];
 
 const SOURCE_LABEL: Record<string, string> = {
-  dashboard: "Paste panel",
+  dashboard: "Web app",
   plugin: "Figma plugin",
   cli: "CLI",
   action: "GitHub Action",
@@ -445,7 +445,7 @@ export function ChecksSearch({
       )}
 
       <p className="mt-2 text-xs text-quiet">
-        Every check from every connected surface (paste panel, Figma
+        Every check from every connected surface (web app, Figma
         plugin, CLI, GitHub Action, editor LSP, MCP) lands here. If
         you don&apos;t see a check from a specific surface, the auth
         on that surface may not match this account.
