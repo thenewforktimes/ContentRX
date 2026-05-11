@@ -30,6 +30,7 @@ import {
   triageOverride,
   type OverrideStatus,
 } from "@/lib/admin/override-inbox";
+import { isContentRXAdmin } from "@/lib/graduation";
 import { humanizeMoment } from "@/lib/humanize";
 
 export const metadata = {
@@ -68,6 +69,13 @@ async function triageAction(formData: FormData) {
 
   const { userId: clerkId } = await auth();
   if (!clerkId) return;
+  // Defense-in-depth: re-check the founder gate at the action
+  // boundary. The /admin layout enforces it on render, but Server
+  // Actions are independently POSTable RPCs so we cannot rely on
+  // the layout alone (see admin/reports/actions.ts:74-80 for the
+  // canonical pattern). Round 3 audit caught three actions
+  // missing this — overrides, customer-flags, costs.
+  if (!isContentRXAdmin(clerkId)) return;
   const db = getDb();
   const [user] = await db
     .select({ id: schema.users.id })

@@ -56,6 +56,15 @@ interface RunResult {
 // preview / backfill writes can still bypass it.
 const SAME_WEEK_DEDUPE_MS = 6 * 24 * 60 * 60 * 1000;
 
+// Parallelism budget. Each owner runs ≥3 DB selects, possibly 1
+// GitHub API call, and 1 DB update — so processing all team owners
+// in series scales linearly with team count and risks Vercel's 60s
+// function timeout once ≥30 teams have the GitHub App connected.
+// Process up to PARALLEL_OWNERS in flight at once; the rest queue.
+// Keep small enough to stay well under the Drizzle pool's ~10
+// connection ceiling and GitHub's secondary rate limits.
+const PARALLEL_OWNERS = 5;
+
 export async function POST(req: Request) {
   const authFail = requireCronAuth(req);
   if (authFail) return authFail;
@@ -87,80 +96,107 @@ export async function POST(req: Request) {
   const githubAppLive = isGithubAppConfigured();
   const dedupeFloor = new Date(Date.now() - SAME_WEEK_DEDUPE_MS);
 
-  for (const owner of owners) {
-    try {
-      const [existing] = (await db
-        .select({ id: schema.agentRuns.id })
-        .from(schema.agentRuns)
+  type OwnerOutcome =
+    | { kind: "skipped" }
+    | { kind: "persisted"; prOpened: boolean }
+    | { kind: "failed"; error: string };
+
+  async function processOwner(ownerId: string): Promise<OwnerOutcome> {
+    const [existing] = (await db
+      .select({ id: schema.agentRuns.id })
+      .from(schema.agentRuns)
+      .where(
+        and(
+          eq(schema.agentRuns.teamId, ownerId),
+          gt(schema.agentRuns.runAt, dedupeFloor),
+        ),
+      )
+      .limit(1)) as Array<{ id: string }>;
+
+    if (existing) {
+      return { kind: "skipped" };
+    }
+
+    const row = await persistAgentRun(ownerId);
+
+    // GitHub-side delivery is gated by App-config presence AND the
+    // team having connected a repo. Either being absent silently
+    // skips the PR step — the run is still persisted to
+    // agent_runs and visible at /admin/agent-runs.
+    if (!githubAppLive) return { kind: "persisted", prOpened: false };
+
+    const installation = await getInstallation(db, ownerId);
+    if (!installation) return { kind: "persisted", prOpened: false };
+    if (!installation.targetRepoOwner || !installation.targetRepoName) {
+      return { kind: "persisted", prOpened: false };
+    }
+
+    const payload = row.payload as AgentRunPayload;
+    const digestMarkdown = renderDigest(payload);
+
+    const prResult = await openPrForDigest({
+      installationId: installation.githubInstallationId,
+      owner: installation.targetRepoOwner,
+      repo: installation.targetRepoName,
+      branch: installation.targetBranch,
+      digestMarkdown,
+      runAtIso: payload.runAt,
+    });
+
+    if (prResult.ok) {
+      await db
+        .update(schema.agentGithubInstallations)
+        .set({
+          lastPrNumber: prResult.number,
+          lastPrUrl: prResult.htmlUrl,
+          lastPrAt: new Date(),
+          updatedAt: new Date(),
+        })
         .where(
-          and(
-            eq(schema.agentRuns.teamId, owner.id),
-            gt(schema.agentRuns.runAt, dedupeFloor),
-          ),
-        )
-        .limit(1)) as Array<{ id: string }>;
+          eq(schema.agentGithubInstallations.id, installation.id),
+        );
+      return { kind: "persisted", prOpened: true };
+    }
+    return {
+      kind: "failed",
+      error: `pr_${prResult.reason}: ${prResult.message}`,
+    };
+  }
 
-      if (existing) {
-        runsSkipped++;
-        continue;
-      }
+  // Chunk into batches of PARALLEL_OWNERS. allSettled per chunk so
+  // one team's failure doesn't abort the rest. Sequential between
+  // chunks to bound DB/HTTP concurrency.
+  for (let i = 0; i < owners.length; i += PARALLEL_OWNERS) {
+    const chunk = owners.slice(i, i + PARALLEL_OWNERS);
+    const settled = await Promise.allSettled(
+      chunk.map((owner) => processOwner(owner.id)),
+    );
 
-      const row = await persistAgentRun(owner.id);
-      runsPersisted++;
-
-      // GitHub-side delivery is gated by App-config presence AND the
-      // team having connected a repo. Either being absent silently
-      // skips the PR step — the run is still persisted to
-      // agent_runs and visible at /admin/agent-runs.
-      if (!githubAppLive) continue;
-
-      const installation = await getInstallation(db, owner.id);
-      if (!installation) continue;
-      if (!installation.targetRepoOwner || !installation.targetRepoName) {
-        continue;
-      }
-
-      const payload = row.payload as AgentRunPayload;
-      const digestMarkdown = renderDigest(payload);
-
-      const prResult = await openPrForDigest({
-        installationId: installation.githubInstallationId,
-        owner: installation.targetRepoOwner,
-        repo: installation.targetRepoName,
-        branch: installation.targetBranch,
-        digestMarkdown,
-        runAtIso: payload.runAt,
-      });
-
-      if (prResult.ok) {
-        prsOpened++;
-        await db
-          .update(schema.agentGithubInstallations)
-          .set({
-            lastPrNumber: prResult.number,
-            lastPrUrl: prResult.htmlUrl,
-            lastPrAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(
-            eq(
-              schema.agentGithubInstallations.id,
-              installation.id,
-            ),
-          );
-      } else {
+    settled.forEach((result, idx) => {
+      const owner = chunk[idx];
+      if (!owner) return;
+      if (result.status === "rejected") {
+        const err = result.reason;
+        logSafeError("[cron/agent-run]", err);
         failures.push({
           teamId: owner.id,
-          error: `pr_${prResult.reason}: ${prResult.message}`,
+          error: err instanceof Error ? err.message : String(err),
         });
+        return;
       }
-    } catch (err) {
-      logSafeError("[cron/agent-run]", err);
-      failures.push({
-        teamId: owner.id,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
+      const outcome = result.value;
+      if (outcome.kind === "skipped") {
+        runsSkipped++;
+      } else if (outcome.kind === "persisted") {
+        runsPersisted++;
+        if (outcome.prOpened) prsOpened++;
+      } else {
+        // persisted-but-PR-failed counts toward runsPersisted and
+        // also surfaces as a failure for /admin/agent-runs review.
+        runsPersisted++;
+        failures.push({ teamId: owner.id, error: outcome.error });
+      }
+    });
   }
 
   const result: RunResult = {

@@ -94,7 +94,10 @@ export async function PATCH(req: Request, context: RouteContext) {
   const fieldsParsed = schemaForAction.safeParse(parsed.data.rule_json);
   if (!fieldsParsed.success) {
     return NextResponse.json(
-      { error: "Invalid rule fields", issues: fieldsParsed.error.issues },
+      {
+        error: "Invalid rule fields",
+        issues: sanitizeZodIssues(fieldsParsed.error.issues),
+      },
       { status: 400 },
     );
   }
@@ -103,9 +106,12 @@ export async function PATCH(req: Request, context: RouteContext) {
     const pattern = (fieldsParsed.data as { pattern: string }).pattern;
     try {
       new RegExp(pattern);
-    } catch (err) {
+    } catch {
+      // Generic message matches the sister POST route at
+      // /api/team-rules. Echoing the raw compile error leaked
+      // engine-internal regex grammar detail to the client.
       return NextResponse.json(
-        { error: "Invalid regex pattern", detail: String(err) },
+        { error: "Invalid regex pattern" },
         { status: 400 },
       );
     }

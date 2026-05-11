@@ -363,7 +363,8 @@ export type AcceptInvitationResult =
         | "email_mismatch"
         | "already_team_owner"
         | "already_member"
-        | "no_seats";
+        | "no_seats"
+        | "user_not_provisioned";
     };
 
 /**
@@ -414,10 +415,18 @@ export async function acceptInvitation(args: {
     teamOwnerUserId: string | null;
     plan: string;
   }>;
-  if (acceptingUser?.plan === "team" && acceptingUser.teamOwnerUserId === null) {
+  if (!acceptingUser) {
+    // The accepting user's row doesn't exist yet — e.g., a race with
+    // the Clerk webhook on first sign-up. Return a typed reason so
+    // the API caller can show "still setting up your account, try
+    // again in a moment" instead of a 500 from the downstream
+    // team_members FK violation.
+    return { ok: false, reason: "user_not_provisioned" };
+  }
+  if (acceptingUser.plan === "team" && acceptingUser.teamOwnerUserId === null) {
     return { ok: false, reason: "already_team_owner" };
   }
-  if (acceptingUser?.teamOwnerUserId !== null && acceptingUser?.teamOwnerUserId !== undefined) {
+  if (acceptingUser.teamOwnerUserId !== null) {
     return { ok: false, reason: "already_member" };
   }
 
