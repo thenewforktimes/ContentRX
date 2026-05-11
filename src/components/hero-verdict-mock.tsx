@@ -65,7 +65,13 @@ const FINDINGS: readonly MockFinding[] = [
     severityLabel: "Quick polish",
     sourceLabel: "Instant",
     inputText: "Submit",
-    issue: "Generic verb on a destructive action.",
+    // "Submit" → "Send invites" is the action-verb fix; the prior
+    // diagnostic ("destructive action") was a content mismatch
+    // because sending invites isn't destructive. The destructive-
+    // confirmation case is already covered by card 2 above
+    // ("Delete this draft?"). This card now reads as what it is:
+    // a generic verb hiding the actual action.
+    issue: "Generic verb hides what the button does.",
     suggestion: "Send invites",
     category: "Action verbs",
   },
