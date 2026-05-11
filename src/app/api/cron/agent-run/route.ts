@@ -27,7 +27,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { isGithubAppConfigured } from "@/lib/agent/github-app";
 import { openPrForDigest } from "@/lib/agent/open-pr";
@@ -41,9 +41,20 @@ interface RunResult {
   ok: true;
   teamsConsidered: number;
   runsPersisted: number;
+  runsSkipped: number;
   prsOpened: number;
   failures: Array<{ teamId: string; error: string }>;
 }
+
+// Idempotency window: if `agent_runs` already has a row for this
+// team within the last 6 days, skip the team. The cron runs Monday
+// 13:00 UTC weekly, so 6 days is enough to dedupe same-week replays
+// (Vercel cron retries, manual triggers, /api/cron/agent-run hit
+// twice via the GET = POST alias) without blocking the next scheduled
+// run from firing. There is no UNIQUE constraint on (teamId, week)
+// — the partial check stays in the cron rather than the schema so
+// preview / backfill writes can still bypass it.
+const SAME_WEEK_DEDUPE_MS = 6 * 24 * 60 * 60 * 1000;
 
 export async function POST(req: Request) {
   const authFail = requireCronAuth(req);
@@ -71,11 +82,29 @@ export async function POST(req: Request) {
 
   const failures: RunResult["failures"] = [];
   let runsPersisted = 0;
+  let runsSkipped = 0;
   let prsOpened = 0;
   const githubAppLive = isGithubAppConfigured();
+  const dedupeFloor = new Date(Date.now() - SAME_WEEK_DEDUPE_MS);
 
   for (const owner of owners) {
     try {
+      const [existing] = (await db
+        .select({ id: schema.agentRuns.id })
+        .from(schema.agentRuns)
+        .where(
+          and(
+            eq(schema.agentRuns.teamId, owner.id),
+            gt(schema.agentRuns.runAt, dedupeFloor),
+          ),
+        )
+        .limit(1)) as Array<{ id: string }>;
+
+      if (existing) {
+        runsSkipped++;
+        continue;
+      }
+
       const row = await persistAgentRun(owner.id);
       runsPersisted++;
 
@@ -138,6 +167,7 @@ export async function POST(req: Request) {
     ok: true,
     teamsConsidered: owners.length,
     runsPersisted,
+    runsSkipped,
     prsOpened,
     failures,
   };

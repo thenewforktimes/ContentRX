@@ -110,7 +110,7 @@ export default async function OnboardPage() {
           >
             <Card
               padding="lg"
-              className="flex h-full flex-col gap-3 transition group-hover:border-stone-400 dark:group-hover:border-stone-600"
+              className="flex h-full flex-col gap-3 transition group-hover:border-line-strong"
             >
               <h2 className="text-base font-semibold">{option.name}</h2>
               <p className="flex-1 text-sm text-default">
