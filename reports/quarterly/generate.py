@@ -107,6 +107,11 @@ class QuarterlyReport:
     standards_total: int
     weeks_in_quarter: list[CalibrationWeekSnapshot]
     kappa_at_quarter_start: float | None
+    # Week the starting-κ value came from (e.g. "2026-19"). The first
+    # MEASURED week of the quarter, which may be a few weeks in if
+    # early weeks lacked an accuracy snapshot. Renderers name this
+    # week explicitly so the "delta" line doesn't imply quarter-start.
+    kappa_at_quarter_start_week: str | None
     kappa_delta_pp: float | None
 
 
@@ -182,9 +187,16 @@ def build_quarterly_report(
             standards_total = int(accuracy["standards_total"])
 
     weeks_sorted = sorted(calibration_weeks, key=lambda w: w.week)
-    kappa_at_start = next(
-        (w.kappa for w in weeks_sorted if w.kappa is not None), None
+    # "Starting κ" is the first measured week of the quarter — which
+    # may be week 17 or 19 if early weeks didn't get a snapshot, not
+    # necessarily the literal quarter-start. Track the source week so
+    # the renderer can name it explicitly instead of implying the
+    # delta runs from the start of the quarter.
+    first_measured = next(
+        (w for w in weeks_sorted if w.kappa is not None), None
     )
+    kappa_at_start = first_measured.kappa if first_measured else None
+    starting_week = first_measured.week if first_measured else None
     current_kappa = (
         measured_system["value"] if measured_system else None
     )
@@ -203,6 +215,7 @@ def build_quarterly_report(
         standards_total=standards_total,
         weeks_in_quarter=weeks_sorted,
         kappa_at_quarter_start=kappa_at_start,
+        kappa_at_quarter_start_week=starting_week,
         kappa_delta_pp=kappa_delta_pp,
     )
 
@@ -242,9 +255,14 @@ def render_markdown(report: QuarterlyReport) -> str:
         lines.append("- Measured system κ: _pending — no current snapshot._")
     if report.kappa_delta_pp is not None:
         sign = "+" if report.kappa_delta_pp >= 0 else ""
+        starting = report.kappa_at_quarter_start
+        starting_week = report.kappa_at_quarter_start_week or "an earlier week"
+        # Name the source week so the line doesn't imply the delta runs
+        # from the literal quarter start when earlier weeks were
+        # actually unmeasured/pending.
         lines.append(
             f"- Quarter-to-date delta: {sign}{report.kappa_delta_pp:.1f} percentage points "
-            f"(starting κ = {report.kappa_at_quarter_start:.3f})."
+            f"(starting κ = {starting:.3f} from {starting_week})."
         )
     else:
         lines.append(

@@ -406,9 +406,10 @@ to fix immediately. Track these so they don't get forgotten.
    `text("plan", { enum: [...] })` is TS-only. Use `pgEnum` if DB-level
    protection matters. Low priority.
 
-5. **`users.email` has no unique constraint.** Decision deferred:
-   revisit when the team invite flow (Session 9) makes email-based
-   lookup matter.
+5. ~~`users.email` has no unique constraint.~~ Resolved: the column
+   has `.unique()` in `src/db/schema.ts`. Adding it didn't require
+   the deferred decision — the team invite flow lookups assume one
+   row per email anyway. Doc updated in the 2026-05-11 audit cleanup.
 
 6. ~~No unique constraint on `subscriptions.userId`.~~ Resolved in
    Session 8: partial unique index `subscriptions_user_active_idx` on
@@ -435,8 +436,10 @@ to fix immediately. Track these so they don't get forgotten.
    not match the target and the browser drops the message with no
    error). **Fix:** test with both Figma web and Figma Desktop in a
    live session, then change the `save-token` call (only — other
-   messages carry no secret). The incoming-message origin check at
-   `ui.html:3367` already closes the higher-severity PLG-C-01.
+   messages carry no secret). The incoming-message origin check
+   (currently at `ui.html:4709` after the 2026-05-11 substrate
+   strip — was at `:3367` pre-strip) already closes the
+   higher-severity PLG-C-01.
 
 ## Before every commit
 

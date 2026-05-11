@@ -12,7 +12,7 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import type { TeamInvitation } from "@/db/schema";
 
@@ -102,6 +102,10 @@ export async function countSeats(
       ),
     )) as Array<{ count: number }>;
 
+  // Match enrichWithSeats — only entitled subscriptions grant capacity.
+  // Without the status filter, a canceled team subscription row kept
+  // driving the invite-headroom calculation, so a downgraded team owner
+  // could keep sending invites past actual paid capacity.
   const [subRow] = (await db
     .select({ seats: schema.subscriptions.seats })
     .from(schema.subscriptions)
@@ -109,6 +113,7 @@ export async function countSeats(
       and(
         eq(schema.subscriptions.userId, teamOwnerUserId),
         eq(schema.subscriptions.plan, "team"),
+        inArray(schema.subscriptions.status, ["active", "trialing"]),
       ),
     )
     .limit(1)) as Array<{ seats: number }>;

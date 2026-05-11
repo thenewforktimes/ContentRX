@@ -5,6 +5,14 @@ GitHub Actions cron and exits non-zero when any report subdirectory's
 newest file is older than its per-type threshold. Tests exercise the
 script end-to-end against tmp_path fixtures by overriding the script's
 module-level constants for the duration of each test.
+
+Modification time source: the script reads "last touched" via
+`_last_modified()`, which prefers git committer time and falls back
+to filesystem mtime when git can't answer. In tests the tmp files
+aren't in git, so we monkeypatch `_last_modified` to read mtime
+directly (via `os.utime` set per test) — without that monkeypatch
+the script would warn-and-fall-through to mtime anyway, which works
+but emits noisy stderr.
 """
 
 from __future__ import annotations
@@ -31,11 +39,20 @@ _spec.loader.exec_module(staleness)
 
 @pytest.fixture
 def staged_reports(tmp_path, monkeypatch):
-    """Build a tmp `reports/` tree and point the script at it."""
+    """Build a tmp `reports/` tree and point the script at it.
+
+    Also rebind `_last_modified` to read fs mtime — tmp files aren't
+    in git, so the production git-first lookup would always fall back
+    anyway. Doing the fallback explicitly keeps stderr clean for the
+    "all subdirs fresh" tests.
+    """
     root = tmp_path / "reports"
     for sub in ("accuracy", "calibration", "quarterly"):
         (root / sub).mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(staleness, "REPORTS_ROOT", root)
+    monkeypatch.setattr(
+        staleness, "_last_modified", lambda p: p.stat().st_mtime
+    )
     return root
 
 
@@ -101,3 +118,42 @@ class TestStaleness:
             age_seconds=60 * 86_400,
         )
         assert staleness.main() == 0
+
+
+class TestLastModifiedFromGit:
+    """Regression guard for the 2026-05-11 audit. Under `actions/checkout`
+    every file's filesystem mtime is the checkout time, so the watchdog
+    used to report every file as ~minutes old and the 2/8/95-day
+    thresholds were unreachable. `_last_modified` now reads git committer
+    time first.
+    """
+
+    def test_git_committer_time_used_when_available(self, tmp_path, monkeypatch):
+        # Stub out subprocess.run to simulate a successful git log call.
+        target_ts = time.time() - 30 * 86_400  # 30 days ago
+
+        class FakeResult:
+            returncode = 0
+            stdout = f"{target_ts:.0f}\n"
+
+        monkeypatch.setattr(
+            staleness.subprocess,
+            "run",
+            lambda *_a, **_kw: FakeResult(),
+        )
+
+        fake_path = tmp_path / "anything.json"
+        fake_path.write_text("x")
+        assert abs(staleness._last_modified(fake_path) - target_ts) < 1.0
+
+    def test_falls_back_to_mtime_when_git_unavailable(self, tmp_path, monkeypatch):
+        def boom(*_a, **_kw):
+            raise FileNotFoundError("git not on PATH")
+
+        monkeypatch.setattr(staleness.subprocess, "run", boom)
+
+        fake_path = tmp_path / "anything.json"
+        fake_path.write_text("x")
+        target_ts = time.time() - 5 * 86_400
+        os.utime(fake_path, (target_ts, target_ts))
+        assert abs(staleness._last_modified(fake_path) - target_ts) < 1.0

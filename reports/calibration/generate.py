@@ -37,6 +37,36 @@ from pathlib import Path
 GENERATOR_VERSION = "1.0.0"
 
 
+# Standards-library path + fallback total — mirrors the helpers in
+# reports/accuracy/generate.py and reports/quarterly/generate.py so the
+# weekly calibration log's fallback denominator stays in lockstep with
+# the nightly accuracy snapshot. Reading the substrate at runtime keeps
+# this number self-correcting; adding a new standard pushes the public
+# "/ N" line up on the next cron run.
+_STANDARDS_LIBRARY_PATH = (
+    Path(__file__).resolve().parent.parent.parent
+    / "src"
+    / "content_checker"
+    / "standards"
+    / "private"
+    / "standards_library.json"
+)
+
+_FALLBACK_TOTAL_STANDARDS = 49
+
+
+def _read_total_standards() -> int:
+    """Count standards in the canonical library at runtime."""
+    try:
+        data = json.loads(_STANDARDS_LIBRARY_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return _FALLBACK_TOTAL_STANDARDS
+    total = 0
+    for cat in data.get("categories", []):
+        total += len(cat.get("standards", []))
+    return total or _FALLBACK_TOTAL_STANDARDS
+
+
 @dataclass
 class CalibrationLog:
     """Structured intermediate representation. The CLI renders this
@@ -125,7 +155,11 @@ def build_calibration_log(
 
     by_level = {"robo_labels": 0, "batch_approval": 0, "autonomous": 0}
     standards_measured = 0
-    standards_total = 47
+    # Fall back to a live read of the library so the calibration log
+    # stops drifting from the accuracy snapshot when upstream is
+    # missing the `standards_total` field. The hardcoded `= 47` here
+    # had survived through 49 standards and counting.
+    standards_total = _read_total_standards()
     if accuracy and isinstance(accuracy.get("by_level"), dict):
         for k in by_level.keys():
             v = accuracy["by_level"].get(k, 0)
