@@ -43,13 +43,19 @@
   --surface-sunken:   #0d0d1f;
   --surface-overlay:  #2a2b50;
   /* `page` is the writing-surface elevation — textareas, paste
-     boxes, anywhere the eye expects to read or write text. Treated
-     as a different material than the surrounding chrome. Dark mode:
-     one step up from raised with a hair of warm tilt vs the cool
-     navy panel — reads as a lit page under a desk lamp. Light mode
-     (below): a hair warmer + brighter than the white panel — reads
-     as a fresh Moleskine page. */
-  --surface-page:     #2d2c5c;
+     boxes, anywhere the eye expects to read or write text. Kindle-
+     screen off-white, not cream: a barely-there warm tilt against
+     near-pure-white. Same value in both light and dark mode so
+     the writing surface always reads as a calm, easy-to-read
+     screen regardless of the surrounding chrome. Dark mode reads
+     it as a lit Kindle in a dim room; light mode reads it as a
+     subtle inset against the white panel.
+     `page-on` is the paired foreground text token. Dark ink in
+     both modes — the bg is always near-white, so the foreground
+     is always near-black. Single value across modes, not a
+     flipping pair. */
+  --surface-page:     #fafaf5;
+  --surface-page-on:  #1c1a17;
 
   /* ─── INTERACTIVE STATES ─── */
   /* Surface colour used for hover / focus background lift on
@@ -134,11 +140,12 @@
     --surface-raised:   #ffffff;
     --surface-sunken:   #f0e9d6;
     --surface-overlay:  #ffffff;
-    /* `page` — writing-surface elevation. A hair warmer + brighter
-       than the pure-white panel; reads as a fresh Moleskine page set
-       into the desk. Used by textareas + paste boxes. See the dark
-       value above for the cross-mode rationale. */
-    --surface-page:     #fdfaf0;
+    /* `page` matches dark mode (#fafaf5) — Kindle-screen off-white,
+       universal across modes. See the dark block comment for the
+       full rationale. `page-on` is the paired ink-text color, also
+       the same in both modes. */
+    --surface-page:     #fafaf5;
+    --surface-page-on:  #1c1a17;
 
     /* ─── INTERACTIVE STATES ─── */
     --state-hover-bg:   #f0e9d6;
@@ -248,6 +255,7 @@
   --color-sunken:   var(--surface-sunken);
   --color-overlay:  var(--surface-overlay);
   --color-page:     var(--surface-page);
+  --color-page-on:  var(--surface-page-on);
 
   --color-strong:   var(--text-strong);
   --color-default:  var(--text-default);

@@ -34,11 +34,15 @@ export const tokens = {
       raised: "#ffffff",
       sunken: "#f0e9d6",
       overlay: "#ffffff",
-      // `page` — writing-surface elevation. Slightly warmer + brighter
-      // than the white panel; reads as a fresh Moleskine page. Used
-      // by textareas + paste boxes. Available to emails for inset-
-      // text blocks that want the same paper feel.
-      page: "#fdfaf0",
+      // `page` — writing-surface elevation. Kindle-screen off-white
+      // (very faint warm tilt against near-pure-white). Same hex in
+      // dark mode below: the off-white value is universal so the
+      // writing surface always reads as a calm reading screen,
+      // regardless of surrounding chrome.
+      page: "#fafaf5",
+      // `pageOn` — paired ink-text color for content on `page`.
+      // Dark in both modes (the bg is always near-white).
+      pageOn: "#1c1a17",
     },
     text: {
       strong: "#1c1a17",
@@ -109,10 +113,14 @@ export const tokens = {
       raised: "#22224a",
       sunken: "#0d0d1f",
       overlay: "#2a2b50",
-      // `page` — writing-surface elevation. One step up from raised
-      // with a hair of warm tilt vs the cool navy panel; reads as a
-      // lit page under a desk lamp.
-      page: "#2d2c5c",
+      // `page` — same Kindle-screen off-white as the light palette.
+      // Reads as a lit reading screen in a dim room — the textarea
+      // becomes the brightest object on screen, which is the
+      // affordance.
+      page: "#fafaf5",
+      // `pageOn` — paired ink-text color for content on `page`.
+      // Dark in both modes (the bg is always near-white).
+      pageOn: "#1c1a17",
     },
     text: {
       strong: "#eef0f5",
