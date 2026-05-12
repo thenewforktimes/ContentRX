@@ -525,10 +525,10 @@ function SeverityDot({ severity }: { severity: string }) {
   // verify against the contrast checker.
   const tone =
     severity === "high"
-      ? "bg-accent-concern-solid"
+      ? "bg-accent-concern"
       : severity === "medium"
-        ? "bg-accent-caution-solid"
-        : "bg-accent-info-solid";
+        ? "bg-accent-caution"
+        : "bg-accent-info";
   return (
     <span
       className={`mt-1.5 inline-block h-2 w-2 flex-none rounded-full ${tone}`}

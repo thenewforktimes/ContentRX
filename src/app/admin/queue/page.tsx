@@ -28,6 +28,7 @@ import {
   humanizeMoment,
   humanizeReviewReason,
 } from "@/lib/humanize";
+import { loadSidebarCounts } from "@/lib/admin/sidebar-counts";
 
 const SUBTYPES = [
   "low_confidence",
@@ -89,6 +90,16 @@ export default async function AdminQueuePage({
   const since = new Date(Date.now() - windowDays * DAY_MS);
 
   const db = getDb();
+
+  // Customer-flag count for the cross-link banner. Engineers
+  // (Robert) repeatedly land on /queue looking for customer-shared
+  // content; the queue is hash-only by privacy contract. The banner
+  // makes the right next click (Customer flags) obvious instead of
+  // implicit in the left rail.
+  const sidebarCounts = await loadSidebarCounts().catch(() => ({
+    customerFlags: 0,
+  }));
+  const openCustomerFlags = sidebarCounts.customerFlags;
 
   // Counts by subtype within the window. Drives the filter tabs.
   const counts = await db
@@ -171,11 +182,24 @@ export default async function AdminQueuePage({
             Review queue
           </h1>
           <p className="mt-1 text-sm text-quiet">
-            Cases the engine flagged for review in the last {windowDays} days.
-            Filter by subtype to focus the daily 15-minute review rhythm.
+            Engine-flagged cases from the last {windowDays} days,
+            grouped by why the engine wasn&rsquo;t sure.{" "}
+            <strong>Customer text is stored as a sha256 hash on this
+            surface</strong> — the per-row text_hash below is the only
+            identity. For customer-shared content (Flag-for-Review
+            consent), see{" "}
+            <Link
+              href="/admin/customer-flags"
+              className="underline underline-offset-2 hover:text-strong"
+            >
+              Customer flags →
+            </Link>
+            .
+          </p>
+          <p className="mt-2 text-sm text-quiet">
             Click <strong>Agree</strong> to confirm the engine&apos;s
-            review-recommended verdict, <strong>False positive</strong> to
-            mark it as a miscall, or <strong>Skip</strong> to defer.
+            review-recommended verdict, <strong>False positive</strong>{" "}
+            to mark it as a miscall, or <strong>Skip</strong> to defer.
             Decisions persist into the override stream for calibration.
           </p>
         </div>
@@ -184,6 +208,26 @@ export default async function AdminQueuePage({
           pending
         </div>
       </header>
+
+      {openCustomerFlags > 0 && (
+        <aside
+          role="note"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent-info-border bg-accent-info-soft p-3 text-sm text-accent-info-text"
+        >
+          <p>
+            <strong>{openCustomerFlags} customer flag
+            {openCustomerFlags === 1 ? "" : "s"}</strong>{" "}
+            awaiting triage. Customer-shared content lands there with
+            plaintext (per-row consent) — not on this surface.
+          </p>
+          <Link
+            href="/admin/customer-flags"
+            className="font-medium underline underline-offset-2"
+          >
+            Open customer flags →
+          </Link>
+        </aside>
+      )}
 
       <nav
         aria-label="Subtype filters"
@@ -249,7 +293,7 @@ function FilterTab({
   count: number;
 }) {
   const cls = active
-    ? "rounded-md bg-accent-primary-solid text-accent-primary-on"
+    ? "rounded-md bg-accent-primary text-accent-primary-on"
     : "rounded-md bg-sunken text-default hover:bg-hover";
   return (
     <Link href={href} className={`${cls} px-3 py-1.5 text-xs font-medium`}>

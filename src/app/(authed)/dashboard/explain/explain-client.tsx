@@ -678,8 +678,8 @@ function SuggestedRewriteBlock({
               "shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-opacity",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
               copyState === "error"
-                ? "bg-accent-caution-solid text-accent-caution-on"
-                : "bg-accent-affirm-solid text-accent-affirm-on hover:opacity-90",
+                ? "bg-accent-caution text-accent-caution-on"
+                : "bg-accent-affirm text-accent-affirm-on hover:opacity-90",
             ].join(" ")}
           >
             {copyLabel}
