@@ -50,11 +50,15 @@ export const tokens = {
         border: "#6366f1",
       },
       affirm: {
-        solid: "#0f766e",
+        // Grass green — matches globals.css light palette. The brand
+        // wordmark RX in marketing emails uses the `text` slot; the
+        // upgrade/welcome CTA button uses `solid`. Re-sync this when
+        // the light palette in globals.css moves.
+        solid: "#16a34a",
         onSolid: "#ffffff",
-        soft: "#ccfbf1",
-        text: "#134e4a",
-        border: "#14b8a6",
+        soft: "#dcfce7",
+        text: "#15803d",
+        border: "#22c55e",
       },
       caution: {
         solid: "#ca8a04",

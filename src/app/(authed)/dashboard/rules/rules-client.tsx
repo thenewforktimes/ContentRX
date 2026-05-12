@@ -212,7 +212,7 @@ export function TeamRulesClient({ categories, rules, isAdmin }: Props) {
 
       {customRules.length > 0 && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold">Custom team rules</h2>
+          <h2 className="mb-3 text-base font-semibold text-strong">Custom team rules</h2>
           <ul className="flex flex-col gap-2">
             {customRules.map((rule) => (
               <CustomRuleRow
@@ -229,7 +229,7 @@ export function TeamRulesClient({ categories, rules, isAdmin }: Props) {
 
       {categories.map((category) => (
         <section key={category.id}>
-          <h2 className="mb-3 text-sm font-semibold">{category.name}</h2>
+          <h2 className="mb-3 text-base font-semibold text-strong">{category.name}</h2>
           <ul className="flex flex-col gap-2">
             {category.standards.map((std) => {
               const rulesForThis = byStandardId(std.id);
@@ -509,7 +509,7 @@ function AddCustomRuleCard({
 
   return (
     <section className="rounded-lg border border-line p-4">
-      <h2 className="mb-3 text-sm font-semibold">New custom rule</h2>
+      <h2 className="mb-3 text-base font-semibold text-strong">New custom rule</h2>
       <div className="flex flex-col gap-3">
         <label className="text-xs">
           <span className="mb-1 block text-default">

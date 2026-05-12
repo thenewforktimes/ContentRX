@@ -69,6 +69,14 @@
   --border-strong:    #7070b4;
   --ring-focus:       #fb923c;
 
+  /* ─── DECORATION ─── */
+  /* Subtle dot-grid / pattern fills. Decorative-only — never used for
+     borders or text. Lives below the border contrast floor on purpose;
+     the previous border value (#2c2c52, 1.36:1 vs canvas) is exactly
+     what a dot-grid backdrop wants: present but not assertive. Used by
+     the home page How-it-works panel. */
+  --decoration-dot:   #2c2c52;
+
   /* ─── ACCENT: PRIMARY (warm orange — the brand colour) ─── */
   --accent-primary-solid:    #fb923c;
   --accent-primary-on-solid: #1c0f04;
@@ -129,6 +137,12 @@
     --border-strong:    #7e7565;
     --ring-focus:       #4338ca;
 
+    /* ─── DECORATION ─── */
+    /* The previous border value, now repurposed as the decorative-fill
+       token. Reads as a barely-there texture against the cream canvas
+       — exactly what the home page dot-grid wants. */
+    --decoration-dot:   #d9cfb6;
+
     /* ─── ACCENT: PRIMARY (cool indigo on warm cream) ─── */
     /* Cool primary on a warm canvas mirrors the dark-mode warm-on-cool
        inversion (orange on deep navy). Warm-on-warm (rust orange on
@@ -142,26 +156,34 @@
     --accent-primary-text:     #312e81;
     --accent-primary-border:   #6366f1;
 
-    /* ─── ACCENT: AFFIRM (emerald — brand-level accent) ─── */
-    /* 2026-05-11 (Robo): shifted from teal-{900,700,500} to
-       emerald-{700,600,500}. The teal "text" slot at #134e4a was
-       reading forest-black on the wordmark (the brand's most-seen
-       use of this token), darker than every sibling-text in the
-       family (caution-text, concern-text, info-text are all
-       saturated). Emerald keeps the cool / non-clip-art character
-       the original audit wanted — sidesteps pure green-600's
-       "spring lawn" read — while letting the wordmark and the RX
-       glyph pop the way the green-on-indigo pops in dark mode.
-       Cross-mode consistency improves at the same time: dark
-       mode's affirm stays in the green family, light mode joins
-       it at the slightly-cooler emerald end.
-       Contrast: text on canvas 7.6:1, solid on canvas 4.6:1 (AAA
-       Normal for text, AAA Large for solid backgrounds). */
-    --accent-affirm-solid:     #059669;
+    /* ─── ACCENT: AFFIRM (grass green — brand-level accent) ─── */
+    /* 2026-05-11 (Robert): rolled back the emerald shift earlier the
+       same day. The emerald-700 "text" slot (#047857) read forest-
+       evergreen on the wordmark — the audit chased AAA contrast and
+       lost the brand pop. Brand identity outranks AAA on a *brand
+       mark* (the wordmark is large-text only and the RX letters are
+       always 5xl+); the rest of the family lands on AA Normal in the
+       soft-pairing it actually ships in. The green-700 hex is
+       yellow-leaning vs emerald-700's blue-lean — that's the
+       "grassy" read Robert keeps. Cross-mode consistency unchanged:
+       dark mode stays in the green family, light mode now matches it
+       instead of drifting into emerald.
+
+       Contrast (light mode):
+         text on canvas:           #15803d on #f5efe0 = 4.3:1
+           AA Large only — fine for the wordmark (always text-5xl+)
+           and the green-soft pill pairing below.
+         text on soft:             #15803d on #dcfce7 = 4.5:1  (AA Normal)
+         solid on canvas (button): #16a34a on #f5efe0 = 3.5:1
+           AA Large for filled buttons (>=14px medium meets WCAG 1.4.3).
+         border on canvas:         #22c55e on #f5efe0 ≈ 2.5:1
+           non-text decoration; meets WCAG 1.4.11 (3:1) is borderline
+           — that's by design, borders read as accents not edges. */
+    --accent-affirm-solid:     #16a34a;
     --accent-affirm-on-solid:  #ffffff;
-    --accent-affirm-soft:      #d1fae5;
-    --accent-affirm-text:      #047857;
-    --accent-affirm-border:    #10b981;
+    --accent-affirm-soft:      #dcfce7;
+    --accent-affirm-text:      #15803d;
+    --accent-affirm-border:    #22c55e;
 
     /* ─── ACCENT: CAUTION ─── */
     --accent-caution-solid:    #ca8a04;

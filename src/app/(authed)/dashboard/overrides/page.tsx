@@ -262,7 +262,7 @@ export default async function OverridesPage() {
         <>
           {pushbacks.length > 0 && (
             <section>
-              <h2 className="mb-1 text-sm font-semibold">Pushbacks</h2>
+              <h2 className="mb-1 text-base font-semibold text-strong">Pushbacks</h2>
               <p className="mb-3 text-xs text-default">
                 Clusters of 3+ overrides on the same rule inside a
                 single session (scan, CI run, dashboard session).
@@ -305,7 +305,7 @@ export default async function OverridesPage() {
           )}
 
           <section>
-            <h2 className="mb-3 text-sm font-semibold">
+            <h2 className="mb-3 text-base font-semibold text-strong">
               Most-overridden categories
             </h2>
             <table className="w-full border-collapse text-sm">
@@ -336,7 +336,7 @@ export default async function OverridesPage() {
           </section>
 
           <section>
-            <h2 className="mb-3 text-sm font-semibold">By dismissal type</h2>
+            <h2 className="mb-3 text-base font-semibold text-strong">By dismissal type</h2>
             <ul className="flex flex-col gap-2">
               {byType.map((t) => (
                 <li
@@ -353,7 +353,7 @@ export default async function OverridesPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 text-sm font-semibold">
+            <h2 className="mb-1 text-base font-semibold text-strong">
               How your team engaged
             </h2>
             <p className="mb-3 text-xs text-default">

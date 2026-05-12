@@ -225,7 +225,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
           placeholder="Paste a button label, an error message, a product update email, a security advisory, or any long-form writing your team is shipping."
           className={`w-full rounded-md border bg-raised px-3 py-2 font-mono text-sm text-strong focus:outline-none focus:ring-1 ${
             overLimit
-              ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
+              ? "border-accent-concern-border focus:border-accent-concern-border focus:ring-accent-concern-border"
               : "border-line-strong focus:ring-ring"
           }`}
         />
@@ -233,9 +233,9 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
           <span
             className={`tabular-nums ${
               overLimit
-                ? "text-rose-600 dark:text-rose-400"
+                ? "text-accent-concern-text"
                 : text.length > MAX_INPUT_CHARS * 0.9
-                  ? "text-amber-600 dark:text-amber-400"
+                  ? "text-accent-caution-text"
                   : "text-default"
             }`}
           >
@@ -251,7 +251,7 @@ export function ExplainClient({ plan = "free" }: { plan?: Plan } = {}) {
             )}
           </span>
           {overLimit ? (
-            <span className="text-right text-rose-600 dark:text-rose-400">
+            <span className="text-right text-accent-concern-text">
               Too long. Split into pieces ≤{" "}
               {MAX_INPUT_CHARS.toLocaleString()} chars, or use{" "}
               <Link href="/install" className="underline underline-offset-2">
@@ -1289,7 +1289,7 @@ function FindingCard({
       )}
 
       {savedState?.verdictRecorded && (
-        <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-300">
+        <p className="mt-3 text-xs text-accent-affirm-text">
           Recorded. The dismissal is on your dashboard.
         </p>
       )}
@@ -1405,9 +1405,9 @@ function CopySuggestionButton({
       className={[
         "shrink-0 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
         state === "copied"
-          ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
+          ? "border-accent-affirm-border bg-accent-affirm-soft text-accent-affirm-text"
           : state === "error"
-            ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+            ? "border-accent-caution-border bg-accent-caution-soft text-accent-caution-text"
             : "border-line-strong bg-raised text-default hover:bg-hover",
       ].join(" ")}
     >

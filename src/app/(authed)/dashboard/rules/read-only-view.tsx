@@ -73,7 +73,7 @@ export function ReadOnlyRulesView({
         }
         return (
           <section key={category.name}>
-            <h2 className="mb-3 text-sm font-semibold">{category.name}</h2>
+            <h2 className="mb-3 text-base font-semibold text-strong">{category.name}</h2>
             <ul className="flex flex-col gap-2">
               {category.standards.map((std, idx) => (
                 <RuleCard key={`${category.name}-${idx}`} standard={std} />
