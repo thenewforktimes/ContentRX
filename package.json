@@ -33,32 +33,32 @@
     "export-corpus": "dotenv -e .env.local -- tsx scripts/export-corpus.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.2.3",
+    "@clerk/nextjs": "^7.3.3",
     "@octokit/auth-app": "^8.2.0",
     "@octokit/request": "^10.0.8",
     "@paralleldrive/cuid2": "^3.3.0",
     "@react-email/components": "^1.0.12",
-    "@react-email/render": "^2.0.7",
-    "@sentry/nextjs": "^10.49.0",
+    "@react-email/render": "^2.0.8",
+    "@sentry/nextjs": "^10.52.0",
     "@upstash/ratelimit": "^2.0.8",
-    "@upstash/redis": "^1.37.0",
+    "@upstash/redis": "^1.38.0",
     "drizzle-orm": "^0.45.2",
     "eslint-import-resolver-typescript": "^4.4.4",
     "framer-motion": "^12.38.0",
-    "jose": "^6.2.2",
+    "jose": "^6.2.3",
     "next": "15.5.15",
     "postgres": "^3.4.9",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "resend": "^6.12.2",
-    "stripe": "^22.0.2",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "resend": "^6.12.3",
+    "stripe": "^22.1.1",
     "svix": "^1.91.1",
-    "zod": "^4.3.6"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.4.4",
+    "@electric-sql/pglite": "^0.4.5",
     "@eslint/eslintrc": "^3",
-    "@next/bundle-analyzer": "^16.2.4",
+    "@next/bundle-analyzer": "^16.2.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -70,7 +70,7 @@
     "eslint-config-next": "15.5.15",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.6"
   },
   "overrides": {
     "esbuild": ">=0.25.0"
