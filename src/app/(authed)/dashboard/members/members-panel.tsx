@@ -83,7 +83,7 @@ export function MembersPanel({
   return (
     <div className="flex flex-col gap-8">
       <section className="rounded-lg border border-line p-5">
-        <h2 className="text-sm font-semibold">Invite a teammate</h2>
+        <h2 className="text-base font-semibold text-strong">Invite a teammate</h2>
         <p className="mt-1 text-xs text-default">
           They&apos;ll get an email with a link that&apos;s good for 7 days.
           {seatsAvailable === 0 && (
@@ -128,7 +128,7 @@ export function MembersPanel({
 
       {pendingInvitations.length > 0 && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold">Pending invitations</h2>
+          <h2 className="mb-3 text-base font-semibold text-strong">Pending invitations</h2>
           <ul className="flex flex-col gap-2">
             {pendingInvitations.map((p) => (
               <li
@@ -157,7 +157,7 @@ export function MembersPanel({
       )}
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold">Members</h2>
+        <h2 className="mb-3 text-base font-semibold text-strong">Members</h2>
         {members.length === 1 && members[0]?.isOwner ? (
           // Solo team — owner only, no invites accepted yet. The form
           // above (Invite a teammate) IS the empty-state CTA, so this

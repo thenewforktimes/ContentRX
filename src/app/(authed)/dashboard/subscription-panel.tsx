@@ -150,7 +150,7 @@ function UpgradeCard({ consentToken }: { consentToken: string | null }) {
   return (
     <section className="rounded-lg border border-line p-5">
       <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Upgrade</h2>
+        <h2 className="text-base font-semibold text-strong">Upgrade</h2>
         <span className="text-xs text-quiet">
           Billed monthly or annually. Cancel anytime.
         </span>
@@ -286,7 +286,7 @@ function PaidCard({
   return (
     <section className="rounded-lg border border-line p-5">
       <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Subscription</h2>
+        <h2 className="text-base font-semibold text-strong">Subscription</h2>
         <span className="text-xs text-quiet">
           Billing handled by Stripe
         </span>
@@ -377,7 +377,7 @@ function IntervalToggle({
           onClick={() => onChange(opt)}
           className={`rounded-[5px] px-3 py-1 text-xs font-medium transition ${
             value === opt
-              ? "bg-black text-white dark:bg-white dark:text-black"
+              ? "bg-strong text-canvas"
               : "text-quiet hover:text-strong"
           }`}
         >

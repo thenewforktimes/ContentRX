@@ -114,7 +114,7 @@ function AccountPanel({ email }: { email: string }) {
   return (
     <section className="rounded-lg border border-line p-5">
       <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Account</h2>
+        <h2 className="text-base font-semibold text-strong">Account</h2>
         <span className="text-xs text-quiet">
           Managed by Clerk
         </span>
@@ -134,7 +134,7 @@ function PrivacyPanel({ email }: { email: string }) {
   return (
     <section className="rounded-lg border border-line p-5">
       <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Privacy</h2>
+        <h2 className="text-base font-semibold text-strong">Privacy</h2>
         <span className="text-xs text-quiet">
           See <Link href="/privacy" className="underline underline-offset-2">/privacy</Link>
         </span>
