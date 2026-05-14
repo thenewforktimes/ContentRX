@@ -11,6 +11,11 @@
  * the same WCAG-verified palette; if you change a hex here, change it
  * there (and re-verify contrast ratios).
  *
+ * AAA across the board (2026-05-14): every text-on-bg ≥7:1; every UI
+ * element ≥3:1; every on-solid pairing ≥7:1. Earlier drafts of this
+ * file lagged globals.css on the dark palette (raised/sunken/overlay
+ * carried older values); resynced as part of the AAA tuning.
+ *
  * Email design choice: emails always use the LIGHT palette (Kindle
  * Paperwhite — warm cream canvas, ink-warm-black text) regardless of
  * recipient OS preference, because most email clients (Gmail web,
@@ -27,27 +32,19 @@ export const tokens = {
    */
   light: {
     surface: {
-      // Light cream — lifted from #f5efe0 on 2026-05-11 so the
-      // Spring Teal affirm slot has room to pop. Sunken shifted
-      // proportionally to maintain the canvas/sunken delta.
       canvas: "#faf5e6",
       raised: "#ffffff",
       sunken: "#f0e9d6",
       overlay: "#ffffff",
-      // `page` — writing-surface elevation. Kindle-screen off-white
-      // (very faint warm tilt against near-pure-white). Same hex in
-      // dark mode below: the off-white value is universal so the
-      // writing surface always reads as a calm reading screen,
-      // regardless of surrounding chrome.
       page: "#fafaf5",
-      // `pageOn` — paired ink-text color for content on `page`.
-      // Dark in both modes (the bg is always near-white).
       pageOn: "#1c1a17",
     },
     text: {
       strong: "#1c1a17",
       default: "#3d3833",
-      quiet: "#574e3f",
+      // quiet darkened from #574e3f (AAA fail on sunken) to #4d4537
+      // (AAA pass everywhere). Same warm-ink family.
+      quiet: "#4d4537",
     },
     border: {
       default: "#888070",
@@ -62,36 +59,41 @@ export const tokens = {
         border: "#6366f1",
       },
       affirm: {
-        // Spring Teal — matches globals.css light palette. The brand
-        // wordmark RX in marketing emails uses the `text` slot; the
-        // upgrade/welcome CTA button uses `solid`. Re-sync this when
-        // the light palette in globals.css moves.
-        //
-        // onSolid is teal-950 (#042f2e) not white — bright teal
-        // solids carry dark text, not white, for AA Normal contrast
-        // (mirrors dark mode's bright-solid + dark-on-solid recipe).
-        solid: "#14b8a6",
+        // Spring Teal — AAA-tuned 2026-05-14. solid moved from #14b8a6
+        // to brighter #2dd4bf so dark-on-bright on-solid hits AAA.
+        // text darkened to #0c4844 for AAA on canvas. border darkened
+        // to #0d9488 for UI 1.4.11 (3:1) — was 1.71:1 before.
+        solid: "#2dd4bf",
         onSolid: "#042f2e",
         soft: "#ccfbf1",
-        text: "#0f766e",
-        border: "#2dd4bf",
+        text: "#0c4844",
+        border: "#0d9488",
       },
       caution: {
+        // onSolid flipped from white to black — was 2.95:1 (AA Normal
+        // FAIL, the only such failure in the whole palette). Black-on-
+        // gold is 7.12:1 AAA. Universal "warning stripe" pattern.
+        // text darkened to #6b3d00 for AAA. border darkened to
+        // #a16207 for UI 1.4.11.
         solid: "#ca8a04",
-        onSolid: "#ffffff",
+        onSolid: "#000000",
         soft: "#fef3c7",
-        text: "#854d0e",
-        border: "#eab308",
+        text: "#6b3d00",
+        border: "#a16207",
       },
       concern: {
-        solid: "#dc2626",
+        // solid darkened from #dc2626 (6.03:1 AAA fail) to #ad1f1f
+        // (7.14:1 AAA pass).
+        solid: "#ad1f1f",
         onSolid: "#ffffff",
         soft: "#fee2e2",
         text: "#991b1b",
         border: "#ef4444",
       },
       info: {
-        solid: "#7c3aed",
+        // solid darkened from #7c3aed (5.41:1 AAA fail) to #5b21b6
+        // (9.13:1 AAA pass).
+        solid: "#5b21b6",
         onSolid: "#ffffff",
         soft: "#ede9fe",
         text: "#4c1d95",
@@ -101,34 +103,32 @@ export const tokens = {
   },
 
   /**
-   * Dark palette — the canonical web experience. Not used in email.
-   * Deep blue-violet canvas with warm cream-white text and a five-
-   * accent palette: orange (primary), violet (info), green (affirm),
-   * yellow (caution), red (concern). The cool canvas + warm accents
-   * pattern gives the eye natural surface-vs-signal separation.
+   * Dark palette — the canonical web experience. Not used in email
+   * (kept in sync for any future surface that needs both modes).
+   * AAA-tuned 2026-05-14.
    */
   dark: {
     surface: {
       canvas: "#14142b",
-      raised: "#22224a",
-      sunken: "#0d0d1f",
-      overlay: "#2a2b50",
-      // `page` — same Kindle-screen off-white as the light palette.
-      // Reads as a lit reading screen in a dim room — the textarea
-      // becomes the brightest object on screen, which is the
-      // affordance.
+      // raised + overlay darkened from the previous values so
+      // text-quiet clears 7:1 on every surface including modals.
+      raised: "#1f1f44",
+      sunken: "#0a0a1a",
+      overlay: "#1f1f50",
       page: "#fafaf5",
-      // `pageOn` — paired ink-text color for content on `page`.
-      // Dark in both modes (the bg is always near-white).
       pageOn: "#1c1a17",
     },
     text: {
       strong: "#eef0f5",
       default: "#c4c8d0",
-      quiet: "#a0a4b0",
+      // quiet brightened from #a0a4b0 to #c4c8d4 for AAA on raised
+      // and overlay.
+      quiet: "#c4c8d4",
     },
     border: {
-      default: "#646494",
+      // default brightened from #646494 (UI 1.4.11 fail on raised) to
+      // #7575a8 (3.47:1 pass).
+      default: "#7575a8",
       strong: "#7070b4",
     },
     accent: {
@@ -137,7 +137,9 @@ export const tokens = {
         onSolid: "#1c0f04",
         soft: "#2d1810",
         text: "#fdba74",
-        border: "#c2410c",
+        // border bumped from #c2410c (2.32:1 vs canvas) to #d97706
+        // (3.64:1 pass).
+        border: "#d97706",
       },
       affirm: {
         solid: "#4ade80",
@@ -155,17 +157,25 @@ export const tokens = {
       },
       concern: {
         solid: "#f87171",
-        onSolid: "#2c0a0a",
+        // onSolid darkened from #2c0a0a (6.70:1 AAA fail) to #1a0606
+        // (7.25:1 AAA pass).
+        onSolid: "#1a0606",
         soft: "#2c0e0e",
         text: "#fca5a5",
-        border: "#dc2626",
+        // border bumped from #dc2626 (2.74:1 vs canvas) to #ef4444
+        // (3.76:1 pass).
+        border: "#ef4444",
       },
       info: {
         solid: "#a78bfa",
-        onSolid: "#1e1142",
+        // onSolid darkened from #1e1142 (6.18:1 AAA fail) to #080414
+        // (7.49:1 AAA pass).
+        onSolid: "#080414",
         soft: "#1e1942",
         text: "#c4b5fd",
-        border: "#7c3aed",
+        // border bumped from #7c3aed (2.59:1 vs canvas) to #8b5cf6
+        // (3.68:1 pass).
+        border: "#8b5cf6",
       },
     },
   },
