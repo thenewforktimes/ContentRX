@@ -64,26 +64,39 @@ if [ -d "${SUBSTRATE_DIR}" ]; then
 fi
 
 echo "[substrate] Cloning ${SUBSTRATE_REPO} into ${SUBSTRATE_DIR}..."
-# Pass the token via `git -c http.extraheader=...` instead of
-# embedding it in the clone URL. Audit L2 (2026-05-13): the previous
-# `https://oauth2:TOKEN@github.com/...` form put the token on the
-# spawned git process's argv (visible to `ps`, process-tree dumps,
-# and shell tracing) AND persisted it into the cloned repo's
-# `.git/config` as the `origin` remote URL. The `-c` flag is
-# per-invocation only — the resulting .git/config carries a plain
-# HTTPS remote, so subsequent `git -C "${SUBSTRATE_DIR}" fetch`
-# calls (if any) won't carry stale credentials either. Vercel's
-# build sandbox limits practical exposure, but this matches the
-# hygiene the project applies elsewhere for secret-rotation
-# discipline (CLAUDE.md "Secret rotation ceremony").
+# URL form: `https://oauth2:TOKEN@github.com/...`.
 #
-# `Authorization: Bearer` works with fine-grained GitHub PATs, which
-# is what the project doc above recommends. For classic PATs use
-# `Authorization: token ${SUBSTRATE_TOKEN}` instead.
-git -c http.extraheader="Authorization: Bearer ${SUBSTRATE_TOKEN}" \
-  clone --depth 1 --quiet \
-  "https://${SUBSTRATE_REPO}" \
+# Why oauth2 specifically: GitHub treats a few usernames specially.
+# `x-access-token:TOKEN` is the auth path for GitHub App installation
+# tokens — using it with a fine-grained user PAT triggers App-specific
+# permission checks that fail with "Write access to repository not
+# granted" even on read-only clones. `oauth2:TOKEN` is the standard
+# username-as-placeholder form: any string works as the username when
+# using a PAT as the password, and `oauth2` is the conventional choice
+# that works for both fine-grained and classic PATs.
+#
+# Audit L2 (2026-05-13) first tried `-c http.extraheader="Authorization:
+# Bearer ${SUBSTRATE_TOKEN}"` to keep the token off the spawned git
+# process's argv. That works against GitHub's REST API but NOT
+# against git's HTTP smart protocol — git wants HTTP Basic auth, not
+# Bearer, so the clone failed in CI with `could not read Username
+# for 'https://github.com'`. Reverted to the proven URL-embed form
+# and adopted the audit's "At minimum" remediation instead: scrub
+# the embedded token from the clone's origin URL immediately after
+# the clone returns. The main hygiene gap the audit named —
+# persistent credentials in `.git/config` of the cloned repo — is
+# closed by the post-clone `remote set-url` below. Transient `ps`
+# visibility during the single clone command remains; acceptable
+# given the Vercel build sandbox boundary.
+git clone --depth 1 --quiet \
+  "https://oauth2:${SUBSTRATE_TOKEN}@${SUBSTRATE_REPO}" \
   "${SUBSTRATE_DIR}"
+
+# Scrub the embedded token from the clone's stored origin URL so it
+# doesn't persist in `.git/config`. Any subsequent `git -C
+# "${SUBSTRATE_DIR}" fetch` would need fresh credentials rather than
+# re-using the cloned URL's stale token.
+git -C "${SUBSTRATE_DIR}" remote set-url origin "https://${SUBSTRATE_REPO}"
 
 if [ ! -f "${SUBSTRATE_FILE}" ]; then
   echo "[substrate] FATAL: clone succeeded but ${SUBSTRATE_FILE} missing." >&2
