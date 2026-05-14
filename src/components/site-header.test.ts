@@ -36,16 +36,25 @@ describe("site header (src/components/site-header.tsx)", () => {
   });
 
   it("carries the primary marketing nav", () => {
+    // 2026-05-14: the nav-link set was lifted into a NAV_LINKS array
+    // so usePathname() can drive aria-current="page" on the matching
+    // link. The hrefs no longer appear as `href="/pricing"` literal
+    // strings in JSX — they're in `{ href: "/pricing", ... }` array
+    // entries. Match the route strings directly, not the JSX-attribute
+    // form. The contract being pinned is "this route reachable from
+    // the header," not "this exact JSX shape."
     for (const href of ["/pricing", "/install"]) {
-      expect(source).toContain(`href="${href}"`);
+      expect(source).toContain(`"${href}"`);
     }
     // /about retired 2026-05-10 — redirect to /ethics in
     // next.config.ts. Pin the absence so the link can't drift back.
-    expect(source).not.toContain(`href="/about"`);
+    expect(source).not.toContain(`"/about"`);
   });
 
   it("carries the auth surfaces (sign in + try free)", () => {
-    expect(source).toContain(`href="/sign-in"`);
+    // Sign in lives in NAV_LINKS (post-2026-05-14 refactor); Try free
+    // is the only Link still rendered inline (CTA, not a nav link).
+    expect(source).toContain(`"/sign-in"`);
     expect(source).toContain(`href="/sign-up"`);
   });
 });
