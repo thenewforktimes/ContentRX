@@ -44,13 +44,15 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   // Drop dead exports from barrel files at build time. Closes audit M-34.
-  // Lucide and react-email expose deep barrel files; without this,
-  // "import { X } from 'lucide-react'" pulls every icon into the bundle.
-  // (Recharts was here pre-Pf7 — replaced by a hand-rolled SVG.)
+  // react-email exposes a deep barrel file; without this, importing a
+  // single email component pulls every component into the bundle.
+  // (Recharts was here pre-Pf7 — replaced by a hand-rolled SVG.
+  // `lucide-react` was here through 2026-05-14 but isn't in
+  // `package.json` and isn't imported anywhere in `src/`, so removing
+  // it from the list as part of the Phase 3 zombie cleanup.)
   experimental: {
     optimizePackageImports: [
       "@react-email/components",
-      "lucide-react",
     ],
   },
   // Server-only deps that don't need to be webpack-bundled. Trims

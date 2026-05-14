@@ -1,10 +1,13 @@
 "use client";
 
 /**
- * Client-island wrapper that dynamic-imports the Recharts chart so
- * the ~115kB Recharts bundle is a separate webpack chunk loaded only
- * when /admin/calibration mounts. Mirrors the pattern in
- * `src/app/dashboard/team/analytics/analytics-client.tsx`.
+ * Client-island wrapper that dynamic-imports the chart so it's a
+ * separate webpack chunk loaded only when /admin/calibration mounts.
+ * The chart itself is now a hand-rolled SVG (Recharts was retired
+ * pre-Pf7; see `./charts.tsx`) — the dynamic-import wrapper survives
+ * because the code-split is still useful on a founder-only route.
+ * (Earlier comment cross-referenced a `dashboard/team/analytics`
+ * peer that no longer exists; removed.)
  */
 
 import dynamic from "next/dynamic";

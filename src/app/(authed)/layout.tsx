@@ -4,8 +4,9 @@
  * Audit Pf5 — pre-split, ClerkProvider lived in the root layout, so
  * the marketing pages all paid for Clerk's frontend SDK in their
  * shared bundle. Splitting it here means /, /pricing, /install,
- * /accuracy, /calibration, /ethics — none of which use Clerk on
- * the client — drop the dependency from their First Load JS.
+ * /writes, /accuracy, /ethics — none of which use Clerk on the
+ * client — drop the dependency from their First Load JS. (/calibration
+ * retired 2026-05-11; /writes added 2026-05-09.)
  *
  * Routes inside this group (URL paths preserved by the route-group
  * naming convention):
