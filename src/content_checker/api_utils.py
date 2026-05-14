@@ -444,41 +444,6 @@ def parse_scan_response(raw: str) -> dict:
     return result
 
 
-def parse_validation_response(raw: str) -> dict:
-    """Parse the validation stage response.
-
-    Expected shape: {"confirmed": [...], "rejected": [...]}
-
-    Raises ParseError if unparseable. The validate module's fail-closed
-    contract means callers should treat ParseError as "confirm all
-    candidates" (worst-case safe).
-    """
-    result = parse_llm_json(raw, context="validate")
-
-    if "confirmed" not in result:
-        result["confirmed"] = []
-    if "rejected" not in result:
-        result["rejected"] = []
-
-    return result
-
-
-def parse_consistency_response(raw: str) -> dict:
-    """Parse the batch consistency check response.
-
-    Expected shape: {"violations": [...]}
-
-    Raises ParseError if unparseable. The batch module should surface
-    this to the caller, never silently swallow.
-    """
-    result = parse_llm_json(raw, context="consistency")
-
-    if "violations" not in result:
-        result["violations"] = []
-
-    return result
-
-
 # ---------------------------------------------------------------------------
 # Module-level reset (for testing)
 # ---------------------------------------------------------------------------

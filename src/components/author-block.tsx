@@ -10,8 +10,9 @@
  *
  * No portrait by design — the brand isn't trading on Robert's face,
  * it's trading on the verifiable career arc and the public
- * accountability surfaces (/accuracy, /calibration, /ethics) the
- * model holds itself to.
+ * accountability surfaces (/accuracy + /ethics; the per-week
+ * /calibration route retired 2026-05-11 and the calibration log now
+ * lives at /accuracy#calibration-log) the model holds itself to.
  *
  * Career-arc data lives in CAREER_ARC.
  */

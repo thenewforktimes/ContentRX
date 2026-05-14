@@ -39,8 +39,6 @@ from content_checker.api_utils import (
     _strip_fences,
     parse_llm_json,
     parse_scan_response,
-    parse_validation_response,
-    parse_consistency_response,
     sanitize_label,
     wrap_user_text,
     _reset_client,
@@ -170,46 +168,6 @@ class TestParseScanResponse:
         with pytest.raises(ParseError) as exc_info:
             parse_scan_response("not json")
         assert exc_info.value.context == "scan"
-
-
-class TestParseValidationResponse:
-    """parse_validation_response: enforces validation-stage response shape."""
-
-    def test_complete_response(self):
-        raw = json.dumps({"confirmed": ["CLR-01"], "rejected": ["GRM-01"]})
-        result = parse_validation_response(raw)
-        assert result["confirmed"] == ["CLR-01"]
-        assert result["rejected"] == ["GRM-01"]
-
-    def test_missing_keys_normalized(self):
-        raw = json.dumps({})
-        result = parse_validation_response(raw)
-        assert result["confirmed"] == []
-        assert result["rejected"] == []
-
-    def test_invalid_json_raises(self):
-        with pytest.raises(ParseError) as exc_info:
-            parse_validation_response("{bad")
-        assert exc_info.value.context == "validate"
-
-
-class TestParseConsistencyResponse:
-    """parse_consistency_response: enforces consistency-stage response shape."""
-
-    def test_complete_response(self):
-        raw = json.dumps({"violations": [{"id": "PRF-01"}]})
-        result = parse_consistency_response(raw)
-        assert len(result["violations"]) == 1
-
-    def test_missing_violations_normalized(self):
-        raw = json.dumps({"notes": "all consistent"})
-        result = parse_consistency_response(raw)
-        assert result["violations"] == []
-
-    def test_invalid_json_raises(self):
-        with pytest.raises(ParseError) as exc_info:
-            parse_consistency_response("nope")
-        assert exc_info.value.context == "consistency"
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -26,7 +26,6 @@ from content_checker.api_utils import (
     wrap_user_text,
     ParseError,
     DEFAULT_MODEL,
-    MODEL_SCAN,
     TIMEOUT_SCAN,
 )
 from content_checker.audience import Audience, get_audience_prompt_context, is_standard_active

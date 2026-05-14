@@ -112,16 +112,6 @@ DISPLAY_LABELS: dict[str, str] = {
 }
 
 
-def get_display_label(standard_id: str) -> str:
-    """Return the human-readable display label for a standard ID.
-
-    Falls back to the standard ID itself if no label is defined.
-    This ensures new standards degrade gracefully — they show their
-    ID until someone adds a label.
-    """
-    return DISPLAY_LABELS.get(standard_id, standard_id)
-
-
 # ---------------------------------------------------------------------------
 # Standard ID → customer-facing CATEGORY (schema 2.5.0)
 #
@@ -251,86 +241,3 @@ def get_category(standard_id: str | None) -> str:
     return STANDARD_CATEGORY.get(standard_id, DEFAULT_CATEGORY)
 
 
-def get_display_label_with_id(standard_id: str) -> str:
-    """Return the display label with the standard ID as a suffix.
-
-    Example: "Casing (CON-02)"
-
-    Useful for CLI output and eval reports where users need both
-    the scannable label and the precise reference.
-    """
-    label = DISPLAY_LABELS.get(standard_id, None)
-    if label:
-        return f"{label} ({standard_id})"
-    return standard_id
-
-
-# ---------------------------------------------------------------------------
-# Proper noun grey area detection
-#
-# When CON-02 flags title case, the flagged text might contain branded
-# terms or proper nouns that are intentionally capitalized. Rather than
-# trying to maintain a word list of every proper noun (doesn't scale),
-# the system detects the ambiguity and lets the user decide.
-#
-# Detection: 2+ consecutive capitalized words that aren't at the start
-# of a sentence. "Opendoor Expert" triggers this. "Your account" doesn't.
-# ---------------------------------------------------------------------------
-
-import re
-
-_CONSECUTIVE_CAPS = re.compile(
-    r"(?<!\. )(?<!\.\s)(?<!^)"   # not at sentence start
-    r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)",  # 2+ capitalized words in a row
-)
-
-
-def detect_possible_proper_nouns(text: str) -> list[str]:
-    """Find sequences of capitalized words that might be proper nouns.
-
-    Returns a list of candidate phrases (e.g., ["Opendoor Expert"]).
-    Empty list if no candidates found.
-    """
-    # Don't flag single-word strings or very short text
-    if len(text.split()) <= 2:
-        return []
-
-    matches = _CONSECUTIVE_CAPS.findall(text)
-    return [m.strip() for m in matches if m.strip()]
-
-
-def enrich_casing_suggestion(
-    standard_id: str,
-    suggestion: str,
-    original_text: str,
-) -> str:
-    """Enrich a CON-02 violation suggestion with proper noun awareness.
-
-    When the flagged text contains what might be a proper noun or
-    branded term, appends guidance that acknowledges the grey area
-    and lets the user decide.
-
-    Returns the original suggestion unchanged for non-CON-02 violations
-    or when no proper noun candidates are found.
-    """
-    if standard_id != "CON-02":
-        return suggestion
-
-    candidates = detect_possible_proper_nouns(original_text)
-    if not candidates:
-        return suggestion
-
-    # Build the grey area acknowledgment
-    if len(candidates) == 1:
-        noun_phrase = f"'{candidates[0]}'"
-        qualifier = "a branded term or proper noun"
-    else:
-        noun_phrase = ", ".join(f"'{c}'" for c in candidates)
-        qualifier = "branded terms or proper nouns"
-
-    enrichment = (
-        f"\n\nNote: if {noun_phrase} is {qualifier} at your organization, "
-        f"the title case is correct — dismiss this check."
-    )
-
-    return suggestion + enrichment

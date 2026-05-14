@@ -73,21 +73,9 @@ export function listCalibrationLogs(): CalibrationLogEntry[] {
   return entries;
 }
 
-export function getCalibrationLog(week: string): CalibrationLogEntry | null {
-  if (!FILENAME_RE.test(`${week}.md`)) return null;
-  const file = path.join(CALIBRATION_DIR, `${week}.md`);
-  try {
-    const stat = fs.statSync(file);
-    if (!stat.isFile()) return null;
-    const contents = fs.readFileSync(file, "utf-8");
-    return {
-      week,
-      filename: `${week}.md`,
-      modified_at: stat.mtime.toISOString(),
-      size_bytes: stat.size,
-      contents,
-    };
-  } catch {
-    return null;
-  }
-}
+// `getCalibrationLog(week)` was here through 2026-05-11; removed in the
+// Phase 3 zombie-deletion pass because the per-week /calibration/:week
+// route retired on the same date (now 308s to /accuracy#calibration-log).
+// `listCalibrationLogs` above remains the only loader — /accuracy renders
+// the full list inline. Restore via git history if a per-week
+// surface ever lands again.
