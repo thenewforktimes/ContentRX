@@ -28,7 +28,6 @@ import hmac
 import json
 import os
 import sys
-import traceback
 from http.server import BaseHTTPRequestHandler
 
 # content_checker is the Python engine package at the monorepo root
@@ -52,6 +51,36 @@ from content_checker.api_utils import (  # noqa: E402
 from content_checker.moments import detect_moment  # noqa: E402
 
 
+# 2 MB ceiling on POST body. Rewrite-document is the longest legitimate
+# payload (full UI copy + metadata) and rarely tops ~100 KB — 2 MB gives
+# 20× headroom and still caps the OOM-DoS vector if INTERNAL_EVAL_SECRET
+# ever leaks. (Audit M1, 2026-05-13.)
+MAX_BODY_BYTES = 2_000_000
+
+
+def _log_safe(label: str, exc: BaseException) -> None:
+    """Hand-shaped structured stderr log — no traceback frames.
+
+    Replaces `traceback.print_exc()` patterns. Tracebacks can capture
+    user text via frame locals when SDK error subclasses serialise the
+    request payload into their own attributes (Anthropic SDK does this
+    on some error classes). Shaping the log to `{kind, label, message}`
+    keeps the leak surface bounded; the message is truncated to 200
+    chars so smuggling user content via `str(exc)` is impractical.
+    Mirrors `src/lib/safe-error-log.ts` on the TS side. (Audit M2.)
+    """
+    print(
+        json.dumps(
+            {
+                "kind": exc.__class__.__name__,
+                "label": label,
+                "message": str(exc)[:200],
+            }
+        ),
+        file=sys.stderr,
+    )
+
+
 class handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         expected = os.environ.get("INTERNAL_EVAL_SECRET", "")
@@ -71,6 +100,21 @@ class handler(BaseHTTPRequestHandler):
 
         try:
             length = int(self.headers.get("content-length", "0"))
+        except ValueError:
+            return self._respond(400, {"error": "Invalid Content-Length"})
+
+        if length > MAX_BODY_BYTES:
+            # Reject before reading. Even with a valid INTERNAL_EVAL_SECRET
+            # (e.g. a leaked or in-rotation secret), an oversized body
+            # would be read into memory before json.loads short-circuits,
+            # OOM-ing the Vercel function. 413 lets /api/check distinguish
+            # "too big" from generic engine failure.
+            return self._respond(
+                413,
+                {"error": f"Request body exceeds {MAX_BODY_BYTES} bytes"},
+            )
+
+        try:
             raw = self.rfile.read(length).decode("utf-8") if length > 0 else ""
             body = json.loads(raw) if raw else {}
         except (ValueError, json.JSONDecodeError) as exc:
@@ -134,8 +178,8 @@ class handler(BaseHTTPRequestHandler):
                 return self._respond(503, {"error": str(exc)}, retry_after=30)
             except RequestTimeoutError as exc:
                 return self._respond(504, {"error": str(exc)})
-            except Exception:  # noqa: BLE001
-                traceback.print_exc()
+            except Exception as exc:  # noqa: BLE001
+                _log_safe("suggest_fix failed", exc)
                 return self._respond(500, {"error": "Suggestion failed"})
 
             return self._respond(
@@ -170,8 +214,8 @@ class handler(BaseHTTPRequestHandler):
                 return self._respond(503, {"error": str(exc)}, retry_after=30)
             except RequestTimeoutError as exc:
                 return self._respond(504, {"error": str(exc)})
-            except Exception:  # noqa: BLE001
-                traceback.print_exc()
+            except Exception as exc:  # noqa: BLE001
+                _log_safe("rewrite_document failed", exc)
                 return self._respond(500, {"error": "Rewrite failed"})
 
             return self._respond(
@@ -215,8 +259,8 @@ class handler(BaseHTTPRequestHandler):
                 return self._respond(503, {"error": str(exc)}, retry_after=30)
             except RequestTimeoutError as exc:
                 return self._respond(504, {"error": str(exc)})
-            except Exception:  # noqa: BLE001
-                traceback.print_exc()
+            except Exception as exc:  # noqa: BLE001
+                _log_safe("classify failed", exc)
                 return self._respond(500, {"error": "Classification failed"})
 
             return self._respond(
@@ -268,13 +312,17 @@ class handler(BaseHTTPRequestHandler):
             # Per-stage timeout exhausted. Lets /api/check distinguish
             # "engine slow" from "engine broken."
             return self._respond(504, {"error": str(exc)})
-        except Exception:  # noqa: BLE001
-            # Keep the full traceback in stderr (Vercel captures it,
-            # Sentry ingests from there) but return a generic message
-            # to the caller. The exception string can include file
-            # paths, model names, Anthropic error bodies, or truncated
-            # LLM output — none of which the TS caller should surface.
-            # (ENG-H-01 from 2026-04-22 audit.)
+        except Exception as exc:  # noqa: BLE001
+            # Log via the safe shaper (kind + truncated message, no
+            # frame locals) and return a generic message to the caller.
+            # The exception string can include file paths, model names,
+            # Anthropic error bodies, or truncated LLM output — none of
+            # which the TS caller should surface. (ENG-H-01 from
+            # 2026-04-22 audit; M2 from 2026-05-13 audit upgraded the
+            # in-process shaping from `traceback.print_exc()` to
+            # `_log_safe`, since SDK error subclasses sometimes
+            # serialise the request payload into their own attributes
+            # and the full traceback exposed those via frame locals.)
             #
             # PR-193/PR-194 added internal-only `detail` + `traceback`
             # fields here as diagnostic aids during the prod 502
@@ -284,7 +332,7 @@ class handler(BaseHTTPRequestHandler):
             # opaque error class again, reintroduce them as a 1-line
             # diagnostic hotfix per the
             # `feedback_diagnostic_detail_injection` memory pattern.
-            traceback.print_exc()
+            _log_safe("evaluate failed", exc)
             return self._respond(500, {"error": "Evaluation failed"})
 
         return self._respond(

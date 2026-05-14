@@ -636,7 +636,11 @@ async function notifyQuotaWarning(args: {
       dedupeKey: `warning:${args.userId}:${currentMonth()}`,
     });
   } catch (err) {
-    console.warn("quota-warning email failed", err);
+    // Audit M7 (2026-05-13): use logSafeError, not console.warn.
+    // Resend SDK errors can carry the rendered email subject (which
+    // includes the user's quota count) on `.message`/`.cause` —
+    // logSafeError truncates and drops transitive props.
+    logSafeError("quota-warning email failed", err);
   }
 }
 
@@ -662,7 +666,8 @@ async function notifyQuotaExhausted(args: {
       dedupeKey: `exhausted:${args.userId}:${currentMonth()}`,
     });
   } catch (err) {
-    console.warn("quota-exhausted email failed", err);
+    // Audit M7 (2026-05-13): see quota-warning equivalent above.
+    logSafeError("quota-exhausted email failed", err);
   }
 }
 

@@ -64,18 +64,25 @@ if [ -d "${SUBSTRATE_DIR}" ]; then
 fi
 
 echo "[substrate] Cloning ${SUBSTRATE_REPO} into ${SUBSTRATE_DIR}..."
-# URL form: `https://oauth2:TOKEN@github.com/...`.
+# Pass the token via `git -c http.extraheader=...` instead of
+# embedding it in the clone URL. Audit L2 (2026-05-13): the previous
+# `https://oauth2:TOKEN@github.com/...` form put the token on the
+# spawned git process's argv (visible to `ps`, process-tree dumps,
+# and shell tracing) AND persisted it into the cloned repo's
+# `.git/config` as the `origin` remote URL. The `-c` flag is
+# per-invocation only — the resulting .git/config carries a plain
+# HTTPS remote, so subsequent `git -C "${SUBSTRATE_DIR}" fetch`
+# calls (if any) won't carry stale credentials either. Vercel's
+# build sandbox limits practical exposure, but this matches the
+# hygiene the project applies elsewhere for secret-rotation
+# discipline (CLAUDE.md "Secret rotation ceremony").
 #
-# Why oauth2 specifically: GitHub treats a few usernames specially.
-# `x-access-token:TOKEN` is the auth path for GitHub App installation
-# tokens — using it with a fine-grained user PAT triggers App-specific
-# permission checks that fail with "Write access to repository not
-# granted" even on read-only clones. `oauth2:TOKEN` is the standard
-# username-as-placeholder form: any string works as the username when
-# using a PAT as the password, and `oauth2` is the conventional choice
-# that works for both fine-grained and classic PATs.
-git clone --depth 1 --quiet \
-  "https://oauth2:${SUBSTRATE_TOKEN}@${SUBSTRATE_REPO}" \
+# `Authorization: Bearer` works with fine-grained GitHub PATs, which
+# is what the project doc above recommends. For classic PATs use
+# `Authorization: token ${SUBSTRATE_TOKEN}` instead.
+git -c http.extraheader="Authorization: Bearer ${SUBSTRATE_TOKEN}" \
+  clone --depth 1 --quiet \
+  "https://${SUBSTRATE_REPO}" \
   "${SUBSTRATE_DIR}"
 
 if [ ! -f "${SUBSTRATE_FILE}" ]; then

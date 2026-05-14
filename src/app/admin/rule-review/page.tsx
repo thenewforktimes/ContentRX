@@ -191,6 +191,7 @@ export default async function AdminRuleReviewPage({ searchParams }: PageProps) {
                     <Link
                       href={`https://docs.contentrx.io/model/standards/${r.standardId}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="underline underline-offset-2"
                     >
                       {r.standardId}

@@ -32,6 +32,10 @@
 import { envelope } from "@/lib/api-envelope";
 import { resolveAuth } from "@/lib/auth";
 import { corsJson, corsPreflight } from "@/lib/cors";
+import {
+  detectSensitivePatterns,
+  sensitiveDataErrorMessage,
+} from "@/lib/pii-screen";
 import { RationaleFeedbackRequestSchema } from "@/lib/rationale-feedback";
 import { checkRateLimit } from "@/lib/ratelimit";
 import { teamScope } from "@/lib/team-scope";
@@ -89,6 +93,28 @@ export async function POST(req: Request) {
     note,
     source,
   } = parsed.data;
+
+  // PII pre-screen — every text-shaped field gets checked before
+  // persistence. Audit M3 (2026-05-13): `note` was previously
+  // unscreened and `original_value`/`corrected_value` are free-text
+  // up to 128 chars per the schema; in practice they carry moment
+  // names but a buggy client could land a credit card or SSN here.
+  // Mirrors the pattern in /api/violations/adjust.
+  const candidates = [
+    note ?? "",
+    original_value,
+    corrected_value ?? "",
+  ].join("\n");
+  const sensitivePatterns = detectSensitivePatterns(candidates);
+  if (sensitivePatterns.length > 0) {
+    return json(
+      {
+        error: sensitiveDataErrorMessage(sensitivePatterns),
+        patterns: sensitivePatterns,
+      },
+      { status: 400 },
+    );
+  }
 
   // Every team-scoped table writer uses teamScope(auth) so readers can
   // join on a non-null team_id. The free/Pro path used to land NULL

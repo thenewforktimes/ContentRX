@@ -115,9 +115,18 @@ export async function POST(req: Request) {
     const db = getDb();
 
     // Server-side correlation: recover substrate context by joining
-    // against violations on (userId, textHash). When correlation
-    // misses, the bucket axes stay null (Robert's /admin triage can
-    // backfill at review time).
+    // against violations on (userId, textHash). Audit H2 (2026-05-13):
+    // correlation is now a STRICT provenance gate — we refuse to
+    // insert when there's no matching violation row for this user.
+    // The customer-supplied `suggestion` and `issue` strings ride
+    // through this endpoint without server-side verification (the
+    // engine never persists plaintext suggestions per SECURITY.md,
+    // so we can't hash-compare). Strict correlation tightens the
+    // boundary: every candidate row must trace to an engine event
+    // this user actually triggered, closing the "spam the corpus
+    // with arbitrary text claiming it came from the engine" vector.
+    // The Flag-for-Review consent flow remains the only path for
+    // customer-authored strings into substrate (ADR 2026-05-11).
     const correlated = await db
       .select({
         moment: schema.violations.moment,
@@ -134,11 +143,19 @@ export async function POST(req: Request) {
       .orderBy(desc(schema.violations.createdAt))
       .limit(1);
 
-    const substrate = correlated[0] ?? {
-      moment: null,
-      contentType: null,
-      standardId: null,
-    };
+    if (correlated.length === 0) {
+      // No matching violation for this (user, textHash). Either the
+      // client is sending stale UI state, replaying after a wipe, or
+      // attempting to plant unverified content. Refuse without
+      // raising a 5xx — this is a caller-state problem, not a server
+      // failure.
+      return json(
+        envelope({ recorded: false, reason: "no_correlated_violation" }),
+        { status: 422 },
+      );
+    }
+
+    const substrate = correlated[0]!;
 
     await db.insert(schema.suggestionCandidates).values({
       moment: substrate.moment,
@@ -155,11 +172,15 @@ export async function POST(req: Request) {
 
     return json(envelope({ recorded: true }), { status: 201 });
   } catch (err) {
+    // Audit H2 (2026-05-13): return 500 on real DB failure so retries
+    // and alerting work. The client-side clipboard write already
+    // succeeded — the customer's UX doesn't depend on this — but
+    // CLAUDE.md "no silently-swallowed errors" wins over the previous
+    // 200-with-recorded:false shape. Sentry catches via logSafeError.
     logSafeError("copy-event candidate insert failed", err);
-    // Non-fatal: the customer's clipboard write already succeeded
-    // client-side. This endpoint exists for substrate accounting,
-    // not for the customer's UX. Return 200 so the client doesn't
-    // retry or surface an error.
-    return json(envelope({ recorded: false }));
+    return json(
+      { error: "Could not record calibration signal" },
+      { status: 500 },
+    );
   }
 }

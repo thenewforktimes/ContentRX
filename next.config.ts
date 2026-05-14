@@ -28,6 +28,18 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=(), payment=(self)",
   },
   { key: "X-Frame-Options", value: "DENY" },
+  // Audit L3 (2026-05-13): make HSTS explicit. Vercel injects HSTS by
+  // default on contentrx.io, so this is belt-and-suspenders rather
+  // than a new control — but pinning the policy in code means it
+  // survives any future deploy-target change. Matches the value
+  // promised in SECURITY.md's "Transport security" section
+  // (max-age=63072000 = 2 years; preload eligible). Note: `preload`
+  // is an opt-in to the browser preload list at hstspreload.org —
+  // keep it in only if domain is already (or about to be) submitted.
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
+  },
 ];
 
 const nextConfig: NextConfig = {

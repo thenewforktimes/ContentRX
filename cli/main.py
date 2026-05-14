@@ -130,6 +130,18 @@ def _load_batch_file(path: str) -> list[ContentItem]:
 
     if not p.exists():
         raise FileNotFoundError(f"Batch file not found: {path}")
+    # Audit L8 (2026-05-13): reject symlinks explicitly. The engine
+    # CLI is a local-dev tool with no privilege boundary (the user
+    # owns their own shell), so this is mostly hygiene — but if the
+    # CLI is ever wrapped by a multi-tenant runner the symlink-
+    # follow becomes a path-traversal vector. `is_symlink()` runs
+    # before `is_file()` so the message clearly names symlinks
+    # rather than the generic "not a regular file" fallback.
+    if p.is_symlink():
+        raise ValueError(
+            f"Batch path is a symlink, which is rejected for safety: {path}. "
+            f"Resolve the symlink yourself and pass the target path directly."
+        )
     if not p.is_file():
         raise ValueError(f"Batch path is not a regular file: {path}")
 

@@ -26,6 +26,7 @@ from content_checker.api_utils import (
     LLMResponse,
     TIMEOUT_SUGGEST_FIX,
     create_message,
+    sanitize_label,
 )
 
 
@@ -119,17 +120,28 @@ def _build_system_prompt(
     # client surface that strips substrate before forwarding), the
     # rewriter relies on `issue` + `current_suggestion` (in the user
     # prompt) as the anchor.
+    #
+    # Audit L5 (2026-05-13): sanitize `rule` and `issue` before
+    # embedding. These come through the JSON body of /api/evaluate,
+    # which is HMAC-gated but the body itself is caller-trusted past
+    # the HMAC. `sanitize_label` strips control chars (no newline
+    # injection that could break the prompt frame) and truncates to
+    # 200 chars (token-cost cap). `standard_id` is regex-shaped from
+    # the standards library and not sanitized — it's a stable internal
+    # ID, not free text.
+    safe_rule = sanitize_label(rule) if rule else ""
+    safe_issue = sanitize_label(issue) if issue else ""
     if standard_id:
         rule_line = (
-            f"Standard: {standard_id} — {rule.strip()}\n"
-            if rule
+            f"Standard: {standard_id} — {safe_rule}\n"
+            if safe_rule
             else f"Standard: {standard_id}\n"
         )
-    elif rule:
-        rule_line = f"Rule: {rule.strip()}\n"
+    elif safe_rule:
+        rule_line = f"Rule: {safe_rule}\n"
     else:
         rule_line = ""
-    issue_line = f"Specific issue: {issue.strip()}\n" if issue else ""
+    issue_line = f"Specific issue: {safe_issue}\n" if safe_issue else ""
 
     return (
         "You are ContentRX, a content-design assistant. Your job right now "
@@ -168,8 +180,16 @@ def _build_user_prompt(
         wrap_user_text(text),
     ]
     if current_suggestion:
-        parts.append("")
-        parts.append(f"Previous hint from the engine: {current_suggestion}")
+        # Audit L5 (2026-05-13): sanitize before embedding. The engine
+        # populates this on the normal /api/check → /api/evaluate
+        # round-trip, but the field is JSON-body input past the HMAC
+        # gate, so a misbehaving caller (or a leaked-secret attacker)
+        # can supply arbitrary text. sanitize_label strips control
+        # chars + truncates.
+        safe_hint = sanitize_label(current_suggestion)
+        if safe_hint:
+            parts.append("")
+            parts.append(f"Previous hint from the engine: {safe_hint}")
     return "\n".join(parts)
 
 

@@ -12,9 +12,10 @@ import { optionalEnv } from "./require-env";
 
 let _redis: Redis | null = null;
 let _ratelimit: Ratelimit | null = null;
+let _waitlistRatelimit: Ratelimit | null = null;
 
-function getRatelimit(): Ratelimit {
-  if (_ratelimit) return _ratelimit;
+function getRedis(): Redis {
+  if (_redis) return _redis;
 
   // Accept both naming conventions:
   //   - UPSTASH_REDIS_REST_* — native Upstash naming (standalone Upstash account)
@@ -42,14 +43,36 @@ function getRatelimit(): Ratelimit {
   }
 
   _redis = new Redis({ url, token });
+  return _redis;
+}
+
+function getRatelimit(): Ratelimit {
+  if (_ratelimit) return _ratelimit;
   _ratelimit = new Ratelimit({
-    redis: _redis,
+    redis: getRedis(),
     limiter: Ratelimit.slidingWindow(60, "60 s"),
     prefix: "ratelimit:check",
     analytics: true,
   });
-
   return _ratelimit;
+}
+
+// Waitlist limiter — separate prefix so the per-user check budget at
+// `ratelimit:check` is unrelated. 5 signups per hour per IP is generous
+// for legitimate geo-blocked traffic (a visitor submits once, maybe
+// twice if they typo the email), but caps the obvious abuse vector:
+// Resend billing DoS via mass-spammed signups rotating email addresses
+// past the per-(email, day) Redis dedupe in the route. (Audit H1,
+// 2026-05-13.)
+function getWaitlistRatelimit(): Ratelimit {
+  if (_waitlistRatelimit) return _waitlistRatelimit;
+  _waitlistRatelimit = new Ratelimit({
+    redis: getRedis(),
+    limiter: Ratelimit.slidingWindow(5, "1 h"),
+    prefix: "ratelimit:waitlist",
+    analytics: true,
+  });
+  return _waitlistRatelimit;
 }
 
 export type RatelimitResult = {
@@ -90,6 +113,40 @@ export async function enforceRateLimit(
   return new Response(
     JSON.stringify({
       error: "Rate limit exceeded",
+      retry_after_seconds: retryAfterSeconds,
+    }),
+    {
+      status: 429,
+      headers: {
+        "content-type": "application/json",
+        "retry-after": String(retryAfterSeconds),
+      },
+    },
+  );
+}
+
+/**
+ * IP-based limiter for /api/waitlist. The route is intentionally
+ * unauthenticated (geo-blocked visitors must reach it), so we can't
+ * key on a user id — `ip` here comes from the first hop of
+ * `x-forwarded-for` (the visitor-facing IP set by Vercel's edge). The
+ * `enforceRateLimit` shape is preserved: returns a 429 Response on
+ * exhaust or `null` to proceed.
+ *
+ * Bucket: 5 / hour. Real users submit once or twice; this gives them
+ * runway while shutting down trivial spam loops.
+ */
+export async function enforceWaitlistRateLimit(
+  ip: string,
+): Promise<Response | null> {
+  const rl = getWaitlistRatelimit();
+  const { success, reset } = await rl.limit(ip);
+  if (success) return null;
+  const retryAfterSeconds = Math.max(0, Math.ceil((reset - Date.now()) / 1000));
+  return new Response(
+    JSON.stringify({
+      error:
+        "Too many waitlist submissions from this network. Try again later, or email hello@contentrx.io.",
       retry_after_seconds: retryAfterSeconds,
     }),
     {

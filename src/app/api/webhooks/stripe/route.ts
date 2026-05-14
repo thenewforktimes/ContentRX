@@ -10,15 +10,27 @@
  * updates are last-write-wins, and the side effects (welcome email,
  * upgrade analytics, payment-failed email) each carry their own
  * per-(userId, subscription | invoice) Redis dedupe. So Stripe's
- * retries are safe to run end-to-end; we don't need (and used to
- * have a buggy version of) a top-level event-id dedupe.
+ * retries are safe to run end-to-end even without top-level dedupe.
  *
- * The earlier top-level dedupe set the event-id key BEFORE running
- * any work. When a handler crashed mid-flight (DB outage, Stripe API
- * timeout), we returned 500 → Stripe retried → the retry saw the
- * key and short-circuited as `deduplicated: true` without re-running
- * the handler, silently dropping the upsert. Matches the same fix
- * the Clerk webhook landed on 2026-04-25.
+ * Top-level dedupe — AFTER-SUCCESS variant (audit M8, 2026-05-13):
+ *   - On entry, look up `webhook:stripe:event:<id>` in Redis. If
+ *     present, the event was fully handled once before — short-circuit
+ *     and return `deduplicated: true`. This saves the per-handler
+ *     dedupe-key churn on Stripe retries that arrived after a
+ *     successful prior run.
+ *   - SET the key ONLY after the handler returns success. A handler
+ *     crash leaves the key unset, so Stripe's retry runs the handlers
+ *     again from scratch — which is safe because each is idempotent.
+ *     This is the inverse of the older "claim-before-work" pattern
+ *     that caused silent permanent dropped writes (rolled back
+ *     2026-04-25): claiming after success means a crashed run never
+ *     poisons the retry.
+ *   - TTL 7 days, well past Stripe's ~3-day retry exhaustion window.
+ *
+ * Net behaviour: defense-in-depth on top of per-handler idempotency.
+ * If a future handler is added and the author forgets the per-action
+ * dedupe key, the top-level dedupe still catches retries — closing
+ * the "design-by-discipline" gap noted in the M8 finding.
  *
  * Handlers (locked per BUILD_PLAN §8):
  *   - checkout.session.completed       → link subscription, set plan
@@ -118,13 +130,17 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  // No top-level event-id dedupe. Each handler's DB writes are
-  // idempotent and the side effects (welcome email, upgrade
-  // analytics, payment-failed email) carry their own per-action
-  // Redis dedupe keys. The header comment block has the longer
-  // rationale; the short version is that pre-claiming the event-id
-  // key turned mid-handler crashes into silent permanent failures
-  // on retry.
+  // Top-level event-id dedupe — after-success variant. The full
+  // rationale (and the history of why the pre-claim variant was
+  // rolled back) is in the header comment block at the top of this
+  // file. Short version: SET happens only on success → a crashed
+  // run never poisons the retry path.
+  const dedupeKey = `webhook:stripe:event:${event.id}`;
+  const redis = getRedis();
+  const alreadyHandled = await redis.get<string>(dedupeKey);
+  if (alreadyHandled) {
+    return NextResponse.json({ received: true, deduplicated: true });
+  }
 
   try {
     switch (event.type) {
@@ -158,7 +174,22 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
     // 500 → Stripe retries, which is what we want for transient failures
     // (DB glitch, Stripe API timeout mid-handler). For a permanent
     // failure the retry will exhaust and Stripe will log it.
+    // The dedupe key is intentionally NOT set here — leaving it unset
+    // ensures the retry runs the full handler chain again. (Audit M8.)
     return NextResponse.json({ error: "Handler failed" }, { status: 500 });
+  }
+
+  // Handler returned cleanly — mark the event handled so subsequent
+  // Stripe retries for the same event.id short-circuit at the top.
+  // TTL = 7 days, comfortably beyond Stripe's ~3-day retry window.
+  // The SET failure is non-fatal: if Redis is briefly unreachable,
+  // skipping the mark just means a retry will re-run the handlers
+  // (each individually idempotent), which is the same posture as
+  // before this dedupe layer existed. (Audit M8, 2026-05-13.)
+  try {
+    await redis.set(dedupeKey, "1", { ex: 60 * 60 * 24 * 7 });
+  } catch (err) {
+    logSafeError("[stripe-webhook] dedupe-key SET failed", err);
   }
 
   return NextResponse.json({ received: true });
