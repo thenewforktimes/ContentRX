@@ -41,13 +41,13 @@ export default function DashboardError({
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col justify-center px-6 py-20">
       <div className="flex flex-col gap-4">
-        <Eyebrow>Dashboard issue</Eyebrow>
+        <Eyebrow>500</Eyebrow>
         <h1 className="text-3xl font-semibold tracking-tight text-strong">
           Something on the dashboard didn&rsquo;t load
         </h1>
         <p className="text-base text-default">
           The error is logged. Refresh to retry. If it keeps happening,
-          signing out and back in clears most session-state issues.
+          try signing back in to clear stale session state.
         </p>
         <div className="mt-2 flex flex-wrap gap-3">
           <button

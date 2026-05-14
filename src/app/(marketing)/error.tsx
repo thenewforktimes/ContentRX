@@ -40,7 +40,7 @@ export default function MarketingError({
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col justify-center px-6 py-20">
       <div className="flex flex-col gap-4">
-        <Eyebrow>Something broke</Eyebrow>
+        <Eyebrow>500</Eyebrow>
         <h1 className="text-3xl font-semibold tracking-tight text-strong">
           This page didn&rsquo;t load cleanly
         </h1>
