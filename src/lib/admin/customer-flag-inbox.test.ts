@@ -58,7 +58,7 @@ async function seedFlag(
     teamId: userId,
     text: "Click here",
     textHash: "hash_" + id,
-    flagReason: "doesnt_match_experience",
+    customerNote: "test note",
     source: "dashboard",
     ...overrides,
   });

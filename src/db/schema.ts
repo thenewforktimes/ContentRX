@@ -1058,28 +1058,14 @@ export const customerFlaggedReviews = pgTable(
     verdict: text("verdict", {
       enum: ["pass", "violation", "review_recommended"],
     }),
-    // What the customer is asking us to look at. Three customer-shaped
-    // axes (per the dashboard audit + Robo's spec):
-    //
-    //   - doesnt_match_experience    — the situation detector picked
-    //                                  the wrong context for the copy
-    //   - lacks_context              — the engine couldn't see something
-    //                                  it needed to make a sensible call
-    //   - not_clear_helpful_concise  — the suggestion text itself isn't
-    //                                  good
-    //
-    // The DB column is plain `text` (drizzle enums are TS-only), so
-    // historical rows from the pre-audit flag vocabulary still read
-    // back fine — the admin inbox falls back gracefully on unknown
-    // values via humanizeFlagReason().
-    flagReason: text("flag_reason", {
-      enum: [
-        "doesnt_match_experience",
-        "lacks_context",
-        "not_clear_helpful_concise",
-      ],
-    }).notNull(),
-    customerNote: text("customer_note"),
+    // What the customer is asking ContentRX to look at — free-text
+    // written in the modal. Required at the API boundary (the modal
+    // gates submit until non-empty) per the 2026-05-13 flag-for-review
+    // simplification: the radio-button reason taxonomy was retired
+    // because the customer's own words are higher-signal calibration
+    // input than a forced category. The content designer categorises
+    // at review time instead.
+    customerNote: text("customer_note").notNull(),
     source: text("source", {
       enum: ["dashboard", "plugin", "cli", "action", "lsp", "mcp"],
     }).notNull(),

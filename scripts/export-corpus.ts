@@ -80,7 +80,6 @@ async function loadPendingRows(): Promise<ExportableRow[]> {
       standardId: sql<string | null>`null`.as("standard_id"),
       moment: schema.customerFlaggedReviews.moment,
       text: schema.customerFlaggedReviews.text,
-      flagReason: schema.customerFlaggedReviews.flagReason,
       customerNote: schema.customerFlaggedReviews.customerNote,
       sourceUserId: schema.customerFlaggedReviews.userId,
       sourceTeamId: schema.customerFlaggedReviews.teamId,
@@ -99,7 +98,12 @@ async function loadPendingRows(): Promise<ExportableRow[]> {
     standardId: row.standardId,
     moment: row.moment,
     text: row.text,
-    overrideReasonCode: row.flagReason,
+    // overrideReasonCode is null for customer-flag exports as of
+    // 2026-05-13. The pre-existing flag_reason taxonomy was retired
+    // (customer's own words via customerNote are higher-signal input).
+    // overrideReasonCode remains in the ExportableRow shape because
+    // violation-override exports populate it from a different table.
+    overrideReasonCode: null,
     overrideReason: row.customerNote,
     sourceUserId: row.sourceUserId,
     sourceTeamId: row.sourceTeamId,

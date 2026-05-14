@@ -113,7 +113,7 @@ async function seedFullUser(idPrefix: string): Promise<string> {
     teamId: userId,
     text: "consented sample",
     textHash: `hash_${idPrefix}`,
-    flagReason: "doesnt_match_experience",
+    customerNote: "test note (consented sample)",
     source: "dashboard",
   });
 
