@@ -33,7 +33,6 @@ import {
   flagInboxCounts,
   loadFlagInbox,
   triageFlag,
-  type FlagReason,
   type FlagStatus,
 } from "@/lib/admin/customer-flag-inbox";
 import { isContentRXAdmin } from "@/lib/graduation";
@@ -53,29 +52,6 @@ const STATUS_LABEL: Record<FlagStatus, string> = {
   addressed_patch: "Fixed in engine",
   not_actionable: "Not actionable",
 };
-
-const REASON_LABEL: Record<FlagReason, string> = {
-  doesnt_match_experience: "Doesn't match the experience",
-  lacks_context: "Lacks context",
-  not_clear_helpful_concise: "Not clear, helpful, or concise",
-};
-
-/**
- * Defensive label lookup. Pre-audit rows in the DB carry the legacy
- * flag_reason enum values (wrong_verdict, etc.); after the audit,
- * TS narrows to the three new values but the text column could still
- * contain anything historical. Falls back to a sentence-cased rewrite
- * for unknowns so legacy rows render without crashing.
- */
-function reasonLabel(value: string): string {
-  if (value in REASON_LABEL) {
-    return REASON_LABEL[value as FlagReason];
-  }
-  const spaced = value.replace(/_/g, " ").trim();
-  return spaced.length > 0
-    ? spaced.charAt(0).toUpperCase() + spaced.slice(1)
-    : value;
-}
 
 // Six-tone Pill primitive doesn't include purple; addressed_taxonomy
 // (rule promoted into the taxonomy) shares "info" semantics with
@@ -202,7 +178,6 @@ export default async function AdminCustomerFlagsPage({
                   <Pill tone={STATUS_PILL_TONE[row.status]}>
                     {STATUS_LABEL[row.status]}
                   </Pill>
-                  <Pill tone="neutral">{reasonLabel(row.flagReason)}</Pill>
                   {row.verdict && (
                     <span className="text-quiet">
                       Verdict: {row.verdict}

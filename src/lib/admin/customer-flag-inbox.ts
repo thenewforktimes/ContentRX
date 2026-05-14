@@ -30,11 +30,6 @@ export type FlagStatus =
   | "addressed_patch"
   | "not_actionable";
 
-export type FlagReason =
-  | "doesnt_match_experience"
-  | "lacks_context"
-  | "not_clear_helpful_concise";
-
 export interface FlagInboxRow {
   id: string;
   userId: string | null;
@@ -44,8 +39,7 @@ export interface FlagInboxRow {
   contentType: string | null;
   moment: string | null;
   verdict: string | null;
-  flagReason: FlagReason;
-  customerNote: string | null;
+  customerNote: string;
   source: string;
   status: FlagStatus;
   consentRecordedAt: Date;
@@ -87,7 +81,6 @@ export async function loadFlagInbox(
       contentType: schema.customerFlaggedReviews.contentType,
       moment: schema.customerFlaggedReviews.moment,
       verdict: schema.customerFlaggedReviews.verdict,
-      flagReason: schema.customerFlaggedReviews.flagReason,
       customerNote: schema.customerFlaggedReviews.customerNote,
       source: schema.customerFlaggedReviews.source,
       status: schema.customerFlaggedReviews.status,
@@ -106,7 +99,6 @@ export async function loadFlagInbox(
 
   return rows.map((r) => ({
     ...r,
-    flagReason: r.flagReason as FlagReason,
     status: r.status as FlagStatus,
   }));
 }

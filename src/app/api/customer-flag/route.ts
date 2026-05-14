@@ -68,19 +68,12 @@ const RequestSchema = z.object({
   // from a check that contained one. Null when the flag was on a pass
   // verdict (the customer thinks a finding SHOULD have fired).
   violation_id: z.string().min(1).max(64).optional(),
-  // What the customer is asking us to look at. Three customer-shaped
-  // axes per the dashboard audit:
-  //   - doesnt_match_experience    — wrong context for this copy
-  //   - lacks_context              — engine missed something
-  //   - not_clear_helpful_concise  — the suggestion text is bad
-  // Triage routing on the admin side reads this as a hint, not a
-  // hard route — the founder still picks the resolution per row.
-  flag_reason: z.enum([
-    "doesnt_match_experience",
-    "lacks_context",
-    "not_clear_helpful_concise",
-  ]),
-  customer_note: z.string().min(1).max(2000).optional(),
+  // What the customer is asking ContentRX to look at — free-text from
+  // the modal. Required (2026-05-13): the radio-button reason taxonomy
+  // was retired in favour of the customer's own words because the
+  // content designer's triage reads better from prose than from a
+  // forced category. The modal gates submit until this is non-empty.
+  customer_note: z.string().min(1).max(2000),
   source: z
     .enum(["dashboard", "plugin", "cli", "action", "lsp", "mcp"])
     .default("dashboard"),
@@ -154,8 +147,7 @@ export async function POST(req: Request) {
         moment: parsed.data.moment ?? null,
         verdict: parsed.data.verdict ?? null,
         violationId: parsed.data.violation_id ?? null,
-        flagReason: parsed.data.flag_reason,
-        customerNote: parsed.data.customer_note ?? null,
+        customerNote: parsed.data.customer_note,
         source: parsed.data.source,
         // Audit trail: stamp consent at the write site instead of relying
         // on the schema's defaultNow(). If the default is ever dropped

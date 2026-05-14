@@ -94,3 +94,7 @@ _private/
 # same at build time using SUBSTRATE_TOKEN. See scripts/fetch-substrate.sh.
 src/content_checker/standards/private/
 
+
+# Drizzle-kit generated output (project uses db:push, not committed migrations
+# per CLAUDE.md "Database" section).
+drizzle/

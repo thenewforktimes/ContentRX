@@ -8,8 +8,8 @@
  *   - Lists only rows belonging to the signed-in user. No team-scoped
  *     bleed. No admin-tier echoes.
  *   - Shows the consent context for every row: when shared, what
- *     reason the customer picked, the source surface, and the current
- *     triage status.
+ *     the customer wrote about what was off, the source surface, and
+ *     the current triage status.
  *   - No aggregate stats above the list that could leak content
  *     between customers.
  *   - Per-card "Remove this check" button that calls
@@ -38,12 +38,6 @@ import { RevokeButton } from "./revoke-button";
 
 export const metadata = {
   title: "Shared checks · ContentRX",
-};
-
-const REASON_LABEL: Record<string, string> = {
-  doesnt_match_experience: "Did not match the experience",
-  lacks_context: "Lacked context",
-  not_clear_helpful_concise: "Not clear, helpful, or concise",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -91,7 +85,6 @@ export default async function SharedChecksPage() {
       contentType: schema.customerFlaggedReviews.contentType,
       moment: schema.customerFlaggedReviews.moment,
       verdict: schema.customerFlaggedReviews.verdict,
-      flagReason: schema.customerFlaggedReviews.flagReason,
       customerNote: schema.customerFlaggedReviews.customerNote,
       source: schema.customerFlaggedReviews.source,
       consentRecordedAt: schema.customerFlaggedReviews.consentRecordedAt,
@@ -138,8 +131,6 @@ export default async function SharedChecksPage() {
       ) : (
         <ul className="flex flex-col gap-3">
           {rows.map((row) => {
-            const reason =
-              REASON_LABEL[row.flagReason] ?? row.flagReason;
             const status = STATUS_LABEL[row.status] ?? row.status;
             const tone = STATUS_TONE[row.status] ?? "stone";
             return (
@@ -164,15 +155,9 @@ export default async function SharedChecksPage() {
                 </p>
                 <dl className="mt-3 grid grid-cols-1 gap-2 text-xs text-default sm:grid-cols-2">
                   <div>
-                    <dt className="font-medium text-quiet">Reason</dt>
-                    <dd>{reason}</dd>
+                    <dt className="font-medium text-quiet">What you wrote</dt>
+                    <dd className="italic">{row.customerNote}</dd>
                   </div>
-                  {row.customerNote && (
-                    <div>
-                      <dt className="font-medium text-quiet">Your note</dt>
-                      <dd className="italic">{row.customerNote}</dd>
-                    </div>
-                  )}
                   {row.moment && (
                     <div>
                       <dt className="font-medium text-quiet">Moment</dt>

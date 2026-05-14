@@ -17,7 +17,7 @@
  * within each source, with a per-source cap. The UI groups them.
  */
 
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, desc, ilike, or, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 
 const PER_SOURCE_LIMIT = 8;
@@ -125,7 +125,6 @@ export async function searchAdmin(rawQuery: string): Promise<SearchResults> {
       id: schema.customerFlaggedReviews.id,
       text: schema.customerFlaggedReviews.text,
       textHash: schema.customerFlaggedReviews.textHash,
-      flagReason: schema.customerFlaggedReviews.flagReason,
       customerNote: schema.customerFlaggedReviews.customerNote,
       verdict: schema.customerFlaggedReviews.verdict,
       status: schema.customerFlaggedReviews.status,
@@ -138,13 +137,6 @@ export async function searchAdmin(rawQuery: string): Promise<SearchResults> {
         : or(
             ilike(schema.customerFlaggedReviews.text, ilikeQuery),
             ilike(schema.customerFlaggedReviews.customerNote, ilikeQuery),
-            eq(
-              schema.customerFlaggedReviews.flagReason,
-              query.toLowerCase() as
-                | "doesnt_match_experience"
-                | "lacks_context"
-                | "not_clear_helpful_concise",
-            ),
           ),
     )
     .orderBy(desc(schema.customerFlaggedReviews.createdAt))
@@ -186,7 +178,6 @@ export async function searchAdmin(rawQuery: string): Promise<SearchResults> {
       id: r.id,
       textPreview: r.text,
       contextLine: [
-        r.flagReason,
         r.verdict ?? null,
         r.status,
         r.customerNote ? `note: ${r.customerNote.slice(0, 80)}` : null,
