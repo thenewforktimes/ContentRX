@@ -243,5 +243,23 @@ async function getInstallation(
 
 // Allow GET for parity with the other cron routes (Vercel Cron sends
 // GET; manual triggers from a developer machine sometimes use POST).
-// Both delegate to the same handler.
-export const GET = POST;
+// Audit L7 (2026-05-13): GET defaults to dry-run, requires `?live=1`
+// to actually fire. Mirrors `/api/cron/rollback-monitor`. Closes the
+// "saved curl URL with CRON_SECRET hits agent-run in a browser →
+// runs the agent" footgun. The cron schedule in vercel.json carries
+// `?live=1` so production behavior is unchanged.
+export async function GET(req: Request) {
+  const authFail = requireCronAuth(req);
+  if (authFail) return authFail;
+  const url = new URL(req.url);
+  if (url.searchParams.get("live") !== "1") {
+    return NextResponse.json({
+      ok: true,
+      mode: "dry_run",
+      note:
+        "GET is dry-run only. POST (or GET with ?live=1) to actually run the agent. " +
+        "Vercel Cron uses GET, so the cron path in vercel.json sets ?live=1.",
+    });
+  }
+  return POST(req);
+}

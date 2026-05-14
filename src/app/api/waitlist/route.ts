@@ -17,18 +17,21 @@
  * No Clerk auth. The middleware explicitly bypasses /api/waitlist via
  * the always-allowed matcher so geo-blocked visitors can hit it.
  *
- * Rate limit posture for launch:
+ * Rate limit posture:
  *   - Dedupe by email-per-day blocks accidental flooding from one
  *     submitter.
- *   - No IP-based rate limit yet. If spam materializes, add an
- *     enforceWaitlistRateLimit(ip) check using a separate Upstash
- *     prefix (don't reuse ratelimit:check; the per-user budget there
- *     is unrelated).
+ *   - IP-based limit at 5/hour via `enforceWaitlistRateLimit`, prefix
+ *     `ratelimit:waitlist` (kept distinct from the per-user
+ *     `ratelimit:check` budget). Caps the spam-rotating-emails vector
+ *     that the per-(email, day) dedupe alone can't catch — without
+ *     this the route is a Resend billing DoS against the founder
+ *     inbox. (Audit H1, 2026-05-13.)
  */
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { sendEmail, appUrl } from "@/lib/email";
+import { enforceWaitlistRateLimit } from "@/lib/ratelimit";
 import { logSafeError } from "@/lib/safe-error-log";
 import { WaitlistSignupEmail } from "@/emails/waitlist-signup";
 
@@ -53,7 +56,31 @@ function readGeoFromHeaders(req: Request): string {
   return region ? `${country}-${region}` : country;
 }
 
+/**
+ * Best-effort caller-IP extraction for the rate-limit key. Vercel sets
+ * `x-forwarded-for` with the visitor's edge IP first; downstream proxies
+ * append. We take the first element. Falls back to `x-real-ip`. If both
+ * are missing (local dev, edge misconfig), we key on a constant so the
+ * limiter still gates — preferring "limit everyone together" over "limit
+ * nobody at all" in the misconfig case.
+ */
+function readClientIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  const real = req.headers.get("x-real-ip");
+  if (real) return real;
+  return "unknown";
+}
+
 export async function POST(req: Request) {
+  // Rate-limit BEFORE body parse — cheap to do first, and a flood
+  // shouldn't be charged Vercel function CPU time parsing JSON.
+  const rl = await enforceWaitlistRateLimit(readClientIp(req));
+  if (rl) return rl;
+
   let body: unknown;
   try {
     body = await req.json();

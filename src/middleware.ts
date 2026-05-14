@@ -119,7 +119,19 @@ export default clerkMiddleware(async (auth, req) => {
   // auth fallback below.
   const { userId } = await auth();
   const authHeader = req.headers.get("authorization");
-  const hasApiKey = !!(authHeader && /^Bearer\s+cx_/i.test(authHeader));
+  // Audit L1 (2026-05-13): match the full well-formed shape
+  // (`cx_` + ≥16 alphanumeric chars), not just the `cx_` prefix.
+  // Inlined regex rather than importing isWellFormedApiKey from
+  // src/lib/api-key.ts because that module pulls `node:crypto`,
+  // which doesn't ship in the edge middleware runtime. Pattern must
+  // stay in sync with `API_KEY_REGEX` in src/lib/api-key.ts. The
+  // previous prefix-only check let `Authorization: Bearer cx_`
+  // (without a body) bypass the geo-block on public pages — auth
+  // still failed downstream on protected routes, but the bypass
+  // intent was sidestepped for marketing pages.
+  const hasApiKey = !!(
+    authHeader && /^Bearer\s+cx_[A-Za-z0-9]{16,}\s*$/i.test(authHeader)
+  );
   const isAuthenticated = !!userId || hasApiKey;
 
   // Geo block applies only to unauthenticated visitors. The whole

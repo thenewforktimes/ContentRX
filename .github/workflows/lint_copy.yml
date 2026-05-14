@@ -58,7 +58,12 @@ jobs:
 
       - name: Run lint (PR — diff-scoped)
         if: github.event_name == 'pull_request'
-        run: npm run lint:copy -- --diff=origin/${{ github.event.pull_request.base.ref }} --pretty
+        env:
+          # Audit M6 (2026-05-13): env-mediate `github.event.*` instead
+          # of interpolating into the run: block. See check_engine.yml
+          # for the full rationale.
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: npm run lint:copy -- --diff="origin/${BASE_REF}" --pretty
 
       - name: Run lint (push to main — full)
         if: github.event_name == 'push'

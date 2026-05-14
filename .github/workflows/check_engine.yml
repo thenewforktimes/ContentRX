@@ -93,6 +93,14 @@ jobs:
         id: engine
         env:
           INTERNAL_EVAL_SECRET: ${{ secrets.INTERNAL_EVAL_SECRET }}
+          # Audit M6 (2026-05-13): env-mediate `github.event.*` values
+          # instead of interpolating them directly into the `run:`
+          # block. Base ref today is always `main` so the practical
+          # injection surface is empty, but the env-mediation pattern
+          # is the canonical defense for command injection via PR
+          # metadata — preserves correctness as soon as branch naming
+          # conventions change or `head_ref` gets mirrored in.
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           if [ -z "$INTERNAL_EVAL_SECRET" ]; then
             echo "INTERNAL_EVAL_SECRET is not set in repo secrets. Skipping engine check."
@@ -104,7 +112,7 @@ jobs:
           # log goes to stderr via --pretty=false (default).
           set +e
           npm run --silent check:engine -- \
-            --diff=origin/${{ github.event.pull_request.base.ref }} \
+            --diff="origin/${BASE_REF}" \
             > /tmp/findings.jsonl
           rc=$?
           set -e
