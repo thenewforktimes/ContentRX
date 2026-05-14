@@ -59,7 +59,7 @@ export default function Home() {
           brand presence as the page's first kinetic moment. */}
       <header className="grid gap-12 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-16">
         <div>
-          <Wordmark size="xl" animate link={false} />
+          <Wordmark size="md" animate link={false} />
           <h1 className="mt-8 text-5xl font-bold tracking-tight text-strong sm:text-6xl lg:text-7xl">
             Staff-level content design review in every repo
           </h1>
