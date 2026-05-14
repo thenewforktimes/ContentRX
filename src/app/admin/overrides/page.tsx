@@ -168,9 +168,20 @@ export default async function AdminOverridesPage({
       )}
 
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-line bg-raised p-6 text-sm text-quiet">
-          No overrides match. Inbox zero — or the filter is too tight.
-        </p>
+        <div className="rounded-lg border border-line bg-raised p-6 text-sm text-quiet">
+          <p>
+            No overrides match. Inbox zero — or the filter is too
+            tight.
+          </p>
+          {/* Reset URL added 2026-05-14 — affordance audit caught the
+              empty state offered no in-UI path back to defaults. */}
+          <a
+            href="/admin/overrides"
+            className={`mt-4 inline-flex ${buttonStyles({ variant: "secondary", size: "sm" })}`}
+          >
+            Clear filters
+          </a>
+        </div>
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => (

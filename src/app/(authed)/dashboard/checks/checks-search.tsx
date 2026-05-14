@@ -29,7 +29,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlagForReview } from "@/components/flag-for-review";
-import { Button } from "@/components/ui/button";
+import { Button, buttonStyles } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pill } from "@/components/ui/pill";
 import {
@@ -401,6 +401,12 @@ export function ChecksSearch({
           flaggedOnly={flaggedOnly}
           hasQuery={query.length > 0}
           totalChecks={totalChecks}
+          // pathname (without params) is the reset URL — EmptyState
+          // renders a "Clear filters" Link for variants where a
+          // filter-narrowed result set is empty. Caught by the
+          // affordance audit: variants 2 + 4 told the user what was
+          // wrong but offered no path forward in the UI.
+          clearAllUrl={pathname}
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -571,10 +577,12 @@ function EmptyState({
   flaggedOnly,
   hasQuery,
   totalChecks,
+  clearAllUrl,
 }: {
   flaggedOnly: boolean;
   hasQuery: boolean;
   totalChecks: number;
+  clearAllUrl: string;
 }) {
   if (flaggedOnly) {
     return (
@@ -593,10 +601,18 @@ function EmptyState({
   }
   if (hasQuery) {
     return (
-      <p className="rounded-lg border border-dashed border-line p-4 text-sm text-quiet">
-        No checks match the search. Try fewer words, or widen the time
-        window above.
-      </p>
+      <div className="rounded-lg border border-dashed border-line p-4 text-sm text-quiet">
+        <p>
+          No checks match the search. Try fewer words, or widen the time
+          window above.
+        </p>
+        <Link
+          href={clearAllUrl}
+          className={`mt-3 inline-flex ${buttonStyles({ variant: "secondary", size: "sm" })}`}
+        >
+          Clear filters
+        </Link>
+      </div>
     );
   }
   if (totalChecks === 0) {
@@ -608,10 +624,18 @@ function EmptyState({
     );
   }
   return (
-    <p className="rounded-lg border border-dashed border-line p-4 text-sm text-quiet">
-      No checks match the current filter. Clear a filter pill above to
-      see more.
-    </p>
+    <div className="rounded-lg border border-dashed border-line p-4 text-sm text-quiet">
+      <p>
+        No checks match the current filter. Clear a filter pill above
+        or reset everything below.
+      </p>
+      <Link
+        href={clearAllUrl}
+        className={`mt-3 inline-flex ${buttonStyles({ variant: "secondary", size: "sm" })}`}
+      >
+        Clear filters
+      </Link>
+    </div>
   );
 }
 

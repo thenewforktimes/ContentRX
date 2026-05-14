@@ -132,11 +132,17 @@ export function FindingAdjustModal({
 
   return (
     <div
+      // bg-overlay was a SOLID surface color — it completely obscured
+      // the page below the dialog. Replaced with bg-black/40
+      // (translucent black scrim) to match flag-for-review.tsx and
+      // admin/command-palette.tsx. Low-vision users now retain the
+      // spatial sense of "modal floating over content" instead of
+      // "the page disappeared." 2026-05-14 audit fix.
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-overlay p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
