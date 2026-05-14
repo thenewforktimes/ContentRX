@@ -25,22 +25,35 @@ export function SiteHeader() {
     <header className="border-b border-line bg-raised">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
         <Wordmark size="xs" />
-        <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+        {/*
+         * `aria-label="Primary"` (WCAG 2.4.6) distinguishes this nav
+         * from the footer nav for screen-reader users navigating by
+         * landmark.
+         *
+         * Link focus ring (WCAG 2.4.7): bare links on bg-raised were
+         * relying on the browser default focus outline, which is
+         * unreliable on tinted backgrounds. Now every link wears the
+         * design-system focus ring explicitly.
+         */}
+        <nav
+          aria-label="Primary"
+          className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm"
+        >
           <Link
             href="/pricing"
-            className="text-quiet hover:text-strong"
+            className="rounded text-quiet hover:text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-raised"
           >
             Pricing
           </Link>
           <Link
             href="/install"
-            className="text-quiet hover:text-strong"
+            className="rounded text-quiet hover:text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-raised"
           >
             Install
           </Link>
           <Link
             href="/sign-in"
-            className="text-quiet hover:text-strong"
+            className="rounded text-quiet hover:text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-raised"
           >
             Sign in
           </Link>

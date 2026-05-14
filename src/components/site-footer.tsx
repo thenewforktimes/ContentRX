@@ -123,25 +123,29 @@ function FooterColumn({
   title: string;
   links: ReadonlyArray<{ href: string; label: string; external?: true }>;
 }) {
+  // Each column is a navigation landmark (WCAG 1.3.1, 2.4.6). The
+  // column title is an <h2> so screen-reader users can heading-jump
+  // between footer sections. Links wear the design-system focus ring
+  // explicitly (the bg-sunken background hides the browser default).
   return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-quiet">
+    <nav aria-label={title}>
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-quiet">
         {title}
-      </p>
+      </h2>
       <ul className="mt-3 space-y-2 text-sm">
         {links.map((link) => (
           <li key={link.href}>
             {link.external ? (
               <a
                 href={link.href}
-                className="text-quiet hover:text-strong"
+                className="rounded text-quiet hover:text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sunken"
               >
                 {link.label}
               </a>
             ) : (
               <Link
                 href={link.href}
-                className="text-quiet hover:text-strong"
+                className="rounded text-quiet hover:text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sunken"
               >
                 {link.label}
               </Link>
@@ -149,6 +153,6 @@ function FooterColumn({
           </li>
         ))}
       </ul>
-    </div>
+    </nav>
   );
 }

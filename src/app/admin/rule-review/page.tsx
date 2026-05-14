@@ -173,12 +173,13 @@ export default async function AdminRuleReviewPage({ searchParams }: PageProps) {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-quiet">
-                <th className="py-2">Standard</th>
-                <th className="py-2 text-right">Teams qualifying</th>
-                <th className="py-2 text-right">Teams with data</th>
-                <th className="py-2 text-right">Total overrides</th>
-                <th className="py-2 text-right">Median rate</th>
-                <th className="py-2 text-right">Max rate</th>
+                {/* scope="col" (WCAG 1.3.1) — SRs announce header with cell value */}
+                <th scope="col" className="py-2">Standard</th>
+                <th scope="col" className="py-2 text-right">Teams qualifying</th>
+                <th scope="col" className="py-2 text-right">Teams with data</th>
+                <th scope="col" className="py-2 text-right">Total overrides</th>
+                <th scope="col" className="py-2 text-right">Median rate</th>
+                <th scope="col" className="py-2 text-right">Max rate</th>
               </tr>
             </thead>
             <tbody>
