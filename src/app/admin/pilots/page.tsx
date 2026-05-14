@@ -107,13 +107,14 @@ function PilotTable({ rows }: { rows: PilotRow[] }) {
       <table className="min-w-full divide-y divide-line text-sm">
         <thead className="bg-overlay text-left text-xs font-medium uppercase tracking-wide text-quiet">
           <tr>
-            <th className="px-4 py-2">Status</th>
-            <th className="px-4 py-2">User</th>
-            <th className="px-4 py-2">Plan</th>
-            <th className="px-4 py-2">Last check</th>
-            <th className="px-4 py-2 text-right">7d</th>
-            <th className="px-4 py-2 text-right">Total</th>
-            <th className="px-4 py-2 text-right">Overrides</th>
+            {/* scope="col" (WCAG 1.3.1) — SRs announce header with cell value */}
+            <th scope="col" className="px-4 py-2">Status</th>
+            <th scope="col" className="px-4 py-2">User</th>
+            <th scope="col" className="px-4 py-2">Plan</th>
+            <th scope="col" className="px-4 py-2">Last check</th>
+            <th scope="col" className="px-4 py-2 text-right">7d</th>
+            <th scope="col" className="px-4 py-2 text-right">Total</th>
+            <th scope="col" className="px-4 py-2 text-right">Overrides</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
