@@ -250,13 +250,25 @@ export default async function OverridesPage() {
 
       {overrides_count === 0 ? (
         <section className="rounded-lg border border-dashed border-line-strong p-6 text-sm text-quiet">
-          Nothing to show yet. Your team hasn&apos;t dismissed any
-          findings. Dismissals from the Figma plugin or{" "}
-          <code className="rounded bg-raised px-1 py-0.5 font-mono text-xs">
-            /contentrx ignore &lt;STD&gt;
-          </code>{" "}
-          comments on PRs land here, so you can decide which rules to
-          tune.
+          <p>
+            Nothing to show yet. Your team hasn&apos;t dismissed any
+            findings. Dismissals from the Figma plugin or{" "}
+            <code className="rounded bg-raised px-1 py-0.5 font-mono text-xs">
+              /contentrx ignore &lt;STD&gt;
+            </code>{" "}
+            comments on PRs land here, so you can decide which rules
+            to tune.
+          </p>
+          {/* CTA added 2026-05-14 — affordance audit caught that the
+              empty state offered no path forward in-UI. Team rules
+              is the pre-emptive surface for managing what shows up
+              here, so it's the right next step. */}
+          <Link
+            href="/dashboard/rules"
+            className={`mt-4 inline-flex ${buttonStyles({ variant: "secondary", size: "sm" })}`}
+          >
+            Open Team rules
+          </Link>
         </section>
       ) : (
         <>

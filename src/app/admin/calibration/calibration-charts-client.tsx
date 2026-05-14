@@ -18,7 +18,13 @@ const SystemKappaTrendChart = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-64 w-full animate-pulse rounded-lg border border-line bg-overlay" />
+      <div
+        role="status"
+        aria-busy="true"
+        className="h-64 w-full animate-pulse rounded-lg border border-line bg-overlay"
+      >
+        <span className="sr-only">Loading calibration chart.</span>
+      </div>
     ),
   },
 );

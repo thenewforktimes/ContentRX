@@ -4,6 +4,12 @@
  * Shows during the cold render while the 5 parallel loaders settle. The
  * heights mirror the live panels so the layout doesn't jump when data
  * arrives. Plain Tailwind — no animation library, no client JS.
+ *
+ * 2026-05-14 a11y — wrapped in `role="status" aria-busy="true"` with a
+ * visually-hidden "Loading dashboard." announcement. Without these,
+ * screen-reader users on a cold load heard nothing until the data
+ * landed; the visual pulse was sighted-only. WCAG 4.1.3 (status
+ * messages).
  */
 
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -13,7 +19,12 @@ const skeletonClass =
 
 export default function DashboardLoading() {
   return (
-    <div className="flex flex-col gap-6">
+    <div
+      role="status"
+      aria-busy="true"
+      className="flex flex-col gap-6"
+    >
+      <span className="sr-only">Loading dashboard.</span>
       <header className="flex items-center justify-between">
         <div>
           <Eyebrow>Dashboard</Eyebrow>
