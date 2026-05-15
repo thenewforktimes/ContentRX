@@ -318,6 +318,11 @@ export async function POST(req: Request) {
         });
       });
     }
+    // A team MEMBER (teamOwnerUserId set) has no billing access — the
+    // pooled limit is the owner's to raise. Sending them to /pricing
+    // is a dead-end; give owner-contact guidance instead. Owners and
+    // solo-on-Team (teamOwnerUserId null) keep the self-serve link.
+    const isTeamMember = auth.teamOwnerUserId !== null;
     return json(
       {
         error: "quota_exhausted",
@@ -325,7 +330,12 @@ export async function POST(req: Request) {
         used: claim.count,
         checks_required: checksNeeded,
         plan: auth.plan,
-        upgrade_url: `${appUrl()}/pricing?from=quota`,
+        upgrade_url: isTeamMember
+          ? undefined
+          : `${appUrl()}/pricing?from=quota`,
+        message: isTeamMember
+          ? "Your team's shared monthly check limit is used up. Ask your team owner to add seats, or wait for the reset."
+          : undefined,
         resets_at: monthResetISO(),
         // Phase 4: surface overage opt-in info on the 402 so customers
         // know they can flip the switch instead of waiting for reset.
