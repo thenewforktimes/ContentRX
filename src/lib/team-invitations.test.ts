@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildInvitationExpiresAt,
+  canAcceptInvitationSeat,
   generateInviteToken,
   isExpired,
   normalizeEmail,
@@ -88,5 +89,60 @@ describe("resolveTeamId", () => {
     expect(
       resolveTeamId({ id: "user_b", teamOwnerUserId: "user_a" }),
     ).toBe("user_a");
+  });
+});
+
+describe("canAcceptInvitationSeat", () => {
+  it("allows the first member into a 2-seat team (owner + 1)", () => {
+    expect(
+      canAcceptInvitationSeat({ capacity: 2, memberCount: 0 }),
+    ).toBe(true);
+  });
+
+  it("allows filling exactly to capacity", () => {
+    // 3-seat: owner + Alice already in, Bob accepting -> 3 == 3.
+    expect(
+      canAcceptInvitationSeat({ capacity: 3, memberCount: 1 }),
+    ).toBe(true);
+  });
+
+  it("blocks the accept that would exceed capacity", () => {
+    // 2-seat, owner + 1 member already -> a 3rd person can't join.
+    expect(
+      canAcceptInvitationSeat({ capacity: 2, memberCount: 1 }),
+    ).toBe(false);
+  });
+
+  it("blocks any accept on a 1-seat team (owner occupies seat 1)", () => {
+    // Consistent with the dining-table model: seat 1 is the owner;
+    // inviting a teammate requires adding seat 2 first.
+    expect(
+      canAcceptInvitationSeat({ capacity: 1, memberCount: 0 }),
+    ).toBe(false);
+  });
+
+  it("blocks when capacity is 0 (no active Team subscription)", () => {
+    expect(
+      canAcceptInvitationSeat({ capacity: 0, memberCount: 0 }),
+    ).toBe(false);
+  });
+
+  it("treats negative/garbage capacity as no capacity", () => {
+    expect(
+      canAcceptInvitationSeat({ capacity: -3, memberCount: 0 }),
+    ).toBe(false);
+  });
+
+  it("downgrade edge: an unrelated pending invite no longer blocks a legitimate accept", () => {
+    // 3-seat team invited Alice + Bob (2 pending), then downgraded to
+    // 2 seats. Old code gated on used = 1+0+2 = 3 > 2 and rejected
+    // BOTH. The headcount guard lets Alice in (owner + Alice = 2)…
+    expect(
+      canAcceptInvitationSeat({ capacity: 2, memberCount: 0 }),
+    ).toBe(true);
+    // …and then correctly blocks Bob (owner + Alice + Bob = 3 > 2).
+    expect(
+      canAcceptInvitationSeat({ capacity: 2, memberCount: 1 }),
+    ).toBe(false);
   });
 });
