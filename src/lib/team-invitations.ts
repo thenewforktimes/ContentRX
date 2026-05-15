@@ -134,6 +134,39 @@ export async function countSeats(
   };
 }
 
+/**
+ * Pure seat guard for accepting an invitation.
+ *
+ * At accept time the invite being converted is still counted in
+ * `countSeats().used` (it flips pending → member inside the accept
+ * transaction). Gating on `used` (the sum of owner + members + ALL
+ * pending invites) is wrong in one real case: after a mid-cycle seat
+ * *downgrade*, a team can legitimately hold more pending invites than
+ * remaining capacity, and gating on `used` blocks an invitee whose
+ * own seat would actually fit just because an unrelated invite is
+ * also outstanding (it stays blocked until that other invite expires
+ * or is revoked — up to 7 days of "why can't I join?").
+ *
+ * The correct question is the post-accept headcount for THIS person:
+ * owner (1) + current accepted members + this new member. Other
+ * outstanding invites don't consume capacity until each is itself
+ * accepted (every accept re-checks). On the normal path this is
+ * identical to the old `used > capacity` check, because
+ * createInvitation already prevents over-allocation; it only differs
+ * — correctly — on the seat-downgrade edge.
+ *
+ * `capacity <= 0` means no active Team subscription resolved → block.
+ */
+export function canAcceptInvitationSeat(args: {
+  capacity: number;
+  memberCount: number;
+}): boolean {
+  const { capacity, memberCount } = args;
+  if (capacity <= 0) return false;
+  const postAcceptHeadcount = 1 /* owner */ + memberCount + 1 /* joiner */;
+  return postAcceptHeadcount <= capacity;
+}
+
 export type CreateInvitationResult =
   | { ok: true; invitation: TeamInvitation }
   | {
@@ -430,13 +463,18 @@ export async function acceptInvitation(args: {
     return { ok: false, reason: "already_member" };
   }
 
-  // Re-check seat availability — could have changed since invite was sent.
+  // Re-check seat availability — could have changed since the invite
+  // was sent (notably a mid-cycle seat downgrade). Gate on the real
+  // post-accept headcount for this joiner, not the sum of all pending
+  // invites — see canAcceptInvitationSeat for why `used` is the wrong
+  // denominator on the downgrade edge.
   const seats = await countSeats(invitation.teamOwnerUserId);
-  // The pending invite itself is in the count; the accept "consumes"
-  // it (pending → accepted), so it's net-zero on the count. Still
-  // require capacity > used - 1 (i.e., this invite is the one we're
-  // about to convert).
-  if (seats.capacity === 0 || seats.used > seats.capacity) {
+  if (
+    !canAcceptInvitationSeat({
+      capacity: seats.capacity,
+      memberCount: seats.memberCount,
+    })
+  ) {
     return { ok: false, reason: "no_seats" };
   }
 
