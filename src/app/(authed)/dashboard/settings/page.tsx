@@ -20,7 +20,7 @@
  */
 
 import { auth } from "@clerk/nextjs/server";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
@@ -217,6 +217,13 @@ async function loadActiveSubscription(
               "past_due",
             ]),
           ),
+        )
+        // Deterministic pick: prefer active, then the latest period.
+        // See the matching loader in dashboard/page.tsx for why an
+        // explicit order is load-bearing here.
+        .orderBy(
+          sql`case ${schema.subscriptions.status} when 'active' then 0 when 'trialing' then 1 else 2 end`,
+          desc(schema.subscriptions.currentPeriodEnd),
         )
         .limit(1);
       return row ?? null;

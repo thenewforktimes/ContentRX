@@ -19,6 +19,7 @@
  * for substrate-side storage.
  */
 
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { buttonStyles } from "@/components/ui/button";
 import { Label, Select, Textarea } from "@/components/ui/input";
@@ -57,6 +58,7 @@ export function FindingAdjustModal({
   issue,
   onSaved,
 }: FindingAdjustModalProps) {
+  const router = useRouter();
   const reasonId = useId();
   const notesId = useId();
   const titleId = useId();
@@ -125,6 +127,13 @@ export function FindingAdjustModal({
         recorded?: { verdict?: boolean };
       };
       onSaved({ verdictRecorded: Boolean(data.recorded?.verdict) });
+      // Revalidate server components so /dashboard/overrides and the
+      // insights panel (override count, override-rate, the team
+      // overrides>=5 caution banner) reflect the dismissal now,
+      // instead of lying until the 5s liveness poll catches up. The
+      // check flow already pairs its mutation with a refresh; the
+      // dismiss flow didn't.
+      router.refresh();
     } catch {
       setErrorMessage("Couldn't reach the server. Check your connection.");
       setSubmitState("error");

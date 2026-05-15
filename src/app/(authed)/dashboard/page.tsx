@@ -560,6 +560,16 @@ async function loadActiveSubscription(
             ]),
           ),
         )
+        // The partial unique index only enforces one row WHERE
+        // status='active'; a past_due/trialing row can legitimately
+        // coexist (recovered failed payment, trial→paid). Without an
+        // explicit order, limit(1) picked a non-deterministic row and
+        // the panel could show the wrong period-end / a phantom
+        // "scheduled to cancel". Prefer active, then the latest period.
+        .orderBy(
+          sql`case ${schema.subscriptions.status} when 'active' then 0 when 'trialing' then 1 else 2 end`,
+          desc(schema.subscriptions.currentPeriodEnd),
+        )
         .limit(1);
       return row ?? null;
     },
