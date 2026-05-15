@@ -600,13 +600,17 @@ async function loadCurrentUsage(userId: string): Promise<number> {
 }
 
 /**
- * Single per-source aggregate: count, first-seen, last-seen. One scan
- * powers BOTH the Active-surfaces row (count + lastAt) and the
- * FirstCallBanner (recently-activated = firstAt within 7d window).
+ * Single per-source aggregate. One scan powers BOTH:
+ *   - the Active-surfaces row (count + lastAt) — TEAM-wide, so the
+ *     row reflects every surface anyone on the team has connected.
+ *   - the FirstCallBanner (recently-activated within the 7d window)
+ *     — per-USER, via a Postgres FILTER on user_id. A member who
+ *     joins after the team owner first used a surface must NOT see
+ *     an "X connected!" banner for the owner's activation. Team-wide
+ *     min(created_at) reintroduced exactly that bug.
  *
- * Scoped to the team (teamId = teamOwnerUserId for members,
- * user.id for owners). Returns a complete record with zero-counts for
- * surfaces never used — the renderer can lay out all five cards.
+ * Returns a complete record with zero-counts for surfaces never
+ * used — the renderer can lay out all five cards.
  */
 async function loadSourceStats(
   userId: string,
@@ -621,7 +625,7 @@ async function loadSourceStats(
   // covers the data-changes path; the timer covers the time-changes
   // path. Whichever fires first refreshes the cache.
   const cached = await unstable_cache(
-    async (id: string) => {
+    async (tId: string, uId: string) => {
       const db = getDb();
       // Query usage_events, not violations. Every successful /api/check
       // writes one usage_events row regardless of verdict; violations
@@ -631,20 +635,26 @@ async function loadSourceStats(
       // Closes the bug where the GitHub Action card stayed
       // "Not connected" after a real run because none of its strings
       // got flagged.
+      //
+      // count + lastAt are team-wide (the Active-surfaces row is a
+      // team view). userFirstAt is the per-user first activation,
+      // computed in the same scan with a Postgres FILTER so the
+      // first-call banner only fires for a surface THIS user
+      // activated — not one a teammate activated before they joined.
       const rows = (await db
         .select({
           source: schema.usageEvents.source,
           count: sql<number>`count(*)::int`,
-          firstAt: sql<Date>`min(${schema.usageEvents.createdAt})`,
           lastAt: sql<Date>`max(${schema.usageEvents.createdAt})`,
+          userFirstAt: sql<Date | null>`min(${schema.usageEvents.createdAt}) filter (where ${schema.usageEvents.userId} = ${uId})`,
         })
         .from(schema.usageEvents)
-        .where(eq(schema.usageEvents.teamId, id))
+        .where(eq(schema.usageEvents.teamId, tId))
         .groupBy(schema.usageEvents.source)) as Array<{
         source: string | null;
         count: number;
-        firstAt: Date;
         lastAt: Date;
+        userFirstAt: Date | null;
       }>;
 
       const activity: SurfaceActivity = {
@@ -662,28 +672,42 @@ async function loadSourceStats(
       for (const r of rows) {
         if (r.source == null || !(r.source in activity)) continue;
         const surface = r.source as SurfaceKey;
-        const firstAt =
-          r.firstAt instanceof Date ? r.firstAt : new Date(r.firstAt);
         const lastAt =
           r.lastAt instanceof Date ? r.lastAt : new Date(r.lastAt);
         activity[surface] = { count: r.count, lastAt };
-        if (
-          firstAt >= since &&
-          (!recentlyActivated || firstAt > recentlyActivated.firstAt)
-        ) {
-          recentlyActivated = { source: surface, firstAt };
+        // Only rows where this user has at least one usage_event get
+        // a non-null userFirstAt — surfaces only a teammate touched
+        // never light the banner for this user.
+        if (r.userFirstAt != null) {
+          const userFirstAt =
+            r.userFirstAt instanceof Date
+              ? r.userFirstAt
+              : new Date(r.userFirstAt);
+          if (
+            userFirstAt >= since &&
+            (!recentlyActivated || userFirstAt > recentlyActivated.firstAt)
+          ) {
+            recentlyActivated = { source: surface, firstAt: userFirstAt };
+          }
         }
       }
       return { activity, recentlyActivated: recentlyActivated?.source ?? null };
     },
-    [`loadSourceStats:${teamId}`],
+    // Cache key MUST include userId. recentlyActivated is per-user, so
+    // teammates cannot share a cache entry — otherwise the cross-user
+    // banner bug just moves to the cache layer. activity is identical
+    // across the team; caching it once per user is mild duplication,
+    // acceptable at current team sizes and the right trade for
+    // correctness. The tag below still invalidates ALL of a team's
+    // per-user entries together (tag invalidation is key-independent).
+    [`loadSourceStats:${teamId}:${userId}`],
     // tags.violations is the "after every check" invalidation tag —
     // /api/check calls revalidateDashboard which fires this regardless
     // of whether a violation was recorded. So the cache refreshes on
     // every API call, which is what we want now that the query reads
     // from usage_events (one row per check, verdict-agnostic).
     { tags: [tags.violations(teamId)], revalidate: 3600 },
-  )(teamId);
+  )(teamId, userId);
   // unstable_cache JSON-serializes Dates back to ISO strings on cache
   // hits; rehydrateMappedDates rebuilds activity[*].lastAt as real Date
   // instances so consumers (formatRelative, etc.) don't crash with
