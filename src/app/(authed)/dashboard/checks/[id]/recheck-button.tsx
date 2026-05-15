@@ -20,17 +20,11 @@ import { useState } from "react";
 
 interface RecheckButtonProps {
   text: string;
-  contentType: string | null;
-  moment: string | null;
 }
 
 type Status = "idle" | "submitting" | "error";
 
-export function RecheckButton({
-  text,
-  contentType,
-  moment,
-}: RecheckButtonProps) {
+export function RecheckButton({ text }: RecheckButtonProps) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -39,16 +33,18 @@ export function RecheckButton({
     setStatus("submitting");
     setErrorMessage(null);
     try {
+      // Don't forward stored content_type / moment — taxonomy
+      // refinements (per ADR 2026-04-25) can remove values from the
+      // engine's allow-list, and a stored row with a since-removed
+      // value would 400 on /api/check's zod validation. Letting the
+      // engine reclassify costs ~50–100ms per recheck but degrades
+      // gracefully across taxonomy versions, which matters more than
+      // the perf for a one-off user action.
       const res = await fetch("/api/check", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           text,
-          // Forward the original taxonomy hints so the engine doesn't
-          // have to re-classify. Both are optional on the wire; we send
-          // them only when the stored row has them.
-          ...(contentType ? { content_type: contentType } : {}),
-          ...(moment ? { moment } : {}),
           source: "dashboard",
         }),
       });

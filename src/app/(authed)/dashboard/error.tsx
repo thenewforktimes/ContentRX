@@ -39,7 +39,10 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col justify-center px-6 py-20">
+    // Renders inside the dashboard layout's <main id="main-content">,
+    // so this wrapper is a <section>, not another <main> — nested
+    // mains are invalid HTML and break the layout's skip-link target.
+    <section className="mx-auto flex min-h-[60vh] max-w-2xl flex-col justify-center px-6 py-20">
       <div className="flex flex-col gap-4">
         <Eyebrow>500</Eyebrow>
         <h1 className="text-3xl font-semibold tracking-tight text-strong">
@@ -65,6 +68,6 @@ export default function DashboardError({
           </Link>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

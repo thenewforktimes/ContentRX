@@ -214,7 +214,10 @@ function TryACheckPanel({ plan }: { plan: Plan }) {
     // privacy line as crammed in. Bumped to mt-6 + a divider so the
     // privacy line reads as a deliberate footer outside the work
     // surface, not glued to the result block above it.
-    <section className="rounded-lg border border-line p-5">
+    // The "Web app" surface card on this page has installHref="#try-a-check";
+    // anchoring here gives the in-page jump a real target. Without the id
+    // the Try-a-check link from the surface row was a dead anchor.
+    <section id="try-a-check" className="rounded-lg border border-line p-5">
       <ExplainClient plan={plan} />
       <p className="mt-6 border-t border-line pt-5 text-xs text-quiet">
         Your checks are private until you flag them for review.
