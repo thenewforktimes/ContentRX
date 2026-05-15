@@ -27,7 +27,10 @@ export default async function ExplainPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    // Renders inside the dashboard layout's <main id="main-content">,
+    // so this wrapper is a <div>, not another <main> — nested mains
+    // are invalid HTML and break the layout's skip-link target.
+    <div className="py-6">
       <header className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-widest text-quiet">
           Paste-mode review
@@ -51,6 +54,6 @@ export default async function ExplainPage() {
       </header>
 
       <ExplainClient />
-    </main>
+    </div>
   );
 }

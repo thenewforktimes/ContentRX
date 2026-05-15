@@ -193,7 +193,20 @@ function UpgradeCard({ consentToken }: { consentToken: string | null }) {
               max={500}
               value={seats}
               onChange={(e) =>
-                setSeats(Math.max(TEAM_MIN_SEATS, Number(e.target.value) || TEAM_MIN_SEATS))
+                // Clamp to [TEAM_MIN_SEATS, 500] client-side. The
+                // <Input max={500}> attribute is browser-only and a
+                // pasted "99999" otherwise round-trips to /api/checkout
+                // before the zod .max(500) catches it. Clamping here
+                // gives the input field deterministic state.
+                setSeats(
+                  Math.min(
+                    500,
+                    Math.max(
+                      TEAM_MIN_SEATS,
+                      Number(e.target.value) || TEAM_MIN_SEATS,
+                    ),
+                  ),
+                )
               }
               className="w-20"
             />

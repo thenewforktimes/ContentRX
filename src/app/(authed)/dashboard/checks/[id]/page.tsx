@@ -359,13 +359,7 @@ export default async function CheckDetailPage({ params }: PageProps) {
             </span>
           )}
         </div>
-        {fullText && (
-          <RecheckButton
-            text={fullText}
-            contentType={row.contentType}
-            moment={row.moment}
-          />
-        )}
+        {fullText && <RecheckButton text={fullText} />}
       </section>
 
       <p className="text-xs text-quiet">
