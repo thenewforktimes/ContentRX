@@ -76,3 +76,57 @@ Reversal, if it happens, is governed by a new ADR superseding this one. It is no
 - Architectural pattern: Tailwind, Linear, Stripe internal style guide
 - Launch analog: PostHog "How we got our first 1,000 users"
 - Mitchell et al. 2019, Model Cards for Model Reporting (kappa-with-CI reporting convention on `/accuracy`)
+
+---
+
+## Addendum — 2026-05-16: the cross-surface presentation line
+
+**Status:** Accepted (pending Robert's sign-off on this PR). **Owner:** Robert.
+**Extends, does not supersede, the decision above.**
+
+A privacy-boundary audit (2026-05-15; register
+`_private/audit-privacy-boundary-2026-05-15.md`) confirmed the original
+decision is well-defended on the `standard_id` / `rule_version` axis,
+but found the line was never stated precisely for *prose and
+exemplars*, and three surfaces sit on the wrong side of it.
+
+**The line, stated precisely:** category names are public. **Standard
+IDs, standards prose, and correct/incorrect exemplars are private
+substrate and never reach any user-facing surface.** This extends the
+original "one pipeline, no verdict drift" non-negotiable from the
+*verdict* layer to the *presentation* layer: **every check surface —
+web, CLI, MCP, LSP, GitHub Action, Figma plugin, the weekly agent
+digest — emits the same human-relatable flags (issue / suggestion /
+severity / category) and nothing beneath them.** The agent in
+particular reports drifts/flags exactly like every other surface; it
+does not "explain" via the taxonomy.
+
+**This also retires the "one allowed exception" carve-out.** The
+original note that `/dashboard/rules` may render standard IDs is
+withdrawn (CLAUDE.md updated in lock-step). IDs are display-labelled
+there already; the residual prose/exemplar exposure on that surface is
+finding F3 below.
+
+**Disposition of the audit findings under this line:**
+
+- **F4** — CLI `--json` defence-in-depth. Fixed + merged (PR #585).
+- **F2** — the weekly agent digest (`render-digest.ts`
+  `patternExamplePair`) embedded standards exemplar prose. Fixed in
+  this PR: the cold-start citation now stands on the team's own flag
+  count only; a substrate fence test pins it. Gated ahead of
+  CRITICAL-PATH #1 (the GitHub App must not go live posting exemplars).
+- **F1** — the Figma plugin ships ~28 substrate standard IDs + their
+  heuristics in plaintext `ui.html` (client-side preprocessor;
+  predates this ADR). Tracked: opaque-ize the preprocessor's tags
+  before any plugin-marketplace push or when the custom-rules UX
+  cluster is built. Not auto-fixed (touches the shipped plugin).
+- **F3** — `/dashboard/rules` renders standards prose + exemplars to
+  customers. Tracked with the parked custom-rules UX cluster.
+- **F5** — add render substrate-absence tests for the
+  `/dashboard/rules` components once F3 is implemented (pin the
+  intended shape, not today's accidental one).
+
+**Why an addendum, not a new ADR:** the moat decision is unchanged.
+This only writes down a boundary the original left implicit and
+records its consequences. Reversal of the parent decision still
+requires a superseding ADR; this addendum travels with it.

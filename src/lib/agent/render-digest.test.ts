@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { STANDARDS_BY_ID } from "@/lib/standards";
 import { ZERO_CHECKS_FOOTER, renderDigest } from "./render-digest";
 import type { Pattern } from "./pattern-grouping";
 import type { AgentRunPayload, CustomizationSignal } from "./run-agent";
@@ -303,19 +304,37 @@ describe("renderDigest trust-signal opener", () => {
 // Citation rendering tests -----------------------------------------
 
 describe("renderDigest citation shapes", () => {
-  it("cold-start citation pulls the standard's example pair from the library", () => {
+  it("cold-start citation stands on the team's own flag count, never library exemplar prose (2026-05-16 no-taxonomy principle)", () => {
     const md = renderDigest({
       ...FIXTURE_DRIFT,
       customization: COLD_START_CUSTOMIZATION,
       agreedOverridesByStandardId: {},
     });
-    // The standards library's `incorrect` and `correct` examples
-    // are quoted in italics. The exact text comes from the library
-    // (it varies as content design refinements land), so the
-    // assertion is on the SHAPE (an italicised before/after pair),
-    // not the literal copy.
-    expect(md).toMatch(/Common pattern: writing that fits the shape of /);
-    expect(md).toMatch(/lands harder as /);
+    // The citation is the team's OWN signal: the flag count for this
+    // pattern, pointing at their own strings in the dashboard.
+    expect(md).toMatch(/fired for this pattern in the last month/);
+    expect(md).toContain("Specific strings are visible in the dashboard");
+    // The old exemplar-prose citation must be gone — standards
+    // exemplar prose is private substrate (ADR 2026-04-25 addendum;
+    // cross-surface no-taxonomy principle).
+    expect(md).not.toContain("Common pattern: writing that fits the shape of");
+    expect(md).not.toContain("lands harder as");
+  });
+
+  it("never renders the referenced standards' incorrect/correct exemplar prose (F2 substrate fence)", () => {
+    // Stronger than assertNoSubstrateLeak: exemplar prose is arbitrary
+    // content text, not an ID, so the ID-regex fence cannot catch it.
+    // Pin it directly against the library for exactly the standards
+    // each fixture renders (the ones patternExamplePair used to leak).
+    for (const fixture of [FIXTURE_DRIFT, FIXTURE_MIXED]) {
+      const md = renderDigest(fixture);
+      for (const p of fixture.patterns) {
+        const std = STANDARDS_BY_ID[p.standardId];
+        if (!std) continue;
+        if (std.incorrect) expect(md).not.toContain(std.incorrect);
+        if (std.correct) expect(md).not.toContain(std.correct);
+      }
+    }
   });
 
   it("warmed-up citation appends the team's accept count", () => {
