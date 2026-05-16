@@ -283,6 +283,21 @@ export type SuggestFixResponse = {
   tokens: EngineTokens;
 };
 
+/**
+ * One server-derived hard-ban matcher passed to the rewrite engine
+ * (Project B, 2026-05-15). `pattern` is the verbatim string
+ * `deriveBanMatcher` stored on the rule — the SAME matcher used by the
+ * deterministic flag and the length-independent trigger, so the engine
+ * detector cannot disagree with them. The customer never authors or
+ * sees this; it is derived from their plain-English rule.
+ */
+export type RewriteBanRule = {
+  pattern: string;
+  case_insensitive: boolean;
+  tokens: string[];
+  leave_proper_nouns: boolean;
+};
+
 export type RewriteDocumentResponse = {
   result: {
     rewritten: string;
@@ -290,6 +305,17 @@ export type RewriteDocumentResponse = {
     // weaknesses. Empty string when the LLM's JSON parse failed; the
     // rewrite still ships in that case.
     diagnostic: string;
+    // Project B (2026-05-15). Hard-ban tokens that survived the
+    // rewrite AND the single corrective re-prompt. Non-empty ⇒ the
+    // caller MUST NOT present `rewritten` as a clean rewrite (never
+    // ship clean-with-banned-token); surface the explicit blocker.
+    // Absent on pre-Project-B engine responses in flight during a
+    // deploy → treat as [].
+    ban_unresolved?: string[];
+    // Survivors that read as a legitimate proper noun under a
+    // leave-proper-nouns ban — flag-to-human disambiguation, never
+    // silent-pass, never auto-mangle. The rewrite may still be shown.
+    ban_name_collisions?: string[];
   };
   latency_ms: number;
   tokens: EngineTokens;
@@ -311,6 +337,7 @@ export type RewriteDocumentResponse = {
 export async function rewriteDocument(
   text: string,
   styleDirectives?: string[],
+  banRules?: RewriteBanRule[],
 ): Promise<RewriteDocumentResponse> {
   const secret = requireEnv("INTERNAL_EVAL_SECRET");
 
@@ -337,6 +364,12 @@ export async function rewriteDocument(
       mode: "rewrite_document",
       ...(directives.length > 0
         ? { style_directives: directives }
+        : {}),
+      // Project B: omitted entirely when there are no hard bans so the
+      // overwhelming-majority no-ban path sends the exact same body it
+      // always did (zero behaviour change there).
+      ...(banRules && banRules.length > 0
+        ? { ban_rules: banRules }
         : {}),
     }),
     cache: "no-store",

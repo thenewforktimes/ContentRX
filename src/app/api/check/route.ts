@@ -32,6 +32,7 @@ import {
   evaluate,
   rewriteDocument,
   type EvaluateResponse,
+  type RewriteBanRule,
 } from "@/lib/evaluate";
 import {
   computeCheckCacheKey,
@@ -400,6 +401,15 @@ export async function POST(req: Request) {
   // same lifecycle, same null conditions. Powers the verdict header.
   let suggestedDiagnostic: string | null = null;
 
+  // Project B (2026-05-15). Hard-ban tokens that survived the rewrite
+  // + the single corrective re-prompt (banUnresolved) and survivors
+  // that read as proper nouns under a leave-proper-nouns ban
+  // (banNameCollisions). Stay empty on the no-ban path and on
+  // cache-hit / rewrite-failure (best-effort, non-fatal) — same null
+  // discipline as suggestedRewrite.
+  let banUnresolved: string[] = [];
+  let banNameCollisions: string[] = [];
+
   // LLM RESULT CACHE (Phase 2 audit fix, 2026-05-14).
   //
   // Repeat checks of identical input ("Save", "Cancel", common error
@@ -468,8 +478,42 @@ export async function POST(req: Request) {
   // structurally in rewrite_document._build_system_prompt, gated by
   // tests/test_rewrite_document_prompt.py. Scope note: disabled-
   // standard-aware rewriting is a documented fast-follow, not P0.
+  // Project B (2026-05-15). Split each classified add rule by how the
+  // save-time classifier tagged it:
+  //  - hard_ban → the ban rides the NON-overridable TIER 1 region via
+  //    `banRules` (server-derived matcher + tokens), NOT the TIER 2
+  //    customer block. Routing a ban into the overridable layer would
+  //    let the model treat it as soft. A MIXED rule's style clause
+  //    (`stylistic_directive`) still rides TIER 2.
+  //  - style_guidance / legacy (no `enforcement`) → unchanged: the
+  //    rule prose feeds the TIER 2 seam exactly as pre-Project-B.
+  // Overrides are unchanged.
+  const addDirectives: string[] = [];
+  const banRules: RewriteBanRule[] = [];
+  for (const { fields } of teamRules.adds) {
+    if (
+      fields.enforcement === "hard_ban" &&
+      fields.pattern &&
+      fields.ban
+    ) {
+      banRules.push({
+        pattern: fields.pattern,
+        case_insensitive: fields.case_insensitive === true,
+        tokens: fields.ban.tokens,
+        leave_proper_nouns: fields.ban.leaveProperNouns === true,
+      });
+      if (
+        typeof fields.stylistic_directive === "string" &&
+        fields.stylistic_directive.trim().length > 0
+      ) {
+        addDirectives.push(fields.stylistic_directive);
+      }
+    } else {
+      addDirectives.push(fields.rule);
+    }
+  }
   const styleDirectives: string[] = [
-    ...teamRules.adds.map((a) => a.fields.rule),
+    ...addDirectives,
     ...Array.from(teamRules.overridesByStandardId.values(), (o) => o.rule),
   ]
     .filter((r): r is string => typeof r === "string" && r.trim().length > 0)
@@ -495,7 +539,7 @@ export async function POST(req: Request) {
     const rewritePromise: Promise<
       Awaited<ReturnType<typeof rewriteDocument>> | null
     > = wantsRewrite
-      ? rewriteDocument(text, styleDirectives).catch((err) => {
+      ? rewriteDocument(text, styleDirectives, banRules).catch((err) => {
           logSafeError("rewriteDocument() failed; returning null", err);
           return null;
         })
@@ -537,6 +581,14 @@ export async function POST(req: Request) {
     suggestedDiagnostic = rewriteResp.result.diagnostic
       ? rewriteResp.result.diagnostic
       : null;
+    banUnresolved = Array.isArray(rewriteResp.result.ban_unresolved)
+      ? rewriteResp.result.ban_unresolved
+      : [];
+    banNameCollisions = Array.isArray(
+      rewriteResp.result.ban_name_collisions,
+    )
+      ? rewriteResp.result.ban_name_collisions
+      : [];
   }
 
   // Cache write — only on a cache MISS (cacheHit === false) and only
@@ -568,10 +620,23 @@ export async function POST(req: Request) {
   // values — persisting then re-suppressing in the response would write
   // rewrites we won't ever surface back to the customer.
   const isCleanDoc = result.verdict === "pass";
+  // Project B last-resort guarantee: NEVER ship a clean-looking
+  // rewrite whose output still contains a banned token. When the
+  // deterministic post-pass + the single corrective couldn't clear it,
+  // the rewrite is WITHHELD (and the diagnostic with it, so nothing
+  // implies a clean result) and the explicit blocker is surfaced via
+  // `ban_enforcement` below. We never scrub/mangle to fake a pass — a
+  // name collision is NOT a block (it is flag-to-human), so it does
+  // not withhold the rewrite.
+  const banBlocked = banUnresolved.length > 0;
   const finalSuggestedRewrite =
-    suggestedRewrite !== null && !isCleanDoc ? suggestedRewrite : null;
+    suggestedRewrite !== null && !isCleanDoc && !banBlocked
+      ? suggestedRewrite
+      : null;
   const finalSuggestedDiagnostic =
-    suggestedDiagnostic !== null && !isCleanDoc ? suggestedDiagnostic : null;
+    suggestedDiagnostic !== null && !isCleanDoc && !banBlocked
+      ? suggestedDiagnostic
+      : null;
 
   // Observational writes — three rows across two tables. The pair of
   // (violations row(s), usage_events row) form the audit trail for
@@ -732,6 +797,22 @@ export async function POST(req: Request) {
       suggestedRewrite: finalSuggestedRewrite,
       suggestedDiagnostic: finalSuggestedDiagnostic,
     }),
+    // Project B (2026-05-15). Surfaced only when there is something to
+    // say: `unresolved` non-empty ⇒ the rewrite was WITHHELD (the
+    // explicit "couldn't produce a ban-clean rewrite without changing
+    // your meaning — here's the spot" blocker); `name_collisions` ⇒
+    // survivors that look like a name, for human disambiguation (the
+    // rewrite may still be present). Sibling of the envelope (request
+    // metadata, not taxonomy) so it doesn't bump schema_version;
+    // existing consumers ignore the unknown field.
+    ...(banUnresolved.length > 0 || banNameCollisions.length > 0
+      ? {
+          ban_enforcement: {
+            unresolved: banUnresolved,
+            name_collisions: banNameCollisions,
+          },
+        }
+      : {}),
     // 2026-05-10 detail-page round 3 — surface the usage_events row id
     // so the dashboard's "Run check" / "Re-run" CTAs can deep-link to
     // /dashboard/checks/[id] after a fresh call. Lives alongside the
