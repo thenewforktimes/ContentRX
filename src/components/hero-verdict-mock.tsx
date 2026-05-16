@@ -12,10 +12,11 @@
  * composition gives the eye a focal point and demonstrates the
  * shape of an actual ContentRX result before any copy is read.
  *
- * The three findings are illustrative — they show the public
- * envelope shape (issue + suggestion + severity_label) the way it
- * would render in the dashboard's finding cards. Substrate-clean by
- * construction (no standard_id, no rule, no rationale_chain).
+ * The three findings are illustrative. They show the public envelope
+ * shape (issue + suggestion + severity_label) applied to prose that
+ * lives in a codebase: a README line, a PR description, an error
+ * string in source. Substrate-clean by construction (no standard_id,
+ * no rule, no rationale_chain).
  *
  * The stack uses small CSS rotations + offsets for the layered look.
  * No animation here — the wordmark animation is the kinetic moment;
@@ -41,39 +42,47 @@ type MockFinding = {
   category: string;
 };
 
+// Three artifact types, all unmistakably prose that lives in a
+// codebase: a README line, a PR description, and an error string in
+// source. Role-agnostic by design (no personas named) and on-thesis:
+// the README card's suggestion restates the product's own positioning
+// in the house voice, demonstrating the product on the product. The
+// front-most card (index 2, opacity 1) is the error string because it
+// is the highest-stakes, most visceral "before anyone else sees it"
+// case. inputText carries the codebase signal directly (literal code,
+// markdown, PR copy) since the type has no file-path field and the
+// category slot is force-uppercased.
 const FINDINGS: readonly MockFinding[] = [
   {
-    severity: "high",
-    severityLabel: "Worth adjusting",
+    severity: "low",
+    severityLabel: "Quick polish",
     sourceLabel: "AI",
-    inputText: "Click here to manage your subscription.",
-    issue: "Link text is too vague to convey destination.",
-    suggestion: "Manage your subscription",
-    category: "Accessibility",
+    inputText:
+      "ContentRX is a revolutionary, best-in-class platform that leverages AI to supercharge your workflow.",
+    issue: "Hype with no information. A developer skims this and learns nothing.",
+    suggestion:
+      "ContentRX reviews the prose in your codebase and flags what to fix before merge.",
+    category: "README",
   },
   {
     severity: "medium",
     severityLabel: "Worth adjusting",
     sourceLabel: "AI",
-    inputText: "Are you sure you want to delete this?",
-    issue: "Empty confirmation prompt — what happens after?",
-    suggestion: "Delete this draft? You'll lose the last 12 minutes of edits.",
-    category: "Voice & tone",
+    inputText: "## Summary: fixed some stuff with the auth flow",
+    issue: "A reviewer cannot tell what changed or why it is safe to merge.",
+    suggestion:
+      "Summary: shorten session expiry to 30m and add a refresh-token guard. No API changes.",
+    category: "PR description",
   },
   {
-    severity: "low",
-    severityLabel: "Quick polish",
+    severity: "high",
+    severityLabel: "Worth adjusting",
     sourceLabel: "Instant",
-    inputText: "Submit",
-    // "Submit" → "Send invites" is the action-verb fix; the prior
-    // diagnostic ("destructive action") was a content mismatch
-    // because sending invites isn't destructive. The destructive-
-    // confirmation case is already covered by card 2 above
-    // ("Delete this draft?"). This card now reads as what it is:
-    // a generic verb hiding the actual action.
-    issue: "Generic verb hides what the button does.",
-    suggestion: "Send invites",
-    category: "Action verbs",
+    inputText: 'throw new Error("Something went wrong. Try again later.");',
+    issue: "Says nothing. The user cannot tell what broke or what to do.",
+    suggestion:
+      "We couldn't save your changes. Check your connection and retry.",
+    category: "Error string",
   },
 ] as const;
 

@@ -46,9 +46,9 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { AnimatedWordmark } from "@/components/animated-wordmark";
 
 export const metadata: Metadata = {
-  title: "ContentRX. Staff-level content design review in every repo",
+  title: "ContentRX. Your codebase ships prose. We read it before anyone else does.",
   description:
-    "ContentRX reviews your short and long-form writing with the judgment of a staff content designer. Suggestions and rationale. Before your next PR, before merge.",
+    "ContentRX reviews the prose that lives in your repo, error messages, READMEs, API docs, PR and commit copy, against one opinionated editorial standard, with the rationale behind every call. Before merge, not after someone screenshots it and your triage Slack blows up. The accuracy is measured and published, so you can check our work.",
 };
 
 export default function Home() {
@@ -61,12 +61,17 @@ export default function Home() {
         <div>
           <AnimatedWordmark size="md" link={false} />
           <h1 className="mt-8 text-5xl font-bold tracking-tight text-strong sm:text-6xl">
-            Staff-level content design review in every repo
+            Your codebase ships prose. ContentRX reads it before
+            anyone else does.
           </h1>
           <p className="mt-6 text-lg text-default sm:text-xl">
-            ContentRX reviews your short and long-form writing with
-            the judgment of a staff content designer. Suggestions
-            and rationale. Before your next PR, before merge.
+            ContentRX reviews the prose that lives in your repo,
+            error messages, READMEs, API docs, PR and commit copy,
+            against one opinionated editorial standard, with the
+            rationale behind every call. Before merge, not after
+            someone screenshots it and your triage Slack blows up.
+            The accuracy is measured and published, so you can check
+            our work.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3 text-sm">
             <Link href="/sign-up" className={buttonStyles({ variant: "primary" })}>
