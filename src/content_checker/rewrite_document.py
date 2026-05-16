@@ -52,6 +52,7 @@ check found something worth editing. Clean docs don't get a rewrite
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass
 
@@ -72,6 +73,33 @@ from content_checker.api_utils import (
 # token cap because the standards prefer shorter copy.
 _MAX_TOKENS = 4096
 
+# Project B (2026-05-15) — bounds on the server-derived ban payload.
+# These are defence-in-depth: the matchers are ContentRX-derived (not
+# customer-authored), but this is the last gate before they hit the
+# model + the deterministic detector, so cap count, pattern length,
+# and how many tokens we will name in the prompt.
+_MAX_BAN_RULES = 25
+_MAX_BAN_PATTERN_CHARS = 2000
+_MAX_TOKENS_PER_RULE = 12
+_MAX_BAN_TOKEN_CHARS = 60
+_MAX_BAN_TOKENS_IN_PROMPT = 40
+
+
+@dataclass(frozen=True)
+class _BanRule:
+    """One server-derived hard-ban matcher + its human-readable tokens.
+
+    `regex` is compiled from the SAME pattern string the TS side stored
+    on the rule (deriveBanMatcher) and used by the deterministic flag +
+    the length-independent trigger — one matcher, three consumers, they
+    cannot disagree. `tokens` are literal surface forms, used only for
+    the prompt + corrective wording (never as the matcher).
+    """
+
+    regex: re.Pattern[str]
+    tokens: tuple[str, ...]
+    leave_proper_nouns: bool
+
 
 @dataclass(frozen=True)
 class RewriteDocumentResult:
@@ -82,6 +110,18 @@ class RewriteDocumentResult:
     output_tokens: int
     cache_creation_input_tokens: int = 0
     cache_read_input_tokens: int = 0
+    # Project B (2026-05-15). Banned tokens that survived the rewrite
+    # AND the single corrective re-prompt. Non-empty ⇒ the caller MUST
+    # NOT present `rewritten` as a clean rewrite ("never ship clean-
+    # with-banned-token"); it surfaces an explicit unresolved blocker
+    # instead. We NEVER string-delete / mangle to force this empty.
+    ban_unresolved: tuple[str, ...] = ()
+    # Surviving occurrences that look like a legitimate proper noun
+    # under a leave-proper-nouns ban (the surname "Guy" vs colloquial
+    # "guys"). Policy = flag-to-human disambiguation: never silent-
+    # pass, never auto-mangle. The rewrite may still be shown; the
+    # surface must prompt "looks like a name — keep or rephrase?".
+    ban_name_collisions: tuple[str, ...] = ()
 
 
 def rewrite_document(
@@ -89,6 +129,7 @@ def rewrite_document(
     text: str,
     model: str = DEFAULT_MODEL,
     style_directives: list[str] | None = None,
+    ban_rules: list[dict] | None = None,
 ) -> RewriteDocumentResult:
     """Rewrite `text` for clarity, calibrated to the team's style rules.
 
@@ -108,12 +149,32 @@ def rewrite_document(
     Returns `{rewritten, diagnostic}` plus token usage so the caller
     can bill the second LLM call to the same usage event.
 
+    `ban_rules` (Project B, 2026-05-15) is the server-derived hard-ban
+    payload: a list of {pattern, case_insensitive, tokens,
+    leave_proper_nouns}. The ban tokens are injected into a
+    non-overridable TIER 1 region of the system prompt (the primary
+    layer — the model fluently rewrites AROUND the banned concept).
+    The matchers then run as a DETERMINISTIC post-pass on the final
+    output: a survivor triggers exactly ONE targeted corrective
+    re-prompt; anything still surviving is returned as an explicit
+    unresolved blocker (`ban_unresolved`) — never scrubbed, never
+    shipped as a clean rewrite. A survivor that reads as a proper noun
+    under a leave-proper-nouns ban is surfaced as
+    `ban_name_collisions` for human disambiguation. Empty / None ⇒ the
+    prompt is byte-identical to the no-ban two-tier default (the CI
+    byte-invariant pins this).
+
     Failure mode: if the LLM's JSON output can't be parsed, fall back
     to treating the raw response as the rewrite with an empty
     diagnostic. This preserves the v2.3.0 behavior — a partial answer
     is better than no answer for a best-effort field.
     """
-    system = _build_system_prompt(style_directives=style_directives)
+    norm_rules = _normalize_ban_rules(ban_rules)
+    ban_tokens = _collect_ban_tokens(norm_rules)
+
+    system = _build_system_prompt(
+        style_directives=style_directives, ban_tokens=ban_tokens
+    )
     user = _build_user_prompt(text=text)
 
     started = time.perf_counter()
@@ -124,18 +185,63 @@ def rewrite_document(
         max_tokens=_MAX_TOKENS,
         timeout=TIMEOUT_SCAN,
     )
-    elapsed_ms = int((time.perf_counter() - started) * 1000)
+    in_tok = response.input_tokens
+    out_tok = response.output_tokens
+    cc_tok = response.cache_creation_input_tokens
+    cr_tok = response.cache_read_input_tokens
 
     rewritten, diagnostic = _parse_response(response.text)
+
+    unresolved: tuple[str, ...] = ()
+    name_collisions: tuple[str, ...] = ()
+
+    if norm_rules:
+        hard, names = _detect_ban_survivors(rewritten, norm_rules)
+        if hard:
+            # Backstop: the deterministic detector found a survivor the
+            # primary (prompt) layer let through. ONE targeted
+            # corrective re-prompt — a narrow single-token fix succeeds
+            # far more reliably than the holistic first pass. Exactly
+            # one; never a second corrective (locked design).
+            corr: LLMResponse = create_message(
+                system=_corrective_system_prompt(ban_tokens),
+                user=_corrective_user_prompt(rewritten, hard),
+                model=model,
+                max_tokens=_MAX_TOKENS,
+                timeout=TIMEOUT_SCAN,
+            )
+            in_tok += corr.input_tokens
+            out_tok += corr.output_tokens
+            cc_tok += corr.cache_creation_input_tokens
+            cr_tok += corr.cache_read_input_tokens
+            corr_rewritten, corr_diag = _parse_response(corr.text)
+            # Accept the corrected text as the working rewrite (it is
+            # the better-faith attempt). Whether it is SHIPPABLE is
+            # decided by re-detecting deterministically, not by
+            # trusting the model's claim.
+            rewritten = corr_rewritten
+            if corr_diag:
+                diagnostic = corr_diag
+            hard, names = _detect_ban_survivors(rewritten, norm_rules)
+        # Survivors after the single corrective ⇒ explicit unresolved
+        # blocker. We do NOT mutate `rewritten` to scrub them (no
+        # string-delete / mangle, ever): the caller withholds the
+        # clean rewrite and surfaces the blocker instead.
+        unresolved = tuple(sorted({m for _, m in hard}))
+        name_collisions = tuple(sorted({m for _, m in names}))
+
+    elapsed_ms = int((time.perf_counter() - started) * 1000)
 
     return RewriteDocumentResult(
         rewritten=rewritten,
         diagnostic=diagnostic,
         latency_ms=elapsed_ms,
-        input_tokens=response.input_tokens,
-        output_tokens=response.output_tokens,
-        cache_creation_input_tokens=response.cache_creation_input_tokens,
-        cache_read_input_tokens=response.cache_read_input_tokens,
+        input_tokens=in_tok,
+        output_tokens=out_tok,
+        cache_creation_input_tokens=cc_tok,
+        cache_read_input_tokens=cr_tok,
+        ban_unresolved=unresolved,
+        ban_name_collisions=name_collisions,
     )
 
 
@@ -229,7 +335,10 @@ def _render_customer_block(style_directives: list[str] | None) -> str:
     )
 
 
-def _build_system_prompt(style_directives: list[str] | None = None) -> str:
+def _build_system_prompt(
+    style_directives: list[str] | None = None,
+    ban_tokens: list[str] | None = None,
+) -> str:
     # The "calibration seam" (2026-05-15). We do NOT impose a fixed
     # house voice; we apply a non-negotiable QUALITY FLOOR (TIER 1) and
     # a customer-overridable STYLE LAYER (TIER 2). A team's configured
@@ -243,6 +352,12 @@ def _build_system_prompt(style_directives: list[str] | None = None) -> str:
     # instructions" countermand). TIER 1 text is byte-identical with
     # and without directives — the structural test pins this.
     customer_block = _render_customer_block(style_directives)
+    # Project B: a non-overridable TIER 1 hard-ban region. Empty string
+    # when there are no ban tokens, so the no-ban prompt is byte-for-
+    # byte identical to the pre-Project-B two-tier default — the CI
+    # invariant in tests/test_rewrite_document_prompt.py pins this, and
+    # it is inserted at a join point chosen so "" changes nothing.
+    ban_block = _render_ban_block(ban_tokens)
     return (
         "You are ContentRX, a staff content designer reviewing a "
         "customer's document. The customer pasted it for review. "
@@ -285,6 +400,7 @@ def _build_system_prompt(style_directives: list[str] | None = None) -> str:
         "below that bar, apply the customer's *intent* only as far as "
         "this floor allows, expressed through strong plain writing — "
         "never through caps, jargon, or hype.\n\n"
+        f"{ban_block}"
         "## TIER 2 — Style layer (sensible defaults; the customer MAY "
         "override these via their configured rules)\n\n"
         "- **Em dashes:** default is to remove them (periods, commas, "
@@ -340,3 +456,227 @@ def _build_user_prompt(*, text: str) -> str:
         "Document to rewrite:",
         wrap_user_text(text),
     ])
+
+
+# ---------------------------------------------------------------------------
+# Project B — deterministic ban enforcement (2026-05-15)
+#
+# Three layers, NOT a fork:
+#   1. Primary    — ban tokens in the non-overridable TIER 1 region;
+#                    the model fluently rewrites AROUND the concept.
+#   2. Backstop   — a deterministic post-pass detector on the FINAL
+#                    output; a survivor triggers ONE corrective
+#                    re-prompt.
+#   3. Last resort— still surviving ⇒ explicit unresolved blocker; the
+#                    caller never presents a clean rewrite. We never
+#                    string-delete / mangle. A proper-noun collision is
+#                    flagged for human disambiguation, not auto-failed.
+# ---------------------------------------------------------------------------
+
+
+def _normalize_ban_rules(ban_rules: list[dict] | None) -> list[_BanRule]:
+    """Validate + compile the server-derived ban payload.
+
+    Defence-in-depth at the last gate before the matcher runs: cap
+    count + pattern length, compile with the stored case flag, and
+    skip (fail-open for THAT rule's detection only) anything malformed
+    rather than crashing the rewrite. The pattern string is the SAME
+    one the TS deriveBanMatcher produced and stored, so the detector
+    here matches exactly what the flag + length-trigger matched.
+    """
+    if not ban_rules:
+        return []
+    out: list[_BanRule] = []
+    for raw in ban_rules[:_MAX_BAN_RULES]:
+        if not isinstance(raw, dict):
+            continue
+        pattern = raw.get("pattern")
+        if (
+            not isinstance(pattern, str)
+            or not pattern
+            or len(pattern) > _MAX_BAN_PATTERN_CHARS
+        ):
+            continue
+        flags = re.IGNORECASE if raw.get("case_insensitive") is True else 0
+        try:
+            compiled = re.compile(pattern, flags)
+        except re.error:
+            continue
+        raw_tokens = raw.get("tokens")
+        tokens: list[str] = []
+        if isinstance(raw_tokens, list):
+            for tok in raw_tokens:
+                if not isinstance(tok, str):
+                    continue
+                t = " ".join(tok.split())
+                if t and len(t) <= _MAX_BAN_TOKEN_CHARS:
+                    tokens.append(t)
+                if len(tokens) >= _MAX_TOKENS_PER_RULE:
+                    break
+        out.append(
+            _BanRule(
+                regex=compiled,
+                tokens=tuple(tokens),
+                leave_proper_nouns=raw.get("leave_proper_nouns") is True,
+            )
+        )
+    return out
+
+
+def _collect_ban_tokens(rules: list[_BanRule]) -> list[str]:
+    """Ordered, de-duplicated token list across rules — for the prompt
+    and the corrective wording only (never the matcher)."""
+    seen: set[str] = set()
+    collected: list[str] = []
+    for rule in rules:
+        for tok in rule.tokens:
+            key = tok.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            collected.append(tok)
+    return collected
+
+
+def _render_ban_block(ban_tokens: list[str] | None) -> str:
+    """Render the non-overridable TIER 1 hard-ban region, or "" when
+    there are no tokens.
+
+    Returning "" is load-bearing: it is concatenated between two fixed
+    prompt literals at a join point chosen so the empty case is
+    byte-for-byte identical to the pre-Project-B prompt (the CI
+    invariant). Tokens are sanitised the same way customer directives
+    are (whitespace-collapsed, fence-stripped, length- and count-
+    capped) — they originate from customer rule prose via the
+    classifier, so they are treated as data, not instructions.
+    """
+    if not ban_tokens:
+        return ""
+    cleaned: list[str] = []
+    seen: set[str] = set()
+    for tok in ban_tokens:
+        if not isinstance(tok, str):
+            continue
+        s = " ".join(tok.split()).replace(_DIRECTIVE_FENCE, "")
+        s = s[:_MAX_BAN_TOKEN_CHARS].strip()
+        if not s:
+            continue
+        key = s.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned.append(s)
+        if len(cleaned) >= _MAX_BAN_TOKENS_IN_PROMPT:
+            break
+    if not cleaned:
+        return ""
+    listed = "\n".join(f'  - "{t}"' for t in cleaned)
+    return (
+        "## TIER 1 — Hard content ban (absolute; outranks TIER 2 and "
+        "every customer-configured style rule)\n\n"
+        "The team that owns this document has BANNED the exact tokens "
+        "below from the output. This is part of the non-negotiable "
+        "floor: it is NOT a style preference and NOT overridable by "
+        "anything else in this prompt, including TIER 2 and the "
+        "customer-configured style rules. None of these may appear in "
+        "your output, in ANY casing:\n\n"
+        f"{listed}\n\n"
+        "Rewrite so that none of the banned tokens appears, by "
+        "genuinely rephrasing — change the word, phrase, sentence, or "
+        "structure so the meaning is carried another way. Do NOT "
+        "delete, blank, hyphenate, misspell, space-break, or otherwise "
+        "mangle a token to dodge the rule; the result must read "
+        "naturally and preserve every fact. If a banned token is also "
+        "a legitimate proper noun (a person's or product's name) and "
+        "removing it would change who or what is meant, keep the name "
+        "intact and do not distort it — that collision is handled "
+        "separately, never by mangling the name.\n\n"
+    )
+
+
+def _detect_ban_survivors(
+    text: str, rules: list[_BanRule]
+) -> tuple[list[tuple[_BanRule, str]], list[tuple[_BanRule, str]]]:
+    """Deterministically scan `text` for banned tokens.
+
+    Returns (hard, names): `hard` survivors are real ban violations;
+    `names` are occurrences that read as a proper noun under a
+    leave-proper-nouns rule (flag-to-human, not auto-fail). Both are
+    surfaced — neither is silently passed, neither is mutated.
+    """
+    hard: list[tuple[_BanRule, str]] = []
+    names: list[tuple[_BanRule, str]] = []
+    for rule in rules:
+        for m in rule.regex.finditer(text):
+            matched = m.group(0)
+            if rule.leave_proper_nouns and _looks_like_proper_noun(text, m):
+                names.append((rule, matched))
+            else:
+                hard.append((rule, matched))
+    return hard, names
+
+
+def _looks_like_proper_noun(text: str, m: re.Match[str]) -> bool:
+    """Conservative, deterministic name heuristic.
+
+    A match reads as a proper noun only when it is capitalised, NOT
+    all-caps (GUYS is colloquial shouting, not a name), and NOT
+    sentence-initial (sentence-start capitalisation is ambiguous — it
+    could just be the banned word opening a sentence, which IS a
+    violation). Erring toward "not a name" keeps the guarantee strong;
+    the locked design explicitly accepts the occasional correct-but-
+    annoying name flag as the price of a real literal guarantee.
+    """
+    s = m.group(0)
+    first = next((c for c in s if c.isalpha()), "")
+    if not first or not first.isupper():
+        return False
+    if len(s) > 1 and s.isupper():
+        return False
+    i = m.start()
+    j = i - 1
+    while j >= 0 and text[j].isspace():
+        j -= 1
+    if j < 0:
+        return False  # start of document → sentence-initial
+    if text[j] in ".!?":
+        return False  # sentence-initial
+    return True
+
+
+def _corrective_system_prompt(ban_tokens: list[str]) -> str:
+    listed = "\n".join(f'  - "{t}"' for t in ban_tokens)
+    return (
+        "You are ContentRX correcting your own document rewrite. The "
+        "previous rewrite STILL contains one or more tokens the team "
+        "has banned outright. Your only job: return a corrected full "
+        "document in which NONE of the banned tokens appears, in any "
+        "casing, while preserving the author's meaning, structure, and "
+        "every fact.\n\n"
+        "Remove each banned token by genuinely rephrasing — change the "
+        "word, phrase, or sentence so the idea is expressed another "
+        "way. NEVER just delete the token, blank it, hyphenate or "
+        "misspell or space-break it to dodge the match, or swap a "
+        "placeholder in. The text must read naturally.\n\n"
+        "Banned tokens (must not appear in your output, any casing):\n"
+        f"{listed}\n\n"
+        "Respond with a single JSON object — no markdown fences, no "
+        "surrounding text:\n"
+        '  { "rewritten": "...", "diagnostic": "..." }\n'
+        "Both fields are required; same output contract as before."
+    )
+
+
+def _corrective_user_prompt(
+    rewritten: str, hard: list[tuple[_BanRule, str]]
+) -> str:
+    survivors = sorted({m for _, m in hard})
+    listed = ", ".join(f'"{s}"' for s in survivors)
+    return "\n".join(
+        [
+            f"These banned tokens still appear and must all be removed: "
+            f"{listed}.",
+            "Here is the document to correct:",
+            wrap_user_text(rewritten),
+        ]
+    )

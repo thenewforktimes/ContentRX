@@ -226,9 +226,25 @@ class handler(BaseHTTPRequestHandler):
                 ]
                 if cleaned:
                     style_directives = cleaned[:25]
+            # Project B (2026-05-15). `ban_rules` is the server-derived
+            # hard-ban payload from /api/check — already shaped by the
+            # TS side from the classifier + deriveBanMatcher. Pass a
+            # bounded list of dicts through; rewrite_document
+            # (_normalize_ban_rules) does the hard validation, compile,
+            # and per-field caps. Anything not a list is dropped (the
+            # rewrite still runs, just without the ban guarantee —
+            # fail-safe, same posture as style_directives).
+            raw_ban_rules = body.get("ban_rules")
+            ban_rules: list[dict] | None = None
+            if isinstance(raw_ban_rules, list):
+                ban_rules = [
+                    r for r in raw_ban_rules if isinstance(r, dict)
+                ][:25]
             try:
                 result = rewrite_document(
-                    text=text, style_directives=style_directives
+                    text=text,
+                    style_directives=style_directives,
+                    ban_rules=ban_rules,
                 )
             except PromptInjectionError as exc:
                 return self._respond(400, {"error": str(exc)})
@@ -250,6 +266,18 @@ class handler(BaseHTTPRequestHandler):
                         # the LLM's JSON output couldn't be parsed; the
                         # rewrite still ships in that case.
                         "diagnostic": result.diagnostic,
+                        # Project B (2026-05-15). Hard-ban tokens that
+                        # survived the rewrite + the single corrective
+                        # re-prompt — the caller MUST NOT present the
+                        # rewrite as clean when this is non-empty.
+                        # ban_name_collisions are survivors that read as
+                        # proper nouns under a leave-proper-nouns ban
+                        # (flag-to-human, not auto-fail). Both default
+                        # to [] for the no-ban path.
+                        "ban_unresolved": list(result.ban_unresolved),
+                        "ban_name_collisions": list(
+                            result.ban_name_collisions
+                        ),
                     },
                     "latency_ms": result.latency_ms,
                     "tokens": {
