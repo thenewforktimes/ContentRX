@@ -116,11 +116,17 @@ Sessions that expose `standard_id` or `rule_version` to a user-facing
 surface — web app cards, MCP response payload, CLI output, Figma plugin
 UI, GitHub Action PR comment text, LSP diagnostic messages, editor
 extension UI — are wrong. Internal logging and the `/admin` dashboard see
-them; product users do not. The one allowed exception today is the
-team-rule management UI at `/dashboard/rules`, which renders standard
-IDs because users need an identifier to enable/disable rules — a
-follow-up will add a `displayName` column so even that surface stops
-leaking IDs.
+them; product users do not. There is **no allowed exception** (the
+prior `/dashboard/rules` carve-out was retired 2026-05-16; see the
+addendum to [decisions/2026-04-25-private-taxonomy-pivot.md](decisions/2026-04-25-private-taxonomy-pivot.md)).
+The line, precisely: category names are public; **standard IDs,
+standards prose, and correct/incorrect exemplars are private substrate
+and never reach any user-facing surface.** Every check surface emits
+the same human-relatable flags (issue / suggestion / severity /
+category) and nothing beneath them — the weekly agent digest included.
+`/dashboard/rules` already display-labels IDs; its residual
+prose/exemplar exposure is audit finding F3, tracked with the
+custom-rules UX cluster.
 
 Major-version cutovers (2.0.0 in the privacy pivot, 3.0.0 in the
 metering collapse) land atomically — engine + all surfaces + snapshot

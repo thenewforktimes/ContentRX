@@ -6,9 +6,12 @@
  * construction — every customer-visible string is rendered through
  * customer-facing vocabulary (Flags, flagged for drift, flag
  * decisions; never violations, verdicts, overrides). The standards
- * library is consulted for category-name translation, which is
- * customer-visible per the existing public envelope; engine
- * substrate IDs (CLR-01, etc.) never reach the rendered output.
+ * library is consulted ONLY for category-name translation, which is
+ * customer-visible per the public envelope; engine substrate IDs
+ * (CLR-01, etc.) AND standards exemplar prose (incorrect/correct
+ * pairs) never reach the rendered output. (2026-05-16: the cold-start
+ * citation no longer quotes library exemplars — the cross-surface
+ * no-taxonomy principle; ADR 2026-04-25 addendum.)
  *
  * Locked copy this file owns:
  *   - Footer: "Cost: 0 checks per run. The agent reads flags your
@@ -72,20 +75,6 @@ function patternLabel(standardId: string): string {
   return CATEGORY_NAMES[std.category] ?? "Pattern";
 }
 
-/** Inline before/after example for a standard. Pulled from the
- * library's `incorrect` / `correct` pair when present so the digest
- * shows the *kind* of writing the pattern catches without quoting
- * the customer's actual strings (which the violations table
- * doesn't store; only sha256 hashes persist). */
-function patternExamplePair(
-  standardId: string,
-): { incorrect: string; correct: string } | null {
-  const std = STANDARDS_BY_ID[standardId];
-  if (!std) return null;
-  if (!std.incorrect || !std.correct) return null;
-  return { incorrect: std.incorrect, correct: std.correct };
-}
-
 /** Pluralise "flag" for the citation count. */
 function flagCount(n: number): string {
   return n === 1 ? "1 flag" : `${n} flags`;
@@ -133,25 +122,21 @@ function renderPatternBlock(
   agreedOverrides: number,
 ): string {
   const label = patternLabel(pattern.standardId);
-  const example = patternExamplePair(pattern.standardId);
 
   const header = `### ${label} (${flagCount(pattern.count)} this month)`;
 
-  // Cold-start citation: stands on the engine's default reasoning
-  // alone (the example pair from the standards library, when
-  // available). Warmed-up citation: appends the team's accepted-
-  // rewrite count for this specific standard.
-  const citationLines: string[] = [];
-
-  if (example) {
-    citationLines.push(
-      `Common pattern: writing that fits the shape of *"${example.incorrect}"* lands harder as *"${example.correct}"*.`,
-    );
-  } else {
-    citationLines.push(
-      `${flagCount(pattern.count)} fired for this pattern in the last month. Specific strings are visible in the dashboard.`,
-    );
-  }
+  // Cross-surface privacy principle (2026-05-16; ADR 2026-04-25
+  // addendum): the agent digest emits the same human-relatable flags
+  // as every other check surface and NEVER the taxonomy. This
+  // citation previously quoted the standards library's
+  // incorrect/correct exemplar prose (patternExamplePair) — that
+  // exemplar prose is private substrate. It now stands only on the
+  // team's OWN signal: the flag count for this pattern (their
+  // content, visible to them in the dashboard) plus, when warmed up,
+  // their own accepted-rewrite history appended below.
+  const citationLines: string[] = [
+    `${flagCount(pattern.count)} fired for this pattern in the last month. Specific strings are visible in the dashboard.`,
+  ];
 
   if (agreedOverrides > 0) {
     citationLines.push(
