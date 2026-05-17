@@ -329,7 +329,7 @@ export default function WritesPage() {
     // defeated the before/after comparison the redesign exists for.
     <main className="mx-auto max-w-6xl px-6 py-20">
       <PageHeader
-        eyebrow="Wherever you work. Whatever you write."
+        eyebrow="Worked examples"
         title="The prose that lives in your codebase."
         lede={
           <>
