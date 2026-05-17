@@ -176,12 +176,11 @@ export default function PricingPage() {
             q="What kind of writing does ContentRX handle?"
             a={
               <>
-                Short-form UI writing (button labels, error messages,
-                tooltips) and long-form internal writing (product
-                update emails, security advisories, all-hands
-                pre-reads, policy notices). Calibrated for product
-                and internal writing. Persuasive marketing draws more
-                &lsquo;worth a look&rsquo; flags.{" "}
+                Short-form repo prose (error messages, UI copy,
+                button labels) and long-form repo prose (READMEs, API
+                docs, PR descriptions, design docs, runbooks,
+                changelogs). Calibrated for the prose that ships in a
+                codebase.{" "}
                 <Link href="/writes" className="underline underline-offset-2">
                   See six worked examples
                 </Link>
