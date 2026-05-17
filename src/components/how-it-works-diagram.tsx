@@ -565,23 +565,43 @@ function ReasonFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
   );
 }
 
-// ---- Frame 5: The Agent — orbital deterministic scan ---------------------
+// ---- Frame 5: The Agent — radar fan over the prose it watches ------------
+// The points are the kinds of prose the deterministic agent scans, in the
+// order they're written (PR -> changelog -> README -> product copy ->
+// error copy). NOT service names — the agent watches prose, not APIs.
 const REPOS = [
-  "api",
-  "web",
-  "cli",
-  "docs",
-  "sdk",
-  "mobile",
-  "infra",
-  "worker",
+  "PR descriptions",
+  "changelogs",
+  "READMEs",
+  "product copy",
+  "error copy",
 ] as const;
+// Scrim opaque floor (px from the stage bottom). Mirrored in the scrim
+// gradient + RepoLabels CSS below — keep all three in sync.
+const SCRIM_PX = 260;
+// The fan: a ~120° arc opening upward from an origin on the scrim
+// horizon. Canvas angles (y is down): PI = left, 3PI/2 = straight up,
+// 2PI = right. Nodes spread left -> right across the visible arc.
+const FAN_PAD = 0.17 * Math.PI;
+const FAN_A0 = Math.PI + FAN_PAD;
+const FAN_A1 = 2 * Math.PI - FAN_PAD;
 const REPO_ANGLES = REPOS.map(
-  (_, i) => -Math.PI / 2 + (i / REPOS.length) * Math.PI * 2,
+  (_, i) => FAN_A0 + (i / (REPOS.length - 1)) * (FAN_A1 - FAN_A0),
 );
-const ROTATION_PERIOD = 12;
+const SWEEP_PERIOD = 7; // seconds for a full there-and-back sweep
 
 function RepoLabels() {
+  // Client-only: the positions are computed from a container-query
+  // calc() with interpolated trig — that serialized differently
+  // server vs client and tripped a React hydration warning. The
+  // labels are decorative (aria-hidden), so rendering them only after
+  // mount removes the SSR markup entirely (no diff) with no SEO/SR
+  // cost. Rounded trig keeps the calc clean + deterministic too.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  const R = "max(70px, min(100cqh - 276px, 42cqw))";
   return (
     <div
       aria-hidden
@@ -590,25 +610,26 @@ function RepoLabels() {
     >
       {REPOS.map((name, i) => {
         const a = REPO_ANGLES[i];
-        const cos = Math.cos(a);
-        const sin = Math.sin(a);
+        const cosN = Math.cos(a);
+        const sinN = Math.sin(a);
+        const cos = cosN.toFixed(4);
+        const sin = sinN.toFixed(4);
         return (
           <div
             key={name}
             className="absolute font-mono text-[11px] font-medium text-strong"
             style={{
-              // Anchored to the canvas centre (cx = 50% w, cy = 40% h)
-              // and orbitR = min(w,h)*0.40, so the labels stay locked
-              // to their node dots after the radar was lifted.
+              // Origin = (50% w, stageH - 260px) on the scrim horizon;
+              // radius R mirrors the canvas arcR = max(70, min(h-276,
+              // 0.42w)). Keeps each label locked to its node on the fan.
               left: "50%",
-              top: "40%",
-              transform: `translate(-50%, -50%) translate(calc(${cos} * min(40cqw, 40cqh) + ${
-                cos * 14
-              }px), calc(${sin} * min(40cqw, 40cqh) + ${sin * 14}px))`,
+              top: "calc(100% - 260px)",
+              transform: `translate(-50%, -50%) translate(calc(${cos} * (${R} + 14px)), calc(${sin} * (${R} + 14px)))`,
               whiteSpace: "nowrap",
               letterSpacing: "0.02em",
               textShadow: "0 1px 5px rgba(0,0,0,0.9)",
-              textAlign: cos > 0.3 ? "left" : cos < -0.3 ? "right" : "center",
+              textAlign:
+                cosN > 0.25 ? "left" : cosN < -0.25 ? "right" : "center",
             }}
           >
             {name}
@@ -655,48 +676,53 @@ function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
       const faint = (a: number) => `rgba(${qr},${qg},${qb},${a})`;
 
       ctx.clearRect(0, 0, w, h);
-      const cx = w * 0.5;
-      // Centre lifted out of the bottom scrim so the radar lives in
-      // the clear zone above the copy.
-      const cy = h * 0.4;
-      const orbitR = Math.min(w, h) * 0.4;
-      const innerR = orbitR * 0.55;
+      // Origin sits on the scrim horizon; the fan opens upward into
+      // the clear zone, sized so it never clips or hides under the
+      // scrim. arcR mirrors the RepoLabels CSS exactly.
+      const ox = w * 0.5;
+      const oy = h - SCRIM_PX;
+      const arcR = Math.max(70, Math.min(oy - 16, w * 0.42));
 
-      [orbitR, orbitR * 0.78, innerR].forEach((r, idx) => {
+      // Concentric arc rings (upper semicircle).
+      [arcR, arcR * 0.72, arcR * 0.44].forEach((r, idx) => {
         ctx.strokeStyle = mint(0.4 - idx * 0.08);
         ctx.lineWidth = idx === 0 ? 1.5 : 1;
         ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.arc(ox, oy, r, Math.PI, Math.PI * 2);
         ctx.stroke();
       });
 
-      for (let i = 0; i < 24; i++) {
-        const a = -Math.PI / 2 + (i / 24) * Math.PI * 2;
-        const r1 = orbitR;
-        const r2 = orbitR + (i % 6 === 0 ? 7 : 3);
-        ctx.strokeStyle = i % 6 === 0 ? mint(0.85) : faint(0.55);
-        ctx.lineWidth = i % 6 === 0 ? 1.5 : 1;
+      // Cadence ticks along the outer arc, across the fan span.
+      const TICKS = 16;
+      for (let i = 0; i <= TICKS; i++) {
+        const a = FAN_A0 + (i / TICKS) * (FAN_A1 - FAN_A0);
+        const major = i % 4 === 0;
+        const r2 = arcR + (major ? 7 : 3);
+        ctx.strokeStyle = major ? mint(0.85) : faint(0.55);
+        ctx.lineWidth = major ? 1.5 : 1;
         ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
-        ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+        ctx.moveTo(ox + Math.cos(a) * arcR, oy + Math.sin(a) * arcR);
+        ctx.lineTo(ox + Math.cos(a) * r2, oy + Math.sin(a) * r2);
         ctx.stroke();
       }
 
-      const scanAngle = -Math.PI / 2 + (t / ROTATION_PERIOD) * Math.PI * 2;
-      const scanX = cx + Math.cos(scanAngle) * orbitR;
-      const scanY = cy + Math.sin(scanAngle) * orbitR;
+      // Oscillating sweep across the fan, eased at both ends.
+      const ph = (1 - Math.cos((t / SWEEP_PERIOD) * Math.PI * 2)) / 2;
+      const sweep = FAN_A0 + ph * (FAN_A1 - FAN_A0);
+      const sx = ox + Math.cos(sweep) * arcR;
+      const sy = oy + Math.sin(sweep) * arcR;
 
-      // Trailing comet wedge first, so the bright ray sits on top.
-      const beamW = (36 * Math.PI) / 180;
-      ctx.fillStyle = mint(0.16);
+      // Soft beam around the sweep (direction-agnostic for the swing).
+      const beamW = (16 * Math.PI) / 180;
+      ctx.fillStyle = mint(0.14);
       ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, orbitR, scanAngle - beamW, scanAngle);
+      ctx.moveTo(ox, oy);
+      ctx.arc(ox, oy, arcR, sweep - beamW, sweep + beamW);
       ctx.closePath();
       ctx.fill();
 
       // The sweep ray — bold, bright at the leading edge.
-      const grad = ctx.createLinearGradient(cx, cy, scanX, scanY);
+      const grad = ctx.createLinearGradient(ox, oy, sx, sy);
       grad.addColorStop(0, mint(0));
       grad.addColorStop(0.45, mint(0.4));
       grad.addColorStop(1, bright(0.98));
@@ -704,31 +730,30 @@ function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
       ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(scanX, scanY);
+      ctx.moveTo(ox, oy);
+      ctx.lineTo(sx, sy);
       ctx.stroke();
       ctx.lineCap = "butt";
 
-      // Leading glow + dot at the scan tip.
-      const tipG = ctx.createRadialGradient(scanX, scanY, 0, scanX, scanY, 14);
+      // Leading glow + dot at the sweep tip.
+      const tipG = ctx.createRadialGradient(sx, sy, 0, sx, sy, 14);
       tipG.addColorStop(0, bright(0.95));
       tipG.addColorStop(0.4, mint(0.4));
       tipG.addColorStop(1, mint(0));
       ctx.fillStyle = tipG;
       ctx.beginPath();
-      ctx.arc(scanX, scanY, 14, 0, Math.PI * 2);
+      ctx.arc(sx, sy, 14, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = bright(0.98);
       ctx.beginPath();
-      ctx.arc(scanX, scanY, 3, 0, Math.PI * 2);
+      ctx.arc(sx, sy, 3, 0, Math.PI * 2);
       ctx.fill();
 
+      // The watched-prose nodes; brighten + pulse as the sweep nears.
       seeds.forEach((s) => {
-        const x = cx + Math.cos(s.angle) * orbitR;
-        const y = cy + Math.sin(s.angle) * orbitR;
-        let delta = Math.abs(scanAngle - s.angle);
-        while (delta > Math.PI) delta = Math.abs(delta - Math.PI * 2);
-        const proximity = Math.max(0, 1 - delta / 0.25);
+        const x = ox + Math.cos(s.angle) * arcR;
+        const y = oy + Math.sin(s.angle) * arcR;
+        const proximity = Math.max(0, 1 - Math.abs(sweep - s.angle) / 0.22);
         const breath = 0.5 + 0.5 * Math.sin(t * 1.2 + s.breathPhase);
         ctx.fillStyle = mint(0.62 + breath * 0.22 + proximity * 0.45);
         ctx.beginPath();
@@ -743,18 +768,19 @@ function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
         }
       });
 
-      const centerR = 3.5 + 0.6 * Math.sin(t * 1.5);
-      const centerG = ctx.createRadialGradient(cx, cy, 0, cx, cy, 28);
-      centerG.addColorStop(0, bright(0.9));
-      centerG.addColorStop(0.4, mint(0.35));
-      centerG.addColorStop(1, mint(0));
-      ctx.fillStyle = centerG;
+      // Origin anchor — the agent, a dish on the horizon.
+      const coreR = 3.5 + 0.6 * Math.sin(t * 1.5);
+      const cG = ctx.createRadialGradient(ox, oy, 0, ox, oy, 26);
+      cG.addColorStop(0, bright(0.9));
+      cG.addColorStop(0.4, mint(0.35));
+      cG.addColorStop(1, mint(0));
+      ctx.fillStyle = cG;
       ctx.beginPath();
-      ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+      ctx.arc(ox, oy, 26, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = bright(0.95);
       ctx.beginPath();
-      ctx.arc(cx, cy, centerR, 0, Math.PI * 2);
+      ctx.arc(ox, oy, coreR, 0, Math.PI * 2);
       ctx.fill();
     },
     [seeds],
@@ -836,21 +862,22 @@ function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
         className="absolute inset-0 block h-full w-full"
         aria-hidden
       />
-      <RepoLabels />
 
-      {/* No box — a soft bottom-up scrim so the radar shows through
-          the whole stage while the copy stays AAA. Token-driven
-          (canvas colour); the opaque ~220px floor guarantees the
-          text never sits on the moving canvas, the fade reveals the
-          orbit + pointer + centre anchor above it. */}
+      {/* Soft bottom-up scrim: opaque to 260px so the copy sits on
+          solid canvas (AAA), fading out by 330px so the radar fan
+          above it stays clear. Token-driven. Drawn BEFORE the labels
+          so the labels are never dimmed by it. Keep 260 in sync with
+          SCRIM_PX + the RepoLabels CSS. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(to top, var(--color-canvas, #0e1430) 0px, var(--color-canvas, #0e1430) 260px, transparent 410px)",
+            "linear-gradient(to top, var(--color-canvas, #0e1430) 0px, var(--color-canvas, #0e1430) 260px, transparent 330px)",
         }}
       />
+
+      <RepoLabels />
 
       {/* Copy, bottom-anchored within the opaque floor of the scrim. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 p-[8%] max-[720px]:p-[5%] max-[480px]:p-[4%]">
