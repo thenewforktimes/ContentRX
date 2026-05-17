@@ -185,15 +185,11 @@ function SaveMoneyCell() {
 }
 
 function LongFormCell() {
-  // The corporate-speak input excerpt is a real fragment from the
-  // /writes product-update example and the pill matches one of that
-  // example's flags. The "Suggested" rewrite, however, is a
-  // hand-tuned exemplar — the full /writes rewrite mentions an
-  // internal feature name and would leak private taxonomy at this
-  // scroll-stopping marketing position. (See `/writes/page.tsx:81–112`
-  // for the source fragment that fed the input excerpt above. That
-  // example also needs a substrate-stripped rewrite — tracked
-  // separately.)
+  // Input excerpt is a fragment of the /writes README example
+  // (reframed 2026-05-16 to codebase-resident long-form). The pill
+  // matches that example's Clarity flag; the "Suggested" line is the
+  // rewrite's opening sentence. Substrate-clean (no standard_id /
+  // rule_version) for this scroll-stopping marketing position.
   return (
     <Cell
       eyebrow="Long-form review"
@@ -202,15 +198,15 @@ function LongFormCell() {
       visual={
         <div className="rounded-xl border border-line bg-canvas p-4 shadow-md shadow-canvas/40">
           <p className="font-mono text-[11px] leading-relaxed text-quiet">
-            &ldquo;leverages cutting-edge AI to facilitate your
-            team&apos;s ability to optimize content workflows...&rdquo;
+            &ldquo;Internal service for tenant routing. See the RFC for
+            background. Run make dev (needs the usual env)...&rdquo;
           </p>
           <div className="mt-3 flex items-center gap-2">
             <Pill tone="amber" size="xs">
-              Plain language
+              Clarity
             </Pill>
             <span className="text-[11px] text-default">
-              Eleven corporate words.
+              Assumes the reader&apos;s context.
             </span>
           </div>
           <div className="mt-3 rounded-md bg-sunken p-2.5">
@@ -218,7 +214,8 @@ function LongFormCell() {
               Suggested
             </p>
             <p className="mt-1 text-[11px] leading-relaxed text-default">
-              Makes your workflows faster. Your teams happier.
+              orbit maps each request to a tenant and region before it
+              reaches the app.
             </p>
           </div>
         </div>

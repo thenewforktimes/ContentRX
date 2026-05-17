@@ -3,14 +3,14 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * /writes copy-pin tests (Phase F3a, 2026-05-09 roadmap).
- *
- * The route is the long-form gallery — three examples on day 1
- * (product update, security advisory, internal announcement); F3b
- * appends three more on day 2. Tests pin structure (the three labels,
- * the substrate-clean rendering, the absence of em dashes), not
- * prose. Robert edits the prose; these tests catch regressions like
- * "an example label dropped out" or "substrate IDs leaked in."
+ * /writes copy-pin tests. REFRAMED 2026-05-16 to the locked north
+ * star: the gallery now covers the long-form prose that lives in the
+ * codebase (README, API reference, PR description, design doc,
+ * runbook, changelog), not the 2026-05-09 company-comms set. Tests
+ * pin structure (the six labels, the codebase-prose headline, the
+ * substrate-clean rendering, the absence of em dashes), not prose.
+ * Robert edits the prose; these catch regressions like "an example
+ * label dropped out" or "substrate IDs leaked in."
  */
 
 const ROOT = path.join(__dirname, "..", "..", "..", "..");
@@ -29,24 +29,26 @@ describe("/writes (src/app/(marketing)/writes/page.tsx)", () => {
   const source = readSource("src/app/(marketing)/writes/page.tsx");
   const visible = visibleCopy(source);
 
-  it("lands the long-form-audience headline", () => {
+  it("lands the codebase-prose headline (north-star reframe 2026-05-16)", () => {
+    // Was "longer-form writing your team sends to itself" (company
+    // comms, off-thesis). The locked north star is the prose that
+    // lives in the codebase; the headline pins that.
     expect(visible).toMatch(
-      /longer-form writing your team sends to itself/i,
+      /long-form prose that lives in your codebase/i,
     );
   });
 
   it("renders all six gallery example labels", () => {
-    // F3a labels (day 1): product update, security advisory, internal
-    // announcement. F3b labels (day 2): all-hands pre-read, incident
-    // update, policy notice. The gallery is "complete" when all six
-    // land — losing one is the regression to catch.
+    // Reframed 2026-05-16 to codebase-resident long-form. The gallery
+    // is "complete" when all six land; losing one is the regression
+    // to catch.
     for (const label of [
-      "Product update",
-      "Security advisory",
-      "Internal announcement",
-      "All-hands pre-read",
-      "Incident update",
-      "Policy notice",
+      "README",
+      "API reference",
+      "PR description",
+      "Design doc",
+      "Runbook",
+      "Changelog",
     ]) {
       expect(visible).toContain(label);
     }
@@ -58,12 +60,12 @@ describe("/writes (src/app/(marketing)/writes/page.tsx)", () => {
     // won't know what kind of writing the page covers without
     // scrolling. Pin the lede / use-case names together.
     for (const label of [
-      "Product updates",
-      "Security advisories",
-      "Internal announcements",
-      "All-hands pre-reads",
-      "Incident updates",
-      "Policy notices",
+      "READMEs",
+      "API docs",
+      "PR descriptions",
+      "Design docs",
+      "Runbooks",
+      "Changelogs",
     ]) {
       expect(visible).toContain(label);
     }

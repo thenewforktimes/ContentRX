@@ -1,42 +1,41 @@
 /**
- * /writes — long-form gallery (Phase F, 2026-05-09 roadmap).
+ * /writes — long-form gallery, REFRAMED 2026-05-16 to the locked
+ * north star ("the opinionated editor for the prose that lives in a
+ * codebase").
  *
- * Six examples in two groups:
+ * The 2026-05-09 design sold "the longer-form writing your team sends
+ * to itself" — product-update emails, security advisories, all-hands
+ * pre-reads, policy notices. Every one was company comms / the inbox:
+ * exactly the out-of-scope ground the north star refuses. This
+ * reframe relocates the same failure modes to the long-form prose
+ * that actually lives in the repo and gets reviewed before merge:
+ * README, API reference, PR description, design doc, runbook,
+ * changelog.
  *
- *   F3a (day 1): product update, security advisory, internal announcement
- *   F3b (day 2): all-hands pre-read, incident update, policy notice
+ * Craft bar (Robert, 2026-05-16; locked north-star quality bar #4,
+ * "ContentRX is not cruel"): the "before" inputs are NOT cartoon
+ * clichés of bad writing. Real engineers/PMs don't write badly on
+ * purpose; they ship a reasonable shortcut when busy, distracted, or
+ * stressed. Each input is a competent author's realistic shortcut
+ * (assumed context, happy-path-only, terse because it was the 4th PR
+ * today). The flag names what the reader loses and why, generously,
+ * never prosecutorial. The rewrite PRESERVES the author's register
+ * and sharpens within it; it does not flatten a terse voice into
+ * bland README mush.
  *
- * 2026-05-11 redesign (Robert): the stacked single-column layout
- * read as a wall of text — six 800px-tall cards with input → flags
- * → rewrite in a vertical chain. Hard to scan, hard to compare
- * before vs after.
- *
- * New shape:
- *
- *   1. Chip nav above the fold — six labels, one click to anchor.
- *      The reader sees what's covered without scrolling. The chip
- *      that matches their use case is the one that matters; the
- *      others are credibility.
- *   2. Per-example side-by-side: "What you wrote" | "Suggested
- *      rewrite" in a 2-col grid at lg+. The before/after comparison
- *      IS the value-prop; making it the first thing the eye lands on
- *      teaches the product faster than any prose.
- *   3. Flags collapsed into a <details> with a severity-count summary
- *      visible by default. Curious readers expand; casual readers
- *      get the comparison and move on. SEO unaffected — all content
- *      ships in the markup.
- *
- * Each example shrinks from ~800px to ~450px collapsed (~700px when
- * flags expanded). Six examples = ~2,700px instead of 4,800px. The
- * page reads as a scannable showcase, not a wall.
+ * Structure retained from the 2026-05-11 redesign (it works): chip
+ * nav above the fold, per-example side-by-side "What you wrote" vs
+ * "Suggested rewrite", flags collapsed into a <details> with a
+ * severity-count summary visible by default.
  *
  * Substrate-clean (ADR 2026-04-25): customer-facing vocabulary only,
  * no `standard_id`, no `rule_version`, no engine snake_case enums.
  *
- * Voice: calm, confident, charming per docs/copy-vocabulary.md. The
- * draft inputs deliberately demonstrate corporate / hedged / cloying
- * writing so the suggestions can land their fixes; they aren't the
- * product's voice, they're the writing the product flags.
+ * Voice: ContentRX's own strings (intro, flag issue/suggestion,
+ * framing) are calm/confident/charming per docs/copy-vocabulary.md,
+ * no em dashes, no semicolons, no colons. The inputText/rewrite
+ * fields are demonstration content (the repo prose under review),
+ * not the product's voice.
  */
 
 import type { Metadata } from "next";
@@ -45,9 +44,9 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Pill } from "@/components/ui/pill";
 
 export const metadata: Metadata = {
-  title: "Long-form writing review. ContentRX",
+  title: "Long-form codebase prose review. ContentRX",
   description:
-    "ContentRX reviews the longer-form writing your team sends to itself. Product updates, security advisories, internal announcements. Same engine, same content-design judgment, on the writing the inbox sees.",
+    "ContentRX reviews the long-form prose that lives in your repo. READMEs, API docs, PR descriptions, design docs, runbooks, changelogs, against one opinionated editorial standard before merge.",
 };
 
 type Flag = {
@@ -71,248 +70,250 @@ type Example = {
 
 const EXAMPLES: readonly Example[] = [
   {
-    id: "product-update",
-    label: "Product update",
-    momentLabel: "Customer notification",
+    id: "readme",
+    label: "README",
+    momentLabel: "Repo entry point",
     contentTypeLabel: "Long-form",
     intro:
-      "An email going out to existing customers about a shipped feature. The most common kind of long-form your team writes; also the most consistently jargon-heavy.",
+      "The first file anyone, or any agent, opens. It gets written by the person who knows the system best, which is exactly why it leaves out the things they already know.",
     inputText:
-      "Hi team! We're absolutely thrilled to announce our newest feature, advanced review intelligence. This robust capability leverages cutting-edge AI to facilitate your team's ability to optimize content workflows. The intuitive new dashboard streamlines the review paradigm, empowering you to ideate across departments. We can't wait to see how you'll utilize these world-class enhancements!",
+      "# orbit\n\nInternal service for tenant routing. Wraps the edge config and the tenant DB. See the RFC for background. Run `make dev` (needs the usual env from 1Password). Most things you'll touch are in `internal/router/`. Ping #orbit if stuck.",
     flags: [
       {
-        category: "Plain language",
+        category: "Clarity",
         severity: "medium",
         severityLabel: "Worth adjusting",
         issue:
-          "Eleven corporate words land in four sentences (robust, leverages, facilitate, optimize, intuitive, streamlines, paradigm, empowering, ideate, utilize, world-class, cutting-edge). The reader translates the announcement before they read it.",
+          "The first line assumes the reader already knows what tenant routing decides here. Someone cloning this cold cannot tell what orbit is for before reading an RFC that isn't linked.",
         suggestion:
-          "Replace with plain words. 'Use' beats 'utilize'; 'help' beats 'facilitate'; 'improve' beats 'optimize'.",
+          "Add one sentence of what it decides. 'orbit maps each incoming request to a tenant and region before it reaches the app.' Keep the rest, the terse register is fine.",
       },
       {
-        category: "Voice & tone",
+        category: "Specific reference",
         severity: "medium",
         severityLabel: "Worth adjusting",
         issue:
-          "Three exclamation points in four sentences. The energy reads as handled, not informed.",
+          "'The RFC', 'the usual env', and '#orbit' each point somewhere only a current teammate can follow. The reader who needs the README most is the one who doesn't have those.",
         suggestion:
-          "Cut to zero. The product update is news; news doesn't need exclaiming.",
+          "Link the RFC by path. Name the env file or bootstrap command. The Slack channel is a fine backstop, not the setup path.",
       },
       {
-        category: "Active voice",
+        category: "Voice and tone",
         severity: "low",
         severityLabel: "Quick polish",
         issue:
-          "'The dashboard streamlines the paradigm' hides who built what. Name the team behind the work.",
+          "'Most things you'll touch are in internal/router/' is true for you today and dates fast, and it still doesn't give a first run.",
         suggestion:
-          "'We rebuilt the dashboard so it adapts the review to the kind of writing.' carries the actor; the original sentence hides it.",
+          "One command that returns something proves the clone works and carries more than the orientation. Drop 'most things'.",
       },
     ],
     rewrite:
-      "Hi team. We made the long-form review smarter. The dashboard now picks the right register for the kind of writing being reviewed: error message, product email, security disclosure, marketing post. The flag list adapts to match. Same dashboard URL. The rest of your workflow doesn't change.",
+      "# orbit\n\norbit maps each incoming request to a tenant and region before it reaches the app. It wraps the edge config and the tenant DB.\n\n## Run it\n\n    cp .env.example .env   # values in 1Password, Eng vault, 'orbit'\n    make dev\n    curl localhost:8080/healthz   # {\"ok\":true} means you're good\n\nBackground: docs/rfcs/0007-tenant-routing.md. Code you'll usually touch: internal/router/. Stuck: #orbit.",
   },
   {
-    id: "security-advisory",
-    label: "Security advisory",
-    momentLabel: "Compliance disclosure",
+    id: "api-reference",
+    label: "API reference",
+    momentLabel: "Endpoint doc",
     contentTypeLabel: "Long-form",
     intro:
-      "A disclosure email to affected users after a security event. The bar is highest here. The reader needs to know what was exposed, who was affected, and what to do.",
+      "Reference docs get written right after the endpoint ships, by the person who just built it. They document what they're looking at, the success path, and skip the parts that were obvious while their hands were on the code.",
     inputText:
-      "On April 12, 2026, our security team became aware of a potential vulnerability that may have impacted some users. We have since taken comprehensive steps to mitigate this issue and ensure the integrity of our platform. We sincerely apologize for any inconvenience this may have caused. Please reach out to our team if you have any questions or concerns regarding this matter.",
+      "### POST /v1/exports\n\nStarts an export job for the caller's workspace. Pass `format` (`csv` or `json`) and an optional `since` ISO timestamp. Returns the job id. Poll `GET /v1/exports/{id}` for status.",
     flags: [
       {
-        category: "Voice & tone",
+        category: "Completeness",
         severity: "high",
         severityLabel: "Worth adjusting",
         issue:
-          "The reader doesn't know what was exposed, who was affected, or what to do. A disclosure has to name those three things or it isn't a disclosure.",
+          "The success path is documented. The integrator's first real questions aren't. What auth does this need, what does a rejected request return, and is the job async with no callback. They hit those before they hit the happy path.",
         suggestion:
-          "Name the data class (email addresses, payment data, content). Name the affected count. Name the next step.",
+          "Add the auth line, one example error body, and a sentence that the job is async so the caller knows to poll.",
       },
       {
-        category: "Plain language",
+        category: "Clarity",
         severity: "medium",
         severityLabel: "Worth adjusting",
         issue:
-          "'Comprehensive steps to mitigate this issue and ensure the integrity of our platform' is corporate filler. The reader wants the verbs.",
+          "'Returns the job id' in what shape. A bare string, a JSON object, a Location header. The integrator has to guess or read your source, which is the thing the doc exists to prevent.",
         suggestion:
-          "Replace with the specific actions. 'Rotated sessions, emailed affected users, audited the access path.'",
+          "Show the actual response. 'Returns 202 with {\"id\": \"exp_…\"}.'",
       },
       {
-        category: "Voice & tone",
+        category: "Specificity",
         severity: "low",
         severityLabel: "Quick polish",
         issue:
-          "'We sincerely apologize for any inconvenience' performs concern instead of stating the work.",
+          "'Poll for status' has no interval and no terminal states, so every caller invents their own.",
         suggestion:
-          "Drop the apology line. The reader's concern is the data, not the reassurance.",
+          "'Poll every 5s. Status is queued, running, done, or failed.' One sentence, one fewer support thread.",
       },
     ],
     rewrite:
-      "On April 12, 2026, an attacker accessed email addresses for 1,200 accounts. No passwords, payment data, or content were exposed. We rotated affected sessions and emailed every affected user on April 13th. If you didn't get an email, you weren't affected. Questions: security@contentrx.io.",
+      "### POST /v1/exports\n\nAuth: API key in the Authorization header. Starts an async export job for the caller's workspace.\n\nBody: `format` (`csv` or `json`, required), `since` (ISO timestamp, optional).\n\nReturns 202 with `{\"id\": \"exp_…\"}`. A bad `format` returns 422 with `{\"error\": \"format must be csv or json\"}`.\n\nPoll `GET /v1/exports/{id}` every 5s. Status is queued, running, done, or failed. No callback is sent.",
   },
   {
-    id: "internal-announcement",
-    label: "Internal announcement",
-    momentLabel: "Team notification",
+    id: "pr-description",
+    label: "PR description",
+    momentLabel: "Before merge",
     contentTypeLabel: "Long-form",
     intro:
-      "A casual heads-up to teammates. The register is more relaxed than a customer email; the standards aren't.",
+      "The description gets written last, when the work is done and you're tired and the next thing is waiting. So it gets the summary the author can write from memory, not the one the reviewer needs to review it.",
     inputText:
-      "Hey everyone! Quick heads up that the all hands has been moved to next Wednesday at 10am due to scheduling conflicts. We will utilize this time to share important updates about Q2 priorities and the recent reorg. Please make every effort to attend if at all possible. There will be time at the end for Q&A. Reach out to me if you have any questions! Thanks guys.",
+      "Fixes the flaky checkout test and tightens the retry logic while I was in there. Also bumped the timeout. Should be good now, tested locally.",
     flags: [
       {
-        category: "Inclusive language",
-        severity: "high",
-        severityLabel: "Worth adjusting",
-        issue: "'Thanks guys' reads as gendered. The team isn't all guys.",
-        suggestion: "'Thanks everyone' or 'thanks team'.",
-      },
-      {
-        category: "Plain language",
-        severity: "low",
-        severityLabel: "Quick polish",
-        issue:
-          "'Utilize this time' is jargon for 'use this time'. The casual register doesn't earn it.",
-        suggestion:
-          "'We'll use the time to cover Q2 priorities and the reorg.'",
-      },
-      {
-        category: "Voice & tone",
-        severity: "low",
-        severityLabel: "Quick polish",
-        issue:
-          "'Please make every effort to attend if at all possible' is corporate hedging in a casual note.",
-        suggestion:
-          "'Plan to come' or 'show up if you can'. Confident reads as kind.",
-      },
-    ],
-    rewrite:
-      "Hey everyone, the all hands moved to next Wednesday at 10am. We'll cover Q2 priorities and the reorg, with 15 minutes at the end for questions. Plan to come; if you can't, the recording lands in #all-hands by EOD Thursday. Drop questions in the thread.",
-  },
-  {
-    id: "all-hands-pre-read",
-    label: "All-hands pre-read",
-    momentLabel: "Team notification",
-    contentTypeLabel: "Long-form",
-    intro:
-      "An email kicking off the next all-hands. Sets the agenda, the format, and what to bring. The all-hands itself is the meeting; this email is the pre-read.",
-    inputText:
-      "Hi team! Just wanted to give you all a comprehensive heads-up on next week's all-hands meeting. We have an incredibly exciting agenda lined up, including a deep-dive into Q1 performance, some exciting strategic initiatives, and updates on the recent organizational changes. We'd really appreciate it if everyone could make every effort to attend in person, as we believe face-to-face engagement maximizes value creation across the organization. Please don't hesitate to reach out if you have any questions or concerns!",
-    flags: [
-      {
-        category: "Plain language",
-        severity: "medium",
-        severityLabel: "Worth adjusting",
-        issue:
-          "'Comprehensive heads-up', 'deep-dive', 'strategic initiatives', 'maximizes value creation across the organization'. The corporate stack hides the actual agenda.",
-        suggestion:
-          "Replace with the agenda. The reader is opening a pre-read; tell them what they'll cover.",
-      },
-      {
-        category: "Voice & tone",
-        severity: "medium",
-        severityLabel: "Worth adjusting",
-        issue:
-          "'We'd really appreciate it if everyone could make every effort' is hedged politeness. It signals the writer expects pushback on the ask.",
-        suggestion:
-          "Just ask. 'Plan to come in person' carries the same request without the hedging.",
-      },
-      {
-        category: "Active voice",
-        severity: "low",
-        severityLabel: "Quick polish",
-        issue:
-          "'Maximizes value creation across the organization' hides who creates the value. Name the people.",
-        suggestion:
-          "'In-person meetings give the team a real conversation about strategy.' carries the actor.",
-      },
-    ],
-    rewrite:
-      "Subject: Next Wednesday's all-hands. Pre-read.\n\nHey team. Next Wednesday at 10am Pacific. Three blocks: Q1 numbers (15 min), the reorg in detail (20 min), what's next (10 min). The last 15 minutes are open for questions. In-person is better but the recording lands in #all-hands by EOD Wednesday. Drop questions in the thread before then; we'll batch them into the Q&A block.",
-  },
-  {
-    id: "incident-update",
-    label: "Incident update",
-    momentLabel: "Outage update",
-    contentTypeLabel: "Long-form",
-    intro:
-      "A status update during an active incident. The audience is anxious and the fact set is changing. Specifics build trust; vagueness corrodes it.",
-    inputText:
-      "We are currently experiencing some intermittent issues with our platform that may be affecting some users. Our engineering team is working diligently to investigate and resolve the situation as quickly as possible. We sincerely apologize for any inconvenience this may be causing and appreciate your patience as we work to restore full service. We will provide additional updates as more information becomes available.",
-    flags: [
-      {
-        category: "Voice & tone",
+        category: "Reviewability",
         severity: "high",
         severityLabel: "Worth adjusting",
         issue:
-          "'Intermittent issues' / 'may be affecting' is the worst register for an incident comm. Vague language reads as the writer not knowing what's wrong, which reads as the team not being on it.",
+          "A reviewer approves the reasoning, not the diff. 'Tightens the retry logic' and 'bumped the timeout' say what changed but not what was wrong or why this fixes it, so they either re-derive it from the diff or rubber-stamp it.",
         suggestion:
-          "Name the failure mode and the affected scope. 'Dashboard checks return 500 for ~40% of requests' beats 'intermittent issues' on every dimension.",
+          "One line of root cause per change. What made the test flaky, and what the retry logic was doing that it shouldn't.",
       },
       {
-        category: "Plain language",
+        category: "Clarity",
         severity: "medium",
         severityLabel: "Worth adjusting",
         issue:
-          "'Working diligently' and 'sincerely apologize for any inconvenience' are filler. Specifics build trust during outages, not apology.",
+          "'Should be good now' and 'tested locally' carry your confidence but not your evidence. The reviewer can't tell if 'tested locally' was the one test 50 times or the full suite once.",
         suggestion:
-          "Replace with the actions in flight. 'Reduced rate limits, scaling the function pool, watching error rate.'",
+          "Say what you ran and what it covered. The reviewer is deciding how hard to look, and that line tells them.",
       },
       {
-        category: "Voice & tone",
-        severity: "medium",
-        severityLabel: "Worth adjusting",
-        issue:
-          "'We will provide additional updates as more information becomes available' leaves the reader hanging. The reader needs a cadence.",
-        suggestion:
-          "Promise a time. 'Next update at 3:30 PM Pacific.'",
-      },
-    ],
-    rewrite:
-      "3:00 PM Pacific. Dashboard checks are returning 500 for ~40% of requests. The Python engine itself is healthy; the API gateway is dropping connections to the function pool under load. Mitigation in flight: we lowered the per-IP rate limit and are scaling the pool. Customers on the Free plan are most affected. Next update at 3:30 PM Pacific. Status page: status.contentrx.io.",
-  },
-  {
-    id: "policy-notice",
-    label: "Policy notice",
-    momentLabel: "Compliance disclosure",
-    contentTypeLabel: "Long-form",
-    intro:
-      "A change to terms, privacy, billing, or company policy. Compliance puts the bar high; readers skim, so the headline has to do the work.",
-    inputText:
-      "Important Update Regarding Our Terms of Service\n\nDear valued customer, we are writing to inform you that we have made some important changes to our Terms of Service. These updates are designed to enhance our ability to provide you with the best possible service while ensuring compliance with various regulatory requirements. The new terms will go into effect on June 1st, 2026. We encourage you to review the updated terms at your earliest convenience. Please don't hesitate to contact us if you have any questions or concerns regarding these changes.",
-    flags: [
-      {
-        category: "Voice & tone",
-        severity: "high",
-        severityLabel: "Worth adjusting",
-        issue:
-          "'Important Update Regarding Our Terms of Service' buries the news. The reader skims; the subject line has to name what changed.",
-        suggestion:
-          "Lead with the change, not the framing. 'Two changes to our terms, effective June 1.'",
-      },
-      {
-        category: "Plain language",
-        severity: "high",
-        severityLabel: "Worth adjusting",
-        issue:
-          "'Designed to enhance our ability to provide you with the best possible service while ensuring compliance with various regulatory requirements' tells the reader nothing. Compliance copy is the place where vague is least defensible.",
-        suggestion:
-          "Name the changes by number, with one sentence each.",
-      },
-      {
-        category: "Voice & tone",
+        category: "Scope",
         severity: "low",
         severityLabel: "Quick polish",
         issue:
-          "'Dear valued customer' is corporate cold-open. The mismatch between this register and the rest of the product reads as outsourced.",
+          "Two unrelated changes in one description make the rollback story ambiguous if one of them regresses later.",
         suggestion:
-          "'Hi' or first-name from the team. The customer can tell the difference.",
+          "A line each, or note they're coupled and why, so a future bisect knows what it's looking at.",
       },
     ],
     rewrite:
-      "Subject: Two changes to our terms, effective June 1\n\nHi everyone. We're updating two things in our Terms of Service on June 1, 2026.\n\n1. Data residency. We'll process customer strings in US-East and EU-West regions only. Today's terms named US-East alone.\n2. Subprocessor list. We added Vercel (our deployment host since launch) to the explicit list.\n\nNeither change affects how your team uses ContentRX. The full diff is at /privacy/terms-changes-2026-06. Reply if anything needs clarifying.",
+      "The checkout test was flaky because it asserted on order state before the webhook settled. Now it waits on the webhook instead of a fixed sleep.\n\nWhile there: retry logic was retrying on 4xx too. Now it retries 5xx and timeouts only. Timeout 5s to 15s because the payment sandbox p95 is 8s and we were timing out legitimate calls.\n\nRan the checkout suite 50x, green. Didn't touch unrelated payment paths.",
+  },
+  {
+    id: "design-doc",
+    label: "Design doc",
+    momentLabel: "Before the build",
+    contentTypeLabel: "Long-form",
+    intro:
+      "A design doc written by someone who did the thinking and wants the reader to see the path they took. The proposal is in there, after a few paragraphs of the context they can't quite bring themselves to cut.",
+    inputText:
+      "## Background\n\nOver the last two quarters we've seen growth in multi-region usage, and the current single-region session store has come up repeatedly in incident reviews and planning. There are a number of considerations here, including latency, failover behavior, and operational surface. This document walks through the history and the options we weighed before arriving at a recommendation.\n\n## History\n\nThe session store was originally built for a single region because at the time...",
+    flags: [
+      {
+        category: "Lead with the decision",
+        severity: "high",
+        severityLabel: "Worth adjusting",
+        issue:
+          "The reader opening a design doc needs the proposal first, what you want to do and the one reason it's right. The history matters, but a reviewer who has to mine three paragraphs for the recommendation reviews the writing, not the decision.",
+        suggestion:
+          "Open with a Proposal section. Move Background and History below it as the support they are.",
+      },
+      {
+        category: "Clarity",
+        severity: "medium",
+        severityLabel: "Worth adjusting",
+        issue:
+          "'A number of considerations' and 'the options we weighed' name that tradeoffs exist without naming them. The doc's job is the tradeoff itself, not the fact that there was one.",
+        suggestion:
+          "State the considerations as the actual tension. 'Per-region primaries cut p99 but make failover a manual call.'",
+      },
+      {
+        category: "Reviewability",
+        severity: "low",
+        severityLabel: "Quick polish",
+        issue:
+          "No stated alternative and no why-not. A doc that only presents the chosen path reads as a decision already made, which makes the review theater.",
+        suggestion:
+          "One paragraph on the option you rejected and the reason. It's what makes the review real.",
+      },
+    ],
+    rewrite:
+      "## Proposal\n\nMove the session store to a per-region primary with async cross-region replication. One reason above the others: every multi-region incident this quarter traced to cross-region session reads at p99.\n\n## Options weighed\n\nGlobal store with read replicas (rejected: replica lag still bit us on failover). Sticky regional routing (rejected: breaks on region drain). Per-region primary (proposed).\n\n## Background\n\nThe single-region store was right when there was one region...",
+  },
+  {
+    id: "runbook",
+    label: "Runbook",
+    momentLabel: "On-call",
+    contentTypeLabel: "Long-form",
+    intro:
+      "Runbook steps get written during or right after the incident, by the person who just fixed it. It's exact in their head. On the page it's exact only if you were there too.",
+    inputText:
+      "### If the queue backs up\n\nCheck the consumer lag dashboard. If it's high, the workers are probably stuck again. Restart them the usual way and keep an eye on it. If that doesn't help, escalate to the platform team.",
+    flags: [
+      {
+        category: "Specificity",
+        severity: "high",
+        severityLabel: "Worth adjusting",
+        issue:
+          "The next on-call doesn't know what 'high' is, what 'the usual way' restarts, or how long to watch before escalating. A runbook is read by the person who wasn't there, and every judgment word it leaves in is a call they make at 3am without you.",
+        suggestion:
+          "Replace each judgment word with the number you actually used. The threshold, the command, the wait.",
+      },
+      {
+        category: "Clarity",
+        severity: "medium",
+        severityLabel: "Worth adjusting",
+        issue:
+          "'The workers are probably stuck again' references a past incident the reader may not have lived through. Name the symptom that confirms it, not the memory of last time.",
+        suggestion:
+          "State what 'stuck' looks like on the dashboard so the reader can confirm it themselves.",
+      },
+      {
+        category: "Specificity",
+        severity: "low",
+        severityLabel: "Quick polish",
+        issue:
+          "'Keep an eye on it' and 'if that doesn't help' have no threshold, so the reader can't tell when to stop waiting.",
+        suggestion:
+          "Give it a clock. 'Lag should fall within 5 min. If it isn't falling by then, escalate.'",
+      },
+    ],
+    rewrite:
+      "### If the queue backs up\n\n1. Open the consumer-lag dashboard. Trigger: lag over 50k messages, or rising for more than 5 min.\n2. Restart the workers: `kubectl rollout restart deploy/queue-worker -n prod`.\n3. Lag should fall within 5 min. If it isn't falling by then, page #platform-oncall (PagerDuty service 'queue') with the dashboard link.",
+  },
+  {
+    id: "changelog",
+    label: "Changelog",
+    momentLabel: "Release notes",
+    contentTypeLabel: "Long-form",
+    intro:
+      "Release notes get written under the release, from the merge list, by someone who knows what each line did and is compressing fast. The compression is where the reader loses the one change that affects them.",
+    inputText:
+      "## v2.4.0\n\n- Performance improvements to the sync engine\n- Fixed several edge cases in auth\n- Various dependency updates\n- Minor UI polish",
+    flags: [
+      {
+        category: "Reader impact",
+        severity: "high",
+        severityLabel: "Worth adjusting",
+        issue:
+          "A changelog answers one question, does this release change something I rely on. 'Fixed several edge cases in auth' can't be acted on. The person whose login flow just changed needs to see that line and recognize it as theirs.",
+        suggestion:
+          "Write each line so the affected reader recognizes it. Name the behavior that changed, not the category it was in.",
+      },
+      {
+        category: "Clarity",
+        severity: "medium",
+        severityLabel: "Worth adjusting",
+        issue:
+          "'Performance improvements to the sync engine' is the result, not the change. If sync now batches differently or a default moved, that's the line. The speedup is the consequence.",
+        suggestion:
+          "Lead with what changed, then the effect. 'Sync batches writes in 200-record chunks, large syncs ~4x faster.'",
+      },
+      {
+        category: "Reader impact",
+        severity: "low",
+        severityLabel: "Quick polish",
+        issue:
+          "'Various dependency updates' hides whether any of them are breaking.",
+        suggestion:
+          "One sub-line for anything that moves a minimum version or a default. It earns the reader's trust in the rest of the list.",
+      },
+    ],
+    rewrite:
+      "## v2.4.0\n\n- Sync batches writes in 200-record chunks (was per-record). No API change. Large syncs are ~4x faster.\n- Auth: expired refresh tokens now return 401 instead of 500. If you retried on 500, that path no longer fires.\n- Dropped Node 16 support. Minimum is now Node 18.\n- Settings: moved 'Danger zone' below the fold so it isn't the first thing your cursor lands on.",
   },
 ] as const;
 
@@ -334,23 +335,20 @@ export default function WritesPage() {
     <main className="mx-auto max-w-6xl px-6 py-20">
       <PageHeader
         eyebrow="Long-form review"
-        title="The longer-form writing your team sends to itself."
+        title="The long-form prose that lives in your codebase."
         lede={
           <>
-            Product updates. Security advisories. Internal announcements.
-            All-hands pre-reads. Incident updates. Policy notices.
-            ContentRX reviews the writing that lands in the inbox, the
-            channel, and the all-hands deck. Same engine, same
-            content-design judgment, on the longer-form writing your
-            team already ships.
+            READMEs. API docs. PR descriptions. Design docs. Runbooks.
+            Changelogs. ContentRX reviews the long-form prose that
+            lives in your repo, against one opinionated editorial
+            standard, before it merges.
           </>
         }
         meta={
           <>
-            Six examples below. Each shows what the writer started
-            with, the cleaned rewrite, and why each flag fired.
-            Calibrated for product and internal writing. Persuasive
-            marketing draws more &lsquo;worth a look&rsquo; flags.
+            Six examples below. Each is real writing under time
+            pressure, the cleaned rewrite, and why each flag fired.
+            Calibrated for the prose that ships in a codebase.
           </>
         }
       />
