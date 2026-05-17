@@ -58,37 +58,37 @@ const STEPS: ReadonlyArray<Step> = [
   {
     n: 1,
     title: "Every line your codebase ships",
-    body: "Error messages, READMEs, PRs, the product copy your team ships. Read in context, right where you build, through MCP.",
+    body: "Product writing, PRs, READMEs, and internal and external comms. All read in context, right where you build and ship.",
   },
   {
     n: 2,
-    title: "Only what matters here",
-    body: "Not a wall of generic flags. The few calls that move this piece forward.",
+    title: "Clearer communication, faster.",
+    body: "Match the clarity of your ideas with the clarity of your writing, all of it.",
   },
   {
     n: 3,
-    title: "An opinion you can defend",
-    body: "Context-aware editorial judgment, applied consistently, that holds up in review.",
+    title: "Your whole team, elevated.",
+    body: "Context-aware writing and editing for every corner of your org.",
   },
   {
     n: 4,
     title: "The sharper line, and why.",
-    body: "The stronger version and the thinking behind it. Clearer writing, faster reviews, less back and forth.",
+    body: "ContentRX does the hard work. You focus on faster reviews and less back and forth.",
   },
   {
     n: 5,
-    title: "Accuracy you can check",
-    body: "Measured and published on a cadence, the bad weeks included. It checks its own work, so you can trust but verify.",
+    title: "Not just a tool. An agent.",
+    body: "More than a writing and editing tool. A deterministic agent catches drift on a cadence and keeps your prose consistent, without burning a token.",
   },
 ];
 
 // Stage top-right phase labels — value framing, not "SCORE".
 const PHASE_LABELS = [
   "IN YOUR REPO",
-  "IN CONTEXT",
+  "IN FOCUS",
   "THE CALL",
-  "REASON",
-  "PUBLISHED",
+  "THE REASON",
+  "THE AGENT",
 ] as const;
 
 const AUTOPLAY_MS = 6800;
@@ -490,13 +490,7 @@ function ReasonFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
 }
 
 // ---- Frame 5: the published-accuracy moat ---------------------------------
-function PublishedFrame({
-  active,
-  reduce,
-}: {
-  active: boolean;
-  reduce: boolean;
-}) {
+function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
   const [shown, setShown] = useState(reduce);
   useEffect(() => {
     if (reduce) {
@@ -521,23 +515,32 @@ function PublishedFrame({
         }}
       >
         <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-quiet">
-          Published
+          The agent
         </span>
         <p className="mt-3 text-lg font-semibold text-strong">
-          Accuracy you can check
+          Not just a tool. An agent.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-default">
-          Measured and published on a cadence, the bad weeks included.
-          It checks its own work, so you can trust but verify.
+          A deterministic agent watches your repos on a cadence. It
+          catches drift and keeps your prose consistent, without
+          burning a token.
         </p>
-        <Link
-          href="/accuracy"
-          tabIndex={-1}
-          className="mt-5 inline-flex items-center gap-1 rounded text-sm font-medium text-accent-affirm-text underline underline-offset-4 hover:text-accent-affirm"
-        >
-          See the accuracy
-          <span aria-hidden>→</span>
-        </Link>
+        <ul className="mt-5 space-y-2 text-sm text-quiet">
+          <li className="flex gap-2.5">
+            <span
+              aria-hidden
+              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-affirm"
+            />
+            Runs on its own, on the schedule you set.
+          </li>
+          <li className="flex gap-2.5">
+            <span
+              aria-hidden
+              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-affirm"
+            />
+            Deterministic, so it never spends a token to do it.
+          </li>
+        </ul>
       </div>
     </div>
   );
@@ -696,7 +699,7 @@ export function HowItWorksDiagram() {
                 <ReasonFrame active={active === 3} reduce={reduce} />
               )}
               {idx === 4 && (
-                <PublishedFrame active={active === 4} reduce={reduce} />
+                <AgentFrame active={active === 4} reduce={reduce} />
               )}
             </div>
           ))}
