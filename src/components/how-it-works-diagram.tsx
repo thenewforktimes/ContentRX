@@ -1,30 +1,27 @@
 "use client";
 
 /**
- * HowItWorksDiagram — "the funnel", v8 (2026-05-16).
+ * HowItWorksDiagram — "the constellation funnel", v9 (2026-05-16).
  *
- * v8 refines v7 from a third live design-critique pass. The story and
- * the galaxy-to-selection mechanic are right (Robert: "those first
- * two frames are excellent"). Four execution fixes:
+ * v9 reworks only the front of the funnel (phase 0-1) from a fourth
+ * live critique. Frames 3/4/5 (the finding, before-merge, receipt)
+ * are confirmed good and are carried over byte-for-byte from v8.
  *
- *   1. Vocabulary — the caption said "in your moment". "Moment" is an
- *      internal taxonomy axis (ADR 2026-04-25), never customer copy.
- *      Rewritten, and the lint:copy gate now has a
- *      `no-moment-taxonomy-vocab` rule (idiom-aware) so it cannot
- *      recur silently.
- *   2. Metadata row — the severity / instant / before-merge / category
- *      line mixed a pill, bare text, another pill, and an ml-auto
- *      gap, so the horizontal rhythm was off. v8 is one balanced
- *      justify-between row: the verdict pill plus one consistent meta
- *      group on the left, the category on the right.
- *   3. Proportions — a full-bleed ~4:1 letterbox read as stretched
- *      and skinny. v8 contains the whole block to max-w-3xl and makes
- *      the stage taller, so it reads as a designed panel (~2.4:1).
- *   4. The field — bordered chips around the words looked shabby. v8
- *      drops the boxes entirely: the field is luminous typography,
- *      depth carried by size + opacity + weight. On selection the
- *      three that apply do not get a box — they brighten to the
- *      affirm color and gain a soft glow; the rest fall away.
+ * The note: v8's bare luminous words read as "just words with our
+ * branded green" — no form, and the collapse was a fade, not a
+ * motion that *guides*. Robert shared geometric inspiration (a
+ * curved convergence, an astroid pinch, an intersection rosette).
+ *
+ * v9 synthesizes them into one thing: every rule is a node — a dot
+ * plus its word — tethered by a faint bezier thread that all bow
+ * into a single focal point on the right (the convergence of the
+ * left reference). At the narrowing, the three that apply have their
+ * threads ignite in the affirm color and their nodes *travel the
+ * curves* inward with a concave, astroid-like ease (the middle
+ * reference); the other seven recede and their threads fade. The
+ * focal point is exactly where the finding then composes, so phase 2
+ * is a real arrival, not a crossfade. The geometry (point + curve)
+ * is the form — no boxes.
  *
  * Five claim-beats (the value, not the mechanics):
  *   1. Every rule that could apply
@@ -73,10 +70,11 @@ const BEATS = [
 // the public category names — these light up out of the field.
 const APPLIES = ["Clarity", "Voice and tone", "Plain language"] as const;
 
-// The rule field. Public category names only — every one already
-// ships on /writes or the hero mock. Distinct (no repeats). Each
-// carries a deterministic position, a depth `z` (0..1 — higher reads
-// nearer: larger, more opaque, heavier), and a stagger delay `d`. No
+// The rule field, fanned on the left. Public category names only —
+// every one already ships on /writes or the hero mock. Distinct (no
+// repeats). Each carries a deterministic position (percent within
+// the panel), a depth `z` (0..1 — higher reads nearer: larger dot +
+// text, more visible thread), and a stagger delay `d`. No
 // Math.random, so SSR and client agree (no hydration mismatch).
 // Survivor is derived from membership in APPLIES, never hand-flagged.
 const FIELD: ReadonlyArray<{
@@ -86,20 +84,63 @@ const FIELD: ReadonlyArray<{
   z: number;
   d: number;
 }> = [
-  { label: "Clarity", x: 17, y: 24, z: 0.92, d: 0.1 },
-  { label: "Scope", x: 7, y: 12, z: 0.6, d: 0.02 },
-  { label: "Specific reference", x: 84, y: 14, z: 0.46, d: 0.04 },
-  { label: "Voice and tone", x: 72, y: 28, z: 0.88, d: 0.16 },
-  { label: "Specificity", x: 9, y: 58, z: 0.5, d: 0.05 },
-  { label: "Active voice", x: 86, y: 60, z: 0.42, d: 0.08 },
-  { label: "Plain language", x: 46, y: 75, z: 0.9, d: 0.22 },
-  { label: "Completeness", x: 26, y: 88, z: 0.56, d: 0.13 },
-  { label: "Reader impact", x: 64, y: 86, z: 0.4, d: 0.07 },
-  { label: "Reviewability", x: 88, y: 84, z: 0.38, d: 0.15 },
+  { label: "Scope", x: 9, y: 11, z: 0.5, d: 0.02 },
+  { label: "Specific reference", x: 17, y: 20, z: 0.46, d: 0.05 },
+  { label: "Clarity", x: 12, y: 31, z: 0.92, d: 0.1 },
+  { label: "Specificity", x: 7, y: 41, z: 0.44, d: 0.07 },
+  { label: "Voice and tone", x: 10, y: 52, z: 0.88, d: 0.16 },
+  { label: "Active voice", x: 17, y: 61, z: 0.42, d: 0.09 },
+  { label: "Plain language", x: 13, y: 70, z: 0.9, d: 0.22 },
+  { label: "Completeness", x: 8, y: 80, z: 0.52, d: 0.13 },
+  { label: "Reviewability", x: 16, y: 88, z: 0.38, d: 0.15 },
+  { label: "Reader impact", x: 6, y: 24, z: 0.4, d: 0.04 },
 ];
+
+// The convergence point — right of center, where the finding then
+// composes (so the handoff is an arrival, not a crossfade).
+const FOCAL = { x: 58, y: 50 } as const;
 
 const isSurvivor = (label: string): boolean =>
   (APPLIES as readonly string[]).includes(label);
+
+// Cubic-bezier control points for a node's thread: leave the node
+// moving horizontally (holds its y → the fan splays), arrive at the
+// focal point mostly converged. Shared by the SVG path and the
+// survivor travel sampling so the word rides its own thread exactly.
+function ctrl(n: { x: number; y: number }) {
+  return {
+    c1x: n.x + (FOCAL.x - n.x) * 0.55,
+    c1y: n.y,
+    c2x: FOCAL.x - (FOCAL.x - n.x) * 0.12,
+    c2y: FOCAL.y + (n.y - FOCAL.y) * 0.3,
+  };
+}
+
+function threadD(n: { x: number; y: number }): string {
+  const { c1x, c1y, c2x, c2y } = ctrl(n);
+  return `M ${n.x} ${n.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${FOCAL.x} ${FOCAL.y}`;
+}
+
+const bez = (p0: number, p1: number, p2: number, p3: number, t: number) => {
+  const u = 1 - t;
+  return (
+    u * u * u * p0 +
+    3 * u * u * t * p1 +
+    3 * u * t * t * p2 +
+    t * t * t * p3
+  );
+};
+
+// Sample the node's own thread at a few t's → keyframes the survivor
+// word travels along (it rides the curve, concave-eased).
+const TRAVEL_T = [0, 0.42, 0.76, 1] as const;
+function travel(n: { x: number; y: number }) {
+  const { c1x, c1y, c2x, c2y } = ctrl(n);
+  return {
+    left: TRAVEL_T.map((t) => `${bez(n.x, c1x, c2x, FOCAL.x, t)}%`),
+    top: TRAVEL_T.map((t) => `${bez(n.y, c1y, c2y, FOCAL.y, t)}%`),
+  };
+}
 
 // Rhythm: linger on the field (beat 1) and the narrowing (beat 2 —
 // the IP), let the judgment land, rest on the proof.
@@ -214,10 +255,13 @@ function Stage({ phase, reduce }: { phase: number; reduce: boolean }) {
 
   return (
     <div className="absolute inset-0">
-      {/* Phase 0-1: the field of rules, then the selection. No boxes —
-          luminous type, depth via size + opacity + weight. The three
-          that apply brighten and glow in place; the rest fall away.
-          One positioning system (percent within the panel), no vw. */}
+      {/* Phase 0-1: the constellation funnel. Faint bezier threads
+          fan from the left-set rule nodes into one focal point. On
+          the narrowing, the three that apply ignite (affirm) and
+          travel their own curves inward; the rest recede. Geometry
+          is the form — no boxes. One percent space; SVG matches the
+          HTML overlay (preserveAspectRatio none + non-scaling
+          stroke), so threads and nodes stay aligned at every size. */}
       <AnimatePresence>
         {showField && (
           <motion.div
@@ -225,48 +269,107 @@ function Stage({ phase, reduce }: { phase: number; reduce: boolean }) {
             className="absolute inset-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           >
-            {FIELD.map((p) => {
-              const survivor = isSurvivor(p.label);
-              const near = p.z >= 0.78;
-              const baseOpacity = 0.34 + p.z * 0.46;
-              const baseScale = 0.92 + p.z * 0.12;
-              const fontSize = 12 + p.z * 11;
-              const target = selecting
-                ? survivor
-                  ? { opacity: 1, scale: 1.18, y: 0 }
-                  : { opacity: 0, scale: 0.5, y: 14 }
-                : { opacity: baseOpacity, scale: baseScale, y: 0 };
+            <svg
+              className="absolute inset-0 h-full w-full"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              fill="none"
+            >
+              {FIELD.map((n) => {
+                const survivor = isSurvivor(n.label);
+                const baseThread = 0.05 + n.z * 0.1;
+                return (
+                  <motion.path
+                    key={n.label}
+                    d={threadD(n)}
+                    stroke="currentColor"
+                    strokeWidth={1}
+                    strokeLinecap="round"
+                    vectorEffect="non-scaling-stroke"
+                    className={[
+                      "transition-colors duration-500",
+                      selecting && survivor
+                        ? "text-accent-affirm-text"
+                        : "text-quiet",
+                    ].join(" ")}
+                    initial={{ opacity: 0 }}
+                    animate={{
+                      opacity: selecting
+                        ? survivor
+                          ? 0.5
+                          : 0
+                        : baseThread,
+                    }}
+                    transition={{
+                      duration: selecting ? (survivor ? 0.6 : 0.5) : 0.7,
+                      delay: selecting ? n.d : n.d * 0.9,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                  />
+                );
+              })}
+            </svg>
+
+            {FIELD.map((n) => {
+              const survivor = isSurvivor(n.label);
+              const near = n.z >= 0.7;
+              const baseOpacity = 0.4 + n.z * 0.45;
+              const dot = 4 + n.z * 4;
+              const fontSize = 12 + n.z * 6;
+              const moving = selecting && survivor;
+              const animate = moving
+                ? {
+                    left: travel(n).left,
+                    top: travel(n).top,
+                    opacity: [baseOpacity, 1, 1, 1],
+                    scale: [1, 1.06, 1.12, 1.12],
+                  }
+                : selecting
+                  ? { left: `${n.x}%`, top: `${n.y}%`, opacity: 0, scale: 0.5 }
+                  : {
+                      left: `${n.x}%`,
+                      top: `${n.y}%`,
+                      opacity: baseOpacity,
+                      scale: 1,
+                    };
               return (
                 <motion.span
-                  key={p.label}
+                  key={n.label}
                   className={[
-                    "absolute -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap tracking-tight transition-all duration-500",
-                    selecting && survivor
-                      ? "font-semibold text-accent-affirm-text [text-shadow:0_0_18px_currentColor]"
+                    "absolute flex -translate-y-1/2 select-none items-center gap-2 whitespace-nowrap tracking-tight transition-colors duration-500",
+                    moving
+                      ? "font-semibold text-accent-affirm-text [text-shadow:0_0_16px_currentColor]"
                       : near
                         ? "font-medium text-default"
                         : "font-normal text-quiet",
                   ].join(" ")}
-                  style={{
-                    left: `${p.x}%`,
-                    top: `${p.y}%`,
-                    fontSize: `${fontSize}px`,
+                  style={{ fontSize: `${fontSize}px` }}
+                  initial={{
+                    left: `${n.x}%`,
+                    top: `${n.y}%`,
+                    opacity: 0,
+                    scale: 0.6,
                   }}
-                  initial={{ opacity: 0, scale: 0.6, y: 0 }}
-                  animate={target}
+                  animate={animate}
                   transition={{
-                    duration: selecting ? (survivor ? 0.55 : 0.6) : 0.7,
-                    delay: selecting ? p.d : p.d * 0.9,
-                    ease:
-                      selecting && !survivor
+                    duration: moving ? 1.15 : selecting ? 0.55 : 0.7,
+                    delay: selecting ? n.d : n.d * 0.9,
+                    times: moving ? [0, 0.42, 0.76, 1] : undefined,
+                    ease: moving
+                      ? [0.65, 0, 0.35, 1]
+                      : selecting
                         ? [0.4, 0, 1, 1]
                         : [0.16, 1, 0.3, 1],
                   }}
                 >
-                  {p.label}
+                  <span
+                    className="shrink-0 rounded-full bg-current"
+                    style={{ width: `${dot}px`, height: `${dot}px` }}
+                  />
+                  {n.label}
                 </motion.span>
               );
             })}
@@ -276,7 +379,8 @@ function Stage({ phase, reduce }: { phase: number; reduce: boolean }) {
 
       {/* Phase 2+: the lit focus hands off to one finding, with its
           reason. It composes INSIDE the panel — the panel is the
-          frame, there is no second card. */}
+          frame, there is no second card. (Carried from v8 verbatim:
+          frames 3/4/5 are confirmed good.) */}
       <AnimatePresence>
         {resolved && (
           <motion.div
