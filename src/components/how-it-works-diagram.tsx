@@ -1,31 +1,30 @@
 "use client";
 
 /**
- * HowItWorksDiagram — "the funnel", v7 (2026-05-16).
+ * HowItWorksDiagram — "the funnel", v8 (2026-05-16).
  *
- * v7 refines v6 from a live design-critique pass. v6 had the right
- * story (the universe of editorial rules collapses to the few that
- * apply, resolves into one finding with its reason, before merge,
- * with accuracy you can check) but four execution defects:
+ * v8 refines v7 from a third live design-critique pass. The story and
+ * the galaxy-to-selection mechanic are right (Robert: "those first
+ * two frames are excellent"). Four execution fixes:
  *
- *   1. Pacing — the universe-to-collapse signature beat was gone in
- *      ~2s, too fast to read. v7 re-paces slower with softer eases.
- *   2. Noise field — low-contrast (halved tokens) and repeated names
- *      (NOISE[i % 10] over 16 slots), so it read as filler mud, not
- *      a universe. v7 uses distinct tokens only, a real chip, and a
- *      per-token depth value (z) driving opacity + scale so it reads
- *      as a layered field.
- *   3. Frame consistency — noise exited by `12vw` (viewport units)
- *      while the rest was %/px, and the survivors vanished and were
- *      *replaced* by a differently-sized card. v7 uses one
- *      positioning system: the survivors are not replaced, they
- *      light up IN PLACE (accent-affirm, the same token as the beat
- *      numbers), the rest recede, then the lit focus hands off to
- *      the finding in the same panel.
- *   4. Container-in-container — a small card floated in a big
- *      same-coloured stage with a near-invisible border. v7 makes
- *      the stage the single elevated `bg-raised` panel; the finding
- *      composes inside it (no second frame).
+ *   1. Vocabulary — the caption said "in your moment". "Moment" is an
+ *      internal taxonomy axis (ADR 2026-04-25), never customer copy.
+ *      Rewritten, and the lint:copy gate now has a
+ *      `no-moment-taxonomy-vocab` rule (idiom-aware) so it cannot
+ *      recur silently.
+ *   2. Metadata row — the severity / instant / before-merge / category
+ *      line mixed a pill, bare text, another pill, and an ml-auto
+ *      gap, so the horizontal rhythm was off. v8 is one balanced
+ *      justify-between row: the verdict pill plus one consistent meta
+ *      group on the left, the category on the right.
+ *   3. Proportions — a full-bleed ~4:1 letterbox read as stretched
+ *      and skinny. v8 contains the whole block to max-w-3xl and makes
+ *      the stage taller, so it reads as a designed panel (~2.4:1).
+ *   4. The field — bordered chips around the words looked shabby. v8
+ *      drops the boxes entirely: the field is luminous typography,
+ *      depth carried by size + opacity + weight. On selection the
+ *      three that apply do not get a box — they brighten to the
+ *      affirm color and gain a soft glow; the rest fall away.
  *
  * Five claim-beats (the value, not the mechanics):
  *   1. Every rule that could apply
@@ -35,17 +34,17 @@
  *   5. Accuracy you can check             ← links /accuracy (moat)
  *
  * Substrate boundary (ADR 2026-04-25): customer-readable terms only.
- * The noise field uses PUBLIC category names already shipped on
- * /writes + the hero mock. No standard_id, no rule version, no
- * taxonomy IDs, no standards prose, no exemplars. The resolved
- * finding reuses the hero verdict-mock's substrate-clean error-string
- * example verbatim, for page coherence.
+ * The field uses PUBLIC category names already shipped on /writes +
+ * the hero mock. No standard_id, no rule version, no taxonomy IDs, no
+ * taxonomy-axis vocabulary, no standards prose, no exemplars. The
+ * resolved finding reuses the hero verdict-mock's substrate-clean
+ * error-message example verbatim, for page coherence.
  *
  * Accessibility:
  *   - The five beats are a semantic <ol>; the <figure> carries the
  *     whole story in aria-label. The animated layer is aria-hidden.
  *   - Meaningful content (finding, before-merge, the accuracy link,
- *     beat labels) uses AAA tokens. The decorative noise field is
+ *     beat labels) uses AAA tokens. The decorative field is
  *     aria-hidden.
  *   - prefers-reduced-motion: no loop; renders the fully-resolved
  *     end state with every beat shown.
@@ -70,14 +69,14 @@ const BEATS = [
   "Accuracy you can check",
 ] as const;
 
-// The three categories that "apply" to this check. A stable subset
-// of the public category names — these light up out of the field.
+// The three categories that apply to this check. A stable subset of
+// the public category names — these light up out of the field.
 const APPLIES = ["Clarity", "Voice and tone", "Plain language"] as const;
 
 // The rule field. Public category names only — every one already
 // ships on /writes or the hero mock. Distinct (no repeats). Each
 // carries a deterministic position, a depth `z` (0..1 — higher reads
-// nearer: more opaque + larger), and a stagger delay `d`. No
+// nearer: larger, more opaque, heavier), and a stagger delay `d`. No
 // Math.random, so SSR and client agree (no hydration mismatch).
 // Survivor is derived from membership in APPLIES, never hand-flagged.
 const FIELD: ReadonlyArray<{
@@ -87,24 +86,23 @@ const FIELD: ReadonlyArray<{
   z: number;
   d: number;
 }> = [
-  { label: "Clarity", x: 16, y: 24, z: 0.9, d: 0.1 },
-  { label: "Scope", x: 6, y: 11, z: 0.62, d: 0.02 },
-  { label: "Specific reference", x: 87, y: 13, z: 0.48, d: 0.04 },
-  { label: "Voice and tone", x: 73, y: 27, z: 0.86, d: 0.16 },
-  { label: "Specificity", x: 8, y: 58, z: 0.5, d: 0.05 },
-  { label: "Active voice", x: 85, y: 60, z: 0.44, d: 0.08 },
-  { label: "Plain language", x: 47, y: 74, z: 0.9, d: 0.22 },
-  { label: "Completeness", x: 27, y: 87, z: 0.58, d: 0.13 },
-  { label: "Reader impact", x: 64, y: 85, z: 0.4, d: 0.07 },
-  { label: "Reviewability", x: 87, y: 83, z: 0.38, d: 0.15 },
+  { label: "Clarity", x: 17, y: 24, z: 0.92, d: 0.1 },
+  { label: "Scope", x: 7, y: 12, z: 0.6, d: 0.02 },
+  { label: "Specific reference", x: 84, y: 14, z: 0.46, d: 0.04 },
+  { label: "Voice and tone", x: 72, y: 28, z: 0.88, d: 0.16 },
+  { label: "Specificity", x: 9, y: 58, z: 0.5, d: 0.05 },
+  { label: "Active voice", x: 86, y: 60, z: 0.42, d: 0.08 },
+  { label: "Plain language", x: 46, y: 75, z: 0.9, d: 0.22 },
+  { label: "Completeness", x: 26, y: 88, z: 0.56, d: 0.13 },
+  { label: "Reader impact", x: 64, y: 86, z: 0.4, d: 0.07 },
+  { label: "Reviewability", x: 88, y: 84, z: 0.38, d: 0.15 },
 ];
 
 const isSurvivor = (label: string): boolean =>
   (APPLIES as readonly string[]).includes(label);
 
-// Rhythm: linger on the universe (beat 1) and the narrowing (beat 2 —
-// the IP), let the judgment land, rest on the proof. Slower than v6
-// across the board per the critique.
+// Rhythm: linger on the field (beat 1) and the narrowing (beat 2 —
+// the IP), let the judgment land, rest on the proof.
 const PHASE_MS = [2400, 2000, 1700, 1500, 2600] as const;
 const RESET_MS = 600;
 const RESET = PHASE_MS.length;
@@ -144,19 +142,19 @@ export function HowItWorksDiagram() {
 
   return (
     <figure
-      className="my-8"
+      className="my-8 max-w-3xl"
       aria-label="How ContentRX evaluates. Every rule that could apply is narrowed to the few that do, judged against an opinionated standard, returned with the reason before merge, with accuracy measured and published."
     >
       <div
         aria-hidden
-        className="relative h-56 overflow-hidden rounded-xl border border-line bg-raised shadow-lg shadow-canvas/40 ring-1 ring-line/30 sm:h-60"
+        className="relative h-72 overflow-hidden rounded-2xl border border-line bg-raised shadow-lg shadow-canvas/40 ring-1 ring-line/30 sm:h-80"
       >
         <Stage phase={phase} reduce={reduce} />
       </div>
 
       {/* Semantic narrative: the five claim-beats. AAA, SR-walkable,
           and the full static story under reduced motion. */}
-      <ol className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-5">
+      <ol className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-5">
         {BEATS.map((b, i) => {
           const active = !reduce && i === phase;
           const done = reduce || (phase > -1 && i < phase);
@@ -199,8 +197,8 @@ export function HowItWorksDiagram() {
       </ol>
 
       <figcaption className="mt-4 text-xs text-quiet">
-        Most rules never reach the model. Only the few that fit your
-        check, in your moment. That is the model around the model.
+        Most rules never reach the model. Only the few that fit this
+        check. That is the model around the model.
       </figcaption>
     </figure>
   );
@@ -216,9 +214,10 @@ function Stage({ phase, reduce }: { phase: number; reduce: boolean }) {
 
   return (
     <div className="absolute inset-0">
-      {/* Phase 0-1: the universe of rules, then the selection. The
-          three that apply light up in place; the rest recede. One
-          positioning system (percent within the panel), no vw. */}
+      {/* Phase 0-1: the field of rules, then the selection. No boxes —
+          luminous type, depth via size + opacity + weight. The three
+          that apply brighten and glow in place; the rest fall away.
+          One positioning system (percent within the panel), no vw. */}
       <AnimatePresence>
         {showField && (
           <motion.div
@@ -231,27 +230,35 @@ function Stage({ phase, reduce }: { phase: number; reduce: boolean }) {
           >
             {FIELD.map((p) => {
               const survivor = isSurvivor(p.label);
-              const baseOpacity = 0.46 + p.z * 0.5;
-              const baseScale = 0.82 + p.z * 0.16;
+              const near = p.z >= 0.78;
+              const baseOpacity = 0.34 + p.z * 0.46;
+              const baseScale = 0.92 + p.z * 0.12;
+              const fontSize = 12 + p.z * 11;
               const target = selecting
                 ? survivor
-                  ? { opacity: 1, scale: 1.06, x: 0, y: 0 }
-                  : { opacity: 0, scale: 0.55, x: 0, y: 22 }
-                : { opacity: baseOpacity, scale: baseScale, x: 0, y: 0 };
+                  ? { opacity: 1, scale: 1.18, y: 0 }
+                  : { opacity: 0, scale: 0.5, y: 14 }
+                : { opacity: baseOpacity, scale: baseScale, y: 0 };
               return (
                 <motion.span
                   key={p.label}
                   className={[
-                    "absolute -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap rounded-md border px-2.5 py-1 text-[11px] font-medium transition-colors duration-500",
+                    "absolute -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap tracking-tight transition-all duration-500",
                     selecting && survivor
-                      ? "border-accent-affirm-border bg-accent-affirm-soft text-accent-affirm-text"
-                      : "border-line bg-canvas/70 text-quiet",
+                      ? "font-semibold text-accent-affirm-text [text-shadow:0_0_18px_currentColor]"
+                      : near
+                        ? "font-medium text-default"
+                        : "font-normal text-quiet",
                   ].join(" ")}
-                  style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                  initial={{ opacity: 0, scale: 0.6 }}
+                  style={{
+                    left: `${p.x}%`,
+                    top: `${p.y}%`,
+                    fontSize: `${fontSize}px`,
+                  }}
+                  initial={{ opacity: 0, scale: 0.6, y: 0 }}
                   animate={target}
                   transition={{
-                    duration: selecting ? (survivor ? 0.6 : 0.7) : 0.7,
+                    duration: selecting ? (survivor ? 0.55 : 0.6) : 0.7,
                     delay: selecting ? p.d : p.d * 0.9,
                     ease:
                       selecting && !survivor
@@ -284,28 +291,34 @@ function Stage({ phase, reduce }: { phase: number; reduce: boolean }) {
             }}
           >
             <div className="w-full max-w-xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <Pill tone="amber" size="xs">
-                  Worth adjusting
-                </Pill>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-quiet">
-                  ⚡ Instant
-                </span>
-                {showBeforeMerge && (
-                  <motion.span
-                    initial={reduce ? false : { opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{
-                      duration: 0.35,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
-                  >
-                    <Pill tone="emerald" size="xs">
-                      ✓ Before merge
-                    </Pill>
-                  </motion.span>
-                )}
-                <span className="ml-auto text-[10px] font-medium uppercase tracking-wider text-quiet">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Pill tone="amber" size="xs">
+                    Worth adjusting
+                  </Pill>
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-quiet">
+                    ⚡ Instant
+                    {showBeforeMerge && (
+                      <motion.span
+                        initial={reduce ? false : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{
+                          duration: 0.35,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
+                      >
+                        <span
+                          aria-hidden
+                          className="mx-1.5 text-quiet/50"
+                        >
+                          ·
+                        </span>
+                        ✓ Before merge
+                      </motion.span>
+                    )}
+                  </span>
+                </div>
+                <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-quiet">
                   Error message
                 </span>
               </div>
