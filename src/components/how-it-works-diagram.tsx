@@ -533,7 +533,7 @@ function PublishedFrame({
         <Link
           href="/accuracy"
           tabIndex={-1}
-          className="mt-5 inline-flex items-center gap-1 rounded text-sm font-medium text-accent-affirm-text underline underline-offset-4 hover:text-accent-affirm-solid"
+          className="mt-5 inline-flex items-center gap-1 rounded text-sm font-medium text-accent-affirm-text underline underline-offset-4 hover:text-accent-affirm"
         >
           See the accuracy
           <span aria-hidden>→</span>
@@ -602,7 +602,7 @@ export function HowItWorksDiagram() {
                     className={[
                       "absolute left-0 top-3 flex h-7 w-7 items-center justify-center rounded-full border text-[12px] font-semibold transition-colors duration-300",
                       isActive
-                        ? "border-accent-affirm-border bg-accent-affirm-solid text-accent-affirm-on"
+                        ? "border-accent-affirm-border bg-accent-affirm text-accent-affirm-on"
                         : "border-line text-quiet",
                     ].join(" ")}
                   >
@@ -658,7 +658,7 @@ export function HowItWorksDiagram() {
         >
           <div className="absolute left-4 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-quiet">
             <span
-              className="h-1.5 w-1.5 rounded-full bg-accent-affirm-solid motion-safe:animate-pulse"
+              className="h-1.5 w-1.5 rounded-full bg-accent-affirm motion-safe:animate-pulse"
               style={{
                 boxShadow: "0 0 6px var(--color-accent-affirm)",
               }}
@@ -704,7 +704,7 @@ export function HowItWorksDiagram() {
           {/* Bottom progress bar */}
           <div className="absolute inset-x-0 bottom-0 z-10 h-0.5 bg-line">
             <div
-              className="h-full bg-accent-affirm-solid"
+              className="h-full bg-accent-affirm"
               style={{
                 width: `${(reduce ? 0 : progress) * 100}%`,
                 boxShadow: "0 0 8px var(--color-accent-affirm)",
@@ -722,7 +722,7 @@ export function HowItWorksDiagram() {
         communication, shipped faster, with the accuracy{" "}
         <Link
           href="/accuracy"
-          className="rounded font-medium text-accent-affirm-text underline underline-offset-2 hover:text-accent-affirm-solid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+          className="rounded font-medium text-accent-affirm-text underline underline-offset-2 hover:text-accent-affirm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
           published
         </Link>
