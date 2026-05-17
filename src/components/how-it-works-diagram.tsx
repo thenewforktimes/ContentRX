@@ -582,7 +582,7 @@ const SCRIM_PX = 260;
 // The fan: a ~120° arc opening upward from an origin on the scrim
 // horizon. Canvas angles (y is down): PI = left, 3PI/2 = straight up,
 // 2PI = right. Nodes spread left -> right across the visible arc.
-const FAN_PAD = 0.17 * Math.PI;
+const FAN_PAD = 0.1 * Math.PI;
 const FAN_A0 = Math.PI + FAN_PAD;
 const FAN_A1 = 2 * Math.PI - FAN_PAD;
 const REPO_ANGLES = REPOS.map(
@@ -601,7 +601,10 @@ function RepoLabels() {
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
 
-  const R = "max(70px, min(100cqh - 276px, 42cqw))";
+  // Mirrors the canvas arcR exactly: max(70, min(stageH - 296, 0.42w)).
+  // The -296 (= 260 scrim + 36 reserve) leaves room for the label box
+  // itself above the apex node so it never clips the top edge.
+  const R = "max(70px, min(100cqh - 296px, 42cqw))";
   return (
     <div
       aria-hidden
@@ -681,7 +684,10 @@ function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
       // scrim. arcR mirrors the RepoLabels CSS exactly.
       const ox = w * 0.5;
       const oy = h - SCRIM_PX;
-      const arcR = Math.max(70, Math.min(oy - 16, w * 0.42));
+      // oy - 36 reserves ~36px above the apex node for the label box
+      // + a top margin, so the fan never clips the panel edge at any
+      // width. Mirrored in the RepoLabels CSS R.
+      const arcR = Math.max(70, Math.min(oy - 36, w * 0.42));
 
       // Concentric arc rings (upper semicircle).
       [arcR, arcR * 0.72, arcR * 0.44].forEach((r, idx) => {
@@ -1025,7 +1031,7 @@ export function HowItWorksDiagram() {
             max-height so it can never balloon below the fold. */}
         <div
           aria-hidden
-          className="relative order-1 aspect-[2/3] max-h-[460px] overflow-hidden rounded-2xl border border-line bg-canvas shadow-2xl shadow-canvas/60 sm:aspect-[16/11] lg:order-2 lg:aspect-[4/3]"
+          className="relative order-1 aspect-[2/3] max-h-[460px] overflow-hidden rounded-2xl border border-line bg-canvas shadow-2xl shadow-canvas/60 sm:aspect-auto sm:h-[460px] lg:order-2"
         >
           <div className="absolute left-4 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-quiet">
             <span
