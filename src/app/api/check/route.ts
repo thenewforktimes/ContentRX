@@ -124,7 +124,7 @@ const RequestSchema = z.object({
       message:
         `Text is too long (max ${MAX_INPUT_CHARS.toLocaleString()} ` +
         `characters per call). ContentRX bills 1 unit per 200 ` +
-        `characters, rounded up. For copy longer than ` +
+        `characters, rounded up. For text longer than ` +
         `${MAX_INPUT_CHARS.toLocaleString()} chars, split into ` +
         `multiple calls — MCP evaluate_copy_batch and the GitHub ` +
         `Action handle this client-side.`,

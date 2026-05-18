@@ -141,7 +141,7 @@ export function sensitiveDataErrorMessage(
   };
   const named = patterns.map((p) => labels[p]).join(", ");
   return (
-    `This looks like sensitive data (${named}), not UI copy. ContentRX ` +
+    `This looks like sensitive data (${named}), not UI text. ContentRX ` +
     `evaluates content-design strings — checking credentials or PII isn't ` +
     `what we do. Replace the value with a placeholder ("****", "[redacted]", ` +
     `or a fake but realistic example) and try again.`

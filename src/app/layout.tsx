@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ContentRX. The opinionated editor for the prose in your codebase.",
   description:
-    "The opinionated editor for the prose that lives in your codebase. Error messages, READMEs, API docs, PR and commit copy, held to one editorial standard before merge. Runs in Claude Code, Cursor, your CLI, and CI.",
+    "The opinionated editor for the prose that lives in your codebase. Error messages, READMEs, API docs, PR and commit messages, held to one editorial standard before merge. Runs in Claude Code, Cursor, your CLI, and CI.",
 };
 
 export default function RootLayout({

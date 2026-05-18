@@ -62,7 +62,7 @@ const MIN_HIGH_FOR_SKEW = 3;
 const MIN_HIGH_SHARE = 0.25;
 
 const MOMENT_LABELS: Record<string, string> = {
-  first_encounter: "First-encounter copy",
+  first_encounter: "First encounter",
   browsing_discovery: "Browsing & discovery",
   decision_point: "Decision points",
   task_execution: "Task execution",

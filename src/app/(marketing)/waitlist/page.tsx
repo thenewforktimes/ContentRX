@@ -132,7 +132,7 @@ export default async function WaitlistPage({
         <p className="mt-2">
           ContentRX is the opinionated editor for the prose that
           lives in your codebase. It reviews error messages, READMEs,
-          API docs, and PR and commit copy against one editorial
+          API docs, and PR and commit messages against one editorial
           standard. The public credibility surface is{" "}
           <Link
             href="/accuracy"
