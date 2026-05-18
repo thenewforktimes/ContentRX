@@ -133,8 +133,16 @@ function usePrefersReducedMotion(): boolean {
 // is AAA on the stage's bg-canvas (same token pairing the radar
 // copy uses). FRAME_PAD is frames 3+4 only; AgentFrame/radar has
 // its own absolute inset-0 wrapper and is untouched.
+//
+// lg:items-center — below lg the content can be tall (heavy wrap at
+// narrow widths) so it stays top-anchored (collision-safe). At lg
+// the diagram block is max-w-5xl, so the stage is width-capped at
+// ~704px no matter how wide the screen; the static frame-3/4 content
+// is always short there (~250-300px in a 440px stage) and CANNOT
+// overflow, so centering is provably safe and removes the dead
+// space that otherwise pooled at the bottom on wide viewports.
 const FRAME_PAD =
-  "absolute inset-0 flex items-start justify-center px-[7%] pt-12 pb-8 max-[480px]:px-5 max-[480px]:pb-6";
+  "absolute inset-0 flex items-start justify-center px-[7%] pt-12 pb-8 max-[480px]:px-5 max-[480px]:pb-6 lg:items-center";
 
 // ---- Frames 1 + 2: converging particle streams (unchanged) ---------------
 const STREAM_COUNT = 19;
