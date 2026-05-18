@@ -161,7 +161,7 @@ describe("humanizeReviewReason", () => {
       "Worth a closer look. We're not certain",
     );
     expect(humanizeReviewReason("situation_ambiguity")).toBe(
-      "Hard to tell what kind of copy this is",
+      "Hard to tell what kind of writing this is",
     );
     expect(humanizeReviewReason("out_of_distribution")).toBe(
       "Unfamiliar shape. Your eyes will help",

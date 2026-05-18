@@ -61,7 +61,7 @@ const REVIEW_REASON_LABELS: Record<string, string> = {
   low_confidence: "We weren't fully sure about this one",
   standards_conflict: "Two rules pointed different directions",
   ensemble_disagreement: "Worth a closer look. We're not certain",
-  situation_ambiguity: "Hard to tell what kind of copy this is",
+  situation_ambiguity: "Hard to tell what kind of writing this is",
   out_of_distribution: "Unfamiliar shape. Your eyes will help",
   novel_pattern: "This rule is shifting. Double-check",
   low_confidence_mixed_signals: "Mixed signals. Worth a second pass",

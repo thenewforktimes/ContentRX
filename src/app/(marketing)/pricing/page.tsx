@@ -176,7 +176,7 @@ export default function PricingPage() {
             q="What kind of writing does ContentRX handle?"
             a={
               <>
-                Short-form repo prose (error messages, UI copy,
+                Short-form repo prose (error messages, UI text,
                 button labels) and long-form repo prose (READMEs, API
                 docs, PR descriptions, design docs, runbooks,
                 changelogs). Calibrated for the prose that ships in a
