@@ -126,8 +126,15 @@ const CARD =
   "w-full rounded-2xl border border-line bg-raised shadow-xl shadow-canvas/40";
 // Responsive outer/inner padding (handoff: 6%/8% → 4%/5% → 3%/4%;
 // inner 28 → 20 → 16/18).
+// items-center at desktop (the card is shorter than the stage, so it
+// sits balanced with the absolute Stage badge in the empty space
+// above it). At <=480px the content-rich card can exceed the fixed
+// aspect-[2/3] box; items-start there pins it to the top so the
+// header is never center-clipped UP into the (now hidden) Stage
+// badge — only the least-critical bottom line can clip. Frames 3+4
+// only; the radar (AgentFrame) uses its own absolute inset-0.
 const FRAME_PAD =
-  "absolute inset-0 flex items-center justify-center p-[8%] max-[720px]:p-[5%] max-[480px]:p-[4%]";
+  "absolute inset-0 flex items-center justify-center p-[8%] max-[720px]:p-[5%] max-[480px]:items-start max-[480px]:p-[4%]";
 const FRAME_INNER = "p-7 max-[720px]:p-5 max-[480px]:px-[18px] max-[480px]:py-4";
 
 // ---- Frames 1 + 2: converging particle streams (unchanged) ---------------
@@ -367,7 +374,7 @@ function CallFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
       <div className={`${CARD} relative max-w-[600px] overflow-hidden`}>
         <div className={`relative ${FRAME_INNER}`}>
           <div
-            className="mb-5 flex flex-wrap items-center justify-between gap-3"
+            className="mb-5 flex flex-wrap items-center justify-between gap-3 max-[480px]:mb-3"
             style={reveal(1)}
           >
             <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-quiet">
@@ -509,7 +516,7 @@ function ReasonFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
       <div className={`${CARD} max-w-[560px] overflow-hidden`}>
         <div className={FRAME_INNER}>
           <div
-            className="mb-5 flex flex-wrap items-center justify-between gap-3"
+            className="mb-5 flex flex-wrap items-center justify-between gap-3 max-[480px]:mb-3"
             style={reveal(1)}
           >
             <div className="flex flex-wrap items-center gap-2.5">
@@ -1087,7 +1094,13 @@ export function HowItWorksDiagram() {
           aria-hidden
           className="relative order-1 aspect-[2/3] max-h-[440px] overflow-hidden rounded-2xl border border-line bg-canvas shadow-2xl shadow-canvas/60 sm:aspect-auto sm:h-[440px] lg:order-2"
         >
-          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-quiet">
+          {/* Hidden at <=480px: at the narrowest viewport the
+              content-rich call/reason card fills the stage, and this
+              absolute badge wallpapered over the card header. The
+              step rail (active step + "0X / 05" legend) already
+              carries stage context there. Mirrors the top-right
+              PHASE_LABELS badge, which is likewise viewport-hidden. */}
+          <div className="absolute left-4 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-quiet max-[480px]:hidden">
             <span
               className="h-1.5 w-1.5 rounded-full bg-accent-affirm motion-safe:animate-pulse"
               style={{ boxShadow: "0 0 6px var(--color-accent-affirm)" }}
