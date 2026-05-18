@@ -123,7 +123,7 @@ export default function Home() {
         // off-screen trigger (WCAG 2.4.3). outline-none prevents the
         // default focus ring from showing on the section itself.
         tabIndex={-1}
-        className="mt-16 scroll-mt-16 rounded-3xl border border-line bg-raised/40 p-6 outline-none sm:p-8"
+        className="mt-16 scroll-mt-16 rounded-3xl border border-line bg-raised/40 p-6 outline-none"
         style={{
           backgroundImage:
             "radial-gradient(circle, var(--decoration-dot) 1px, transparent 1px)",

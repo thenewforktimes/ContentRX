@@ -581,7 +581,16 @@ const REPOS = [
 ] as const;
 // Scrim opaque floor (px from the stage bottom). Mirrored in the scrim
 // gradient + RepoLabels CSS below — keep all three in sync.
-const SCRIM_PX = 260;
+// 2026-05-17: stage 460→440 + SCRIM 260→240 in lockstep with the
+// mirrored constant (296→276) below, so arcR = stageH−(SCRIM+36)
+// is INVARIANT (164px) — the radar fan/sweep/labels/AAA are
+// pixel-identical; only the box and the text floor shrink 20px.
+// The agent copy was first tightened (spacing only, no words cut)
+// so it still fits the 240px floor. Keep ALL of: SCRIM_PX, the
+// RepoLabels R "276", the RepoLabels origin "calc(100% - 240px)",
+// the scrim gradient (240px / 310px), and the stage h-[440px] in
+// lockstep — they encode one geometry.
+const SCRIM_PX = 240;
 // The fan: a ~120° arc opening upward from an origin on the scrim
 // horizon. Canvas angles (y is down): PI = left, 3PI/2 = straight up,
 // 2PI = right. Nodes spread left -> right across the visible arc.
@@ -607,7 +616,7 @@ function RepoLabels() {
   // Mirrors the canvas arcR exactly: max(70, min(stageH - 296, 0.42w)).
   // The -296 (= 260 scrim + 36 reserve) leaves room for the label box
   // itself above the apex node so it never clips the top edge.
-  const R = "max(70px, min(100cqh - 296px, 42cqw))";
+  const R = "max(70px, min(100cqh - 276px, 42cqw))";
   return (
     <div
       aria-hidden
@@ -638,7 +647,7 @@ function RepoLabels() {
               // radius R mirrors the canvas arcR = max(70, min(h-276,
               // 0.42w)). Keeps each label locked to its node on the fan.
               left: "50%",
-              top: "calc(100% - 260px)",
+              top: "calc(100% - 240px)",
               transform: `translate(${anchorX}, -50%) translate(calc(${cos} * (${R} + 14px)), calc(${sin} * (${R} + 14px)))`,
               whiteSpace: "nowrap",
               letterSpacing: "0.02em",
@@ -657,7 +666,7 @@ function RepoLabels() {
 
 function AgentBullet({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2.5 py-1.5">
+    <div className="flex items-start gap-2.5 py-1">
       <span
         aria-hidden
         className="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-accent-affirm"
@@ -902,24 +911,28 @@ function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
         aria-hidden
       />
 
-      {/* Soft bottom-up scrim: opaque to 260px so the copy sits on
-          solid canvas (AAA), fading out by 330px so the radar fan
-          above it stays clear. Token-driven. Drawn BEFORE the labels
-          so the labels are never dimmed by it. Keep 260 in sync with
-          SCRIM_PX + the RepoLabels CSS. */}
+      {/* Soft bottom-up scrim: opaque to 240px so the copy sits on
+          solid canvas (AAA), fading out by 310px (240 + 70px fade)
+          so the radar fan above it stays clear. Token-driven. Drawn
+          BEFORE the labels so the labels are never dimmed by it.
+          Keep 240/310 in sync with SCRIM_PX + the RepoLabels CSS. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(to top, var(--color-canvas, #0e1430) 0px, var(--color-canvas, #0e1430) 260px, transparent 330px)",
+            "linear-gradient(to top, var(--color-canvas, #0e1430) 0px, var(--color-canvas, #0e1430) 240px, transparent 310px)",
         }}
       />
 
       <RepoLabels />
 
-      {/* Copy, bottom-anchored within the opaque floor of the scrim. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 p-[8%] max-[720px]:p-[5%] max-[480px]:p-[4%]">
+      {/* Copy, bottom-anchored within the opaque floor of the scrim.
+          2026-05-17: padding tightened 8%→6% (desktop) so the copy
+          block is denser WITHOUT cutting any words — this is what
+          frees the scrim for the radar-identical stage cut below
+          (SCRIM_PX/stage reduced in lockstep so arcR is invariant). */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 p-[6%] max-[720px]:p-[5%] max-[480px]:p-[4%]">
         <div className="max-w-[34rem]">
           <p
             className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-affirm-text"
@@ -934,14 +947,14 @@ function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
             Not just a tool. An agent.
           </p>
           <p
-            className="mt-2.5 text-sm leading-relaxed text-default max-[480px]:mt-2 max-[480px]:text-[13px]"
+            className="mt-2 text-sm leading-relaxed text-default max-[480px]:text-[13px]"
             style={reveal(3)}
           >
             A deterministic agent watches your repos on a cadence. It
             catches drift and keeps your prose consistent, without
             burning a token.
           </p>
-          <div className="mt-2.5" style={reveal(4)}>
+          <div className="mt-2" style={reveal(4)}>
             <AgentBullet>Runs on its own, on the schedule you set.</AgentBullet>
           </div>
           <div style={reveal(5)}>
@@ -990,10 +1003,11 @@ export function HowItWorksDiagram() {
     // 2026-05-17 home-rhythm pass: was max-w-4xl (896px) centered
     // inside the max-w-6xl How-it-works panel → ~96px dead gutter
     // each side, reading as a frame-in-a-frame. max-w-5xl shrinks
-    // the gutter to normal panel padding. Stage stays height-bound
-    // (h-[460px] → arcR = min(100cqh-296, 42cqw) is the 100cqh-296
-    // term at any reasonable width), so the radar geometry, AAA
-    // scrim, and the by-construction label-clip guard are unaffected.
+    // the gutter to normal panel padding. Stage is height-bound
+    // (h-[440px] → arcR = min(100cqh-276, 42cqw) is the 100cqh-276
+    // term at any reasonable width = 164px, unchanged from the prior
+    // 460/296 geometry), so the radar, AAA scrim, and the
+    // by-construction label-clip guard are all unaffected.
     <div className="mx-auto max-w-5xl">
       <div
         className="flex flex-col gap-7 lg:grid lg:grid-cols-[minmax(220px,280px)_1fr] lg:items-stretch lg:gap-10"
@@ -1071,7 +1085,7 @@ export function HowItWorksDiagram() {
             max-height so it can never balloon below the fold. */}
         <div
           aria-hidden
-          className="relative order-1 aspect-[2/3] max-h-[460px] overflow-hidden rounded-2xl border border-line bg-canvas shadow-2xl shadow-canvas/60 sm:aspect-auto sm:h-[460px] lg:order-2"
+          className="relative order-1 aspect-[2/3] max-h-[440px] overflow-hidden rounded-2xl border border-line bg-canvas shadow-2xl shadow-canvas/60 sm:aspect-auto sm:h-[440px] lg:order-2"
         >
           <div className="absolute left-4 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-quiet">
             <span
@@ -1126,7 +1140,7 @@ export function HowItWorksDiagram() {
 
       {/* Closer — reachable, not aria-hidden. Carries the /accuracy
           link required whenever a surface claims accuracy. */}
-      <p className="mt-6 max-w-2xl text-sm leading-relaxed text-quiet">
+      <p className="mt-4 max-w-2xl text-sm leading-relaxed text-quiet">
         The context-aware editor in your codebase. Sharper
         communication, shipped faster, with the accuracy{" "}
         <Link
