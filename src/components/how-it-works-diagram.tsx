@@ -120,15 +120,29 @@ function usePrefersReducedMotion(): boolean {
   return reduce;
 }
 
-// Frame-card chrome shared by frames 3 + 4 — a real token surface
-// (not the handoff's translucent white gradient), so text is AAA.
-const CARD =
-  "w-full rounded-2xl border border-line bg-raised shadow-xl shadow-canvas/40";
-// Responsive outer/inner padding (handoff: 6%/8% → 4%/5% → 3%/4%;
-// inner 28 → 20 → 16/18).
+// Frames 3 + 4 render their content DIRECTLY on the stage — no
+// interior card — exactly like frames 1/2 (particles) and 5 (radar).
+// The old nested bg-raised card was a box-in-a-box and, being a
+// fixed block centered in the fixed aspect-[2/3] stage, it overran
+// the box at narrow widths and its header wallpapered up under the
+// absolute Stage badge. With the card gone the content is a plain
+// text block, top-anchored so it always clears the top chrome at
+// EVERY width: pt-12 (48px) reserves the Stage-badge zone, and
+// items-start means overflow (only at the very narrowest) clips the
+// least-critical last line off the BOTTOM, never the header. Text
+// is AAA on the stage's bg-canvas (same token pairing the radar
+// copy uses). FRAME_PAD is frames 3+4 only; AgentFrame/radar has
+// its own absolute inset-0 wrapper and is untouched.
+//
+// lg:items-center — below lg the content can be tall (heavy wrap at
+// narrow widths) so it stays top-anchored (collision-safe). At lg
+// the diagram block is max-w-5xl, so the stage is width-capped at
+// ~704px no matter how wide the screen; the static frame-3/4 content
+// is always short there (~250-300px in a 440px stage) and CANNOT
+// overflow, so centering is provably safe and removes the dead
+// space that otherwise pooled at the bottom on wide viewports.
 const FRAME_PAD =
-  "absolute inset-0 flex items-center justify-center p-[8%] max-[720px]:p-[5%] max-[480px]:p-[4%]";
-const FRAME_INNER = "p-7 max-[720px]:p-5 max-[480px]:px-[18px] max-[480px]:py-4";
+  "absolute inset-0 flex items-start justify-center px-[7%] pt-12 pb-8 max-[480px]:px-5 max-[480px]:pb-6 lg:items-center";
 
 // ---- Frames 1 + 2: converging particle streams (unchanged) ---------------
 const STREAM_COUNT = 19;
@@ -364,90 +378,88 @@ function CallFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
 
   return (
     <div className={FRAME_PAD}>
-      <div className={`${CARD} relative max-w-[600px] overflow-hidden`}>
-        <div className={`relative ${FRAME_INNER}`}>
-          <div
-            className="mb-5 flex flex-wrap items-center justify-between gap-3"
-            style={reveal(1)}
-          >
-            <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-quiet">
-              PR description
-            </span>
-            <Pill tone="amber" size="xs">
-              Worth adjusting
-            </Pill>
-          </div>
+      <div className="relative w-full max-w-[600px]">
+        <div
+          className="mb-5 flex flex-wrap items-center justify-between gap-3"
+          style={reveal(1)}
+        >
+          <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-quiet">
+            PR description
+          </span>
+          <Pill tone="amber" size="xs">
+            Worth adjusting
+          </Pill>
+        </div>
 
-          <p
-            className="m-0 text-[15px] italic leading-[1.7] text-quiet"
-            style={reveal(2)}
-          >
-            {PR_PARTS.map((part, i) => {
-              if (!("mark" in part) || !part.mark)
-                return <span key={i}>{part.text}</span>;
-              const on = reduce || phase >= part.mark + 2;
-              return (
-                <span
-                  key={i}
-                  className={on ? "text-strong" : "text-quiet"}
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(120deg, var(--color-accent-caution-soft), var(--color-accent-caution-soft))",
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: on ? "100% 72%" : "0% 72%",
-                    backgroundPosition: "0 78%",
-                    transition:
-                      "background-size 0.75s cubic-bezier(0.4,0,0.2,1), color 0.5s ease",
-                    padding: "0 2px",
-                    borderRadius: 2,
-                  }}
-                >
-                  {part.text}
-                </span>
-              );
-            })}
-          </p>
-
-          <div className="my-5 h-px bg-line" style={reveal(2)} />
-
-          <div className="relative pl-[18px]">
-            <div
-              className="absolute left-1 top-2 w-0.5 rounded-full"
-              style={{
-                height: `calc(${(filled / 3) * 100}% - 16px)`,
-                minHeight: phase >= 3 ? 24 : 0,
-                background:
-                  "linear-gradient(180deg, var(--color-accent-caution-border), var(--color-accent-caution-soft))",
-                transition: "height 0.6s cubic-bezier(0.4,0,0.2,1)",
-              }}
-            />
-            {ISSUES.map((issue, i) => (
-              <div
+        <p
+          className="m-0 text-[15px] italic leading-[1.7] text-quiet"
+          style={reveal(2)}
+        >
+          {PR_PARTS.map((part, i) => {
+            if (!("mark" in part) || !part.mark)
+              return <span key={i}>{part.text}</span>;
+            const on = reduce || phase >= part.mark + 2;
+            return (
+              <span
                 key={i}
-                className="flex items-start gap-3.5 py-2"
-                style={reveal(issue.phase, true)}
+                className={on ? "text-strong" : "text-quiet"}
+                style={{
+                  backgroundImage:
+                    "linear-gradient(120deg, var(--color-accent-caution-soft), var(--color-accent-caution-soft))",
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: on ? "100% 72%" : "0% 72%",
+                  backgroundPosition: "0 78%",
+                  transition:
+                    "background-size 0.75s cubic-bezier(0.4,0,0.2,1), color 0.5s ease",
+                  padding: "0 2px",
+                  borderRadius: 2,
+                }}
               >
-                <span
-                  className={[
-                    "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono text-[11px] font-semibold leading-none",
-                    issue.meta
-                      ? "border-line bg-sunken text-quiet"
-                      : "border-accent-caution-border bg-accent-caution-soft text-accent-caution-text",
-                  ].join(" ")}
-                >
-                  {issue.n}
-                </span>
-                <span
-                  className={[
-                    "text-sm leading-relaxed",
-                    issue.meta ? "text-quiet" : "text-default",
-                  ].join(" ")}
-                >
-                  {issue.text}
-                </span>
-              </div>
-            ))}
-          </div>
+                {part.text}
+              </span>
+            );
+          })}
+        </p>
+
+        <div className="my-5 h-px bg-line" style={reveal(2)} />
+
+        <div className="relative pl-[18px]">
+          <div
+            className="absolute left-1 top-2 w-0.5 rounded-full"
+            style={{
+              height: `calc(${(filled / 3) * 100}% - 16px)`,
+              minHeight: phase >= 3 ? 24 : 0,
+              background:
+                "linear-gradient(180deg, var(--color-accent-caution-border), var(--color-accent-caution-soft))",
+              transition: "height 0.6s cubic-bezier(0.4,0,0.2,1)",
+            }}
+          />
+          {ISSUES.map((issue, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3.5 py-2"
+              style={reveal(issue.phase, true)}
+            >
+              <span
+                className={[
+                  "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono text-[11px] font-semibold leading-none",
+                  issue.meta
+                    ? "border-line bg-sunken text-quiet"
+                    : "border-accent-caution-border bg-accent-caution-soft text-accent-caution-text",
+                ].join(" ")}
+              >
+                {issue.n}
+              </span>
+              <span
+                className={[
+                  "text-sm leading-relaxed",
+                  issue.meta ? "text-quiet" : "text-default",
+                ].join(" ")}
+              >
+                {issue.text}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -506,59 +518,57 @@ function ReasonFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
 
   return (
     <div className={FRAME_PAD}>
-      <div className={`${CARD} max-w-[560px] overflow-hidden`}>
-        <div className={FRAME_INNER}>
-          <div
-            className="mb-5 flex flex-wrap items-center justify-between gap-3"
-            style={reveal(1)}
-          >
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Pill tone="amber" size="xs">
-                Worth adjusting
-              </Pill>
-              <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-quiet">
-                <span aria-hidden>⚡</span> Instant
-                <span aria-hidden className="mx-1.5 text-quiet/50">
-                  ·
-                </span>
-                ✓ Before merge
+      <div className="relative w-full max-w-[560px]">
+        <div
+          className="mb-5 flex flex-wrap items-center justify-between gap-3"
+          style={reveal(1)}
+        >
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Pill tone="amber" size="xs">
+              Worth adjusting
+            </Pill>
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-quiet">
+              <span aria-hidden>⚡</span> Instant
+              <span aria-hidden className="mx-1.5 text-quiet/50">
+                ·
               </span>
-            </div>
-            <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-quiet">
-              PR description
+              ✓ Before merge
             </span>
           </div>
+          <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-quiet">
+            PR description
+          </span>
+        </div>
 
-          <p
-            className="mb-4 text-sm italic leading-relaxed text-quiet"
-            style={reveal(2)}
-          >
-            {PR_DESC}
-          </p>
-          <p
-            className="mb-5 text-[15px] font-medium leading-relaxed text-strong"
-            style={reveal(3)}
-          >
-            {CRITIQUE}
-          </p>
+        <p
+          className="mb-4 text-sm italic leading-relaxed text-quiet"
+          style={reveal(2)}
+        >
+          {PR_DESC}
+        </p>
+        <p
+          className="mb-5 text-[15px] font-medium leading-relaxed text-strong"
+          style={reveal(3)}
+        >
+          {CRITIQUE}
+        </p>
 
-          <div
-            className="rounded-xl border border-accent-affirm-border/40 bg-accent-affirm-soft p-4"
-            style={reveal(4)}
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-affirm-text">
-              Suggested
-            </p>
-            <p className="mt-2 min-h-[1.4rem] text-sm leading-relaxed text-default">
-              {typed}
-              {!reduce && phase >= 4 && typed.length < SUGGESTED.length && (
-                <span
-                  aria-hidden
-                  className="ml-0.5 inline-block h-3.5 w-[7px] translate-y-0.5 bg-accent-affirm motion-safe:animate-pulse"
-                />
-              )}
-            </p>
-          </div>
+        <div
+          className="rounded-xl border border-accent-affirm-border/40 bg-accent-affirm-soft p-4"
+          style={reveal(4)}
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-affirm-text">
+            Suggested
+          </p>
+          <p className="mt-2 min-h-[1.4rem] text-sm leading-relaxed text-default">
+            {typed}
+            {!reduce && phase >= 4 && typed.length < SUGGESTED.length && (
+              <span
+                aria-hidden
+                className="ml-0.5 inline-block h-3.5 w-[7px] translate-y-0.5 bg-accent-affirm motion-safe:animate-pulse"
+              />
+            )}
+          </p>
         </div>
       </div>
     </div>
@@ -581,7 +591,16 @@ const REPOS = [
 ] as const;
 // Scrim opaque floor (px from the stage bottom). Mirrored in the scrim
 // gradient + RepoLabels CSS below — keep all three in sync.
-const SCRIM_PX = 260;
+// 2026-05-17: stage 460→440 + SCRIM 260→240 in lockstep with the
+// mirrored constant (296→276) below, so arcR = stageH−(SCRIM+36)
+// is INVARIANT (164px) — the radar fan/sweep/labels/AAA are
+// pixel-identical; only the box and the text floor shrink 20px.
+// The agent copy was first tightened (spacing only, no words cut)
+// so it still fits the 240px floor. Keep ALL of: SCRIM_PX, the
+// RepoLabels R "276", the RepoLabels origin "calc(100% - 240px)",
+// the scrim gradient (240px / 310px), and the stage h-[440px] in
+// lockstep — they encode one geometry.
+const SCRIM_PX = 240;
 // The fan: a ~120° arc opening upward from an origin on the scrim
 // horizon. Canvas angles (y is down): PI = left, 3PI/2 = straight up,
 // 2PI = right. Nodes spread left -> right across the visible arc.
@@ -607,7 +626,7 @@ function RepoLabels() {
   // Mirrors the canvas arcR exactly: max(70, min(stageH - 296, 0.42w)).
   // The -296 (= 260 scrim + 36 reserve) leaves room for the label box
   // itself above the apex node so it never clips the top edge.
-  const R = "max(70px, min(100cqh - 296px, 42cqw))";
+  const R = "max(70px, min(100cqh - 276px, 42cqw))";
   return (
     <div
       aria-hidden
@@ -638,7 +657,7 @@ function RepoLabels() {
               // radius R mirrors the canvas arcR = max(70, min(h-276,
               // 0.42w)). Keeps each label locked to its node on the fan.
               left: "50%",
-              top: "calc(100% - 260px)",
+              top: "calc(100% - 240px)",
               transform: `translate(${anchorX}, -50%) translate(calc(${cos} * (${R} + 14px)), calc(${sin} * (${R} + 14px)))`,
               whiteSpace: "nowrap",
               letterSpacing: "0.02em",
@@ -657,7 +676,7 @@ function RepoLabels() {
 
 function AgentBullet({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2.5 py-1.5">
+    <div className="flex items-start gap-2.5 py-1">
       <span
         aria-hidden
         className="mt-[7px] h-[7px] w-[7px] shrink-0 rounded-full bg-accent-affirm"
@@ -902,24 +921,28 @@ function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
         aria-hidden
       />
 
-      {/* Soft bottom-up scrim: opaque to 260px so the copy sits on
-          solid canvas (AAA), fading out by 330px so the radar fan
-          above it stays clear. Token-driven. Drawn BEFORE the labels
-          so the labels are never dimmed by it. Keep 260 in sync with
-          SCRIM_PX + the RepoLabels CSS. */}
+      {/* Soft bottom-up scrim: opaque to 240px so the copy sits on
+          solid canvas (AAA), fading out by 310px (240 + 70px fade)
+          so the radar fan above it stays clear. Token-driven. Drawn
+          BEFORE the labels so the labels are never dimmed by it.
+          Keep 240/310 in sync with SCRIM_PX + the RepoLabels CSS. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(to top, var(--color-canvas, #0e1430) 0px, var(--color-canvas, #0e1430) 260px, transparent 330px)",
+            "linear-gradient(to top, var(--color-canvas, #0e1430) 0px, var(--color-canvas, #0e1430) 240px, transparent 310px)",
         }}
       />
 
       <RepoLabels />
 
-      {/* Copy, bottom-anchored within the opaque floor of the scrim. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 p-[8%] max-[720px]:p-[5%] max-[480px]:p-[4%]">
+      {/* Copy, bottom-anchored within the opaque floor of the scrim.
+          2026-05-17: padding tightened 8%→6% (desktop) so the copy
+          block is denser WITHOUT cutting any words — this is what
+          frees the scrim for the radar-identical stage cut below
+          (SCRIM_PX/stage reduced in lockstep so arcR is invariant). */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 p-[6%] max-[720px]:p-[5%] max-[480px]:p-[4%]">
         <div className="max-w-[34rem]">
           <p
             className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-affirm-text"
@@ -934,14 +957,14 @@ function AgentFrame({ active, reduce }: { active: boolean; reduce: boolean }) {
             Not just a tool. An agent.
           </p>
           <p
-            className="mt-2.5 text-sm leading-relaxed text-default max-[480px]:mt-2 max-[480px]:text-[13px]"
+            className="mt-2 text-sm leading-relaxed text-default max-[480px]:text-[13px]"
             style={reveal(3)}
           >
             A deterministic agent watches your repos on a cadence. It
             catches drift and keeps your prose consistent, without
             burning a token.
           </p>
-          <div className="mt-2.5" style={reveal(4)}>
+          <div className="mt-2" style={reveal(4)}>
             <AgentBullet>Runs on its own, on the schedule you set.</AgentBullet>
           </div>
           <div style={reveal(5)}>
@@ -987,7 +1010,15 @@ export function HowItWorksDiagram() {
   narrowRef.current = narrow;
 
   return (
-    <div className="mx-auto max-w-4xl">
+    // 2026-05-17 home-rhythm pass: was max-w-4xl (896px) centered
+    // inside the max-w-6xl How-it-works panel → ~96px dead gutter
+    // each side, reading as a frame-in-a-frame. max-w-5xl shrinks
+    // the gutter to normal panel padding. Stage is height-bound
+    // (h-[440px] → arcR = min(100cqh-276, 42cqw) is the 100cqh-276
+    // term at any reasonable width = 164px, unchanged from the prior
+    // 460/296 geometry), so the radar, AAA scrim, and the
+    // by-construction label-clip guard are all unaffected.
+    <div className="mx-auto max-w-5xl">
       <div
         className="flex flex-col gap-7 lg:grid lg:grid-cols-[minmax(220px,280px)_1fr] lg:items-stretch lg:gap-10"
         onMouseEnter={() => setPaused(true)}
@@ -1064,7 +1095,7 @@ export function HowItWorksDiagram() {
             max-height so it can never balloon below the fold. */}
         <div
           aria-hidden
-          className="relative order-1 aspect-[2/3] max-h-[460px] overflow-hidden rounded-2xl border border-line bg-canvas shadow-2xl shadow-canvas/60 sm:aspect-auto sm:h-[460px] lg:order-2"
+          className="relative order-1 aspect-[2/3] max-h-[440px] overflow-hidden rounded-2xl border border-line bg-canvas shadow-2xl shadow-canvas/60 sm:aspect-auto sm:h-[440px] lg:order-2"
         >
           <div className="absolute left-4 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-quiet">
             <span
@@ -1119,7 +1150,7 @@ export function HowItWorksDiagram() {
 
       {/* Closer — reachable, not aria-hidden. Carries the /accuracy
           link required whenever a surface claims accuracy. */}
-      <p className="mt-8 max-w-2xl text-sm leading-relaxed text-quiet">
+      <p className="mt-4 max-w-2xl text-sm leading-relaxed text-quiet">
         The context-aware editor in your codebase. Sharper
         communication, shipped faster, with the accuracy{" "}
         <Link

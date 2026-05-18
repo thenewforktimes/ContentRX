@@ -44,13 +44,26 @@ import { Pill } from "@/components/ui/pill";
 
 export function OutcomesGrid() {
   return (
-    <section id="outcomes" className="mt-20 scroll-mt-16">
+    // 2026-05-17 home-rhythm pass (v2). History: bare section, then
+    // briefly wrapped in the shared bordered panel, now UN-paneled
+    // again on purpose. A 6-cell grid (two cells nest a third
+    // bordered card) is already a visual object; an outer panel made
+    // it up to three levels of nested boxes. Cohesion now comes from
+    // the shared card system + the eyebrow/h2/intro header rhythm
+    // (the intro line below was the one real CONTENT gap vs the
+    // other two sections) + mt-16. Only How-it-works keeps a panel.
+    // Keep this bare-section shape in lockstep with SurfacesGrid.
+    <section id="outcomes" className="mt-16 scroll-mt-16">
       <Eyebrow>Outcomes</Eyebrow>
       <h2 className="mt-2 text-2xl font-semibold text-strong sm:text-3xl">
         Why teams pick ContentRX.
       </h2>
+      <p className="mt-4 max-w-2xl text-base text-default">
+        Real outcomes, not feature lists. Faster reviews, one bill,
+        and receipts you can check.
+      </p>
 
-      <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+      <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
         <SaveTimeCell />
         <SaveMoneyCell />
         <OneApprovalCell />

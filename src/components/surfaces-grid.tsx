@@ -102,7 +102,18 @@ const SURFACES: readonly Surface[] = [
 export function SurfacesGrid() {
   return (
     <section
-      className="mt-20 scroll-mt-16 rounded-3xl border border-accent-info-border/40 bg-accent-info-soft/30 p-8 sm:p-12"
+      // 2026-05-17 home-rhythm pass (v2). History: blue accent-info
+      // panel, then neutralized to match How-it-works/Outcomes, now
+      // UN-paneled. A 5-card grid is already a visual object; wrapping
+      // it in a bordered panel doubled the framing (panel border +
+      // card borders = box-in-box, the same problem we removed from
+      // the diagram). Cohesion with the other sections now comes from
+      // the shared card system + the identical eyebrow/h2/intro
+      // header rhythm + mt-16, not an outer box. Only How-it-works
+      // keeps a panel (it frames ONE object; the dot-grid is its one
+      // accent). Keep this bare-section shape in lockstep with
+      // OutcomesGrid (the other card-grid section).
+      className="mt-16 scroll-mt-16"
     >
       <Eyebrow>Where it runs</Eyebrow>
       <h2 className="mt-2 text-2xl font-semibold text-strong sm:text-3xl">
